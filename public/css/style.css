@@ -410,26 +410,11 @@ h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:te
 .seat.empty .seg button[data-v=toddler]{border-color:#bfeadf}.seat.empty .seg button[data-v=easy]{border-color:#c6e1fb}.seat.empty .seg button[data-v=normal]{border-color:#ffe2b0}.seat.empty .seg button[data-v=hard]{border-color:#ffc6d8}
 .seat .btn.mini{margin-top:4px;min-height:36px;padding:2px 12px}
 .roomView{padding-right:14px}
-/* 回遊戲大廳：每個畫面左上角固定；首頁顯示文字，其他畫面縮成圖示避免佔版 */
+/* 回遊戲大廳：只在首頁左上角顯示 */
 .lobbyLink{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:29;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;background:#fff;box-shadow:var(--sh-s);border-width:2px;padding:0 14px 0 10px;height:48px;min-height:48px;border-radius:999px;font-size:15px}
 .lobbyLink svg{width:24px;height:24px;flex:none}
-body:not([data-screen=home]) .lobbyLink{width:48px;padding:0}
-body:not([data-screen=home]) .lobbyLink span{display:none}
-/* 其他畫面：頂欄／側欄往右讓出圖示位置 */
-body:not([data-screen=home]) .topbar{margin-left:56px;width:calc(100% - 56px)}
-body:not([data-screen=home]) .omain .topbar{margin-left:56px}
-body[data-screen=online] .panel2{margin-top:56px;height:calc(100% - 56px)}
-body[data-screen=online] .olayout[data-panel=closed] .panel2{height:44px}
-@media (max-width:899px),(max-aspect-ratio:1/1){body[data-screen=online] .panel2{margin-top:0;height:auto}}
-@media (max-height:520px) and (orientation:landscape){body[data-screen=online] .panel2{margin-top:56px;height:calc(100% - 56px);position:relative}body[data-screen=online] .olayout[data-panel=closed] .panel2{height:44px}.lobbyLink{height:44px;min-height:44px}body:not([data-screen=home]) .lobbyLink{width:44px}}
-@media (max-width:380px){.lobbyLink{height:44px;min-height:44px;font-size:14px}body:not([data-screen=home]) .lobbyLink{width:44px}body:not([data-screen=home]) .topbar{margin-left:52px;width:calc(100% - 52px)}.hearts svg{width:18px;height:18px}}
-@media (max-width:380px){#game .topbar .title{display:none}.omain .chips2{display:none}.omain .topbar{grid-template-columns:auto 1fr}}
+body:not([data-screen=home]) .lobbyLink{display:none}
+@media (max-height:520px) and (orientation:landscape){.lobbyLink{height:44px;min-height:44px}}
+@media (max-width:380px){.lobbyLink{height:44px;min-height:44px;font-size:14px}}
+@media (max-width:380px){#game .topbar .title{display:none}.omain .chips2{display:none}.omain .topbar{grid-template-columns:auto 1fr}#game .topbar{grid-template-columns:auto 1fr}#game .hearts{justify-self:end;min-width:0}.topbar{padding-right:58px}.topbar .btn.small{padding:6px 10px}#game .hearts svg{width:16px;height:16px}#game .hearts{gap:1px}}
 @media (max-width:480px){.omain .chips2{max-width:none;flex-wrap:nowrap;overflow:hidden}.omain .chips2 .mchip{flex:none}}
-@media (max-width:380px){#game .topbar{grid-template-columns:auto 1fr}#game .hearts{justify-self:end;min-width:0}}
-@media (max-width:380px){.topbar{padding-right:58px}.topbar .btn.small{padding:6px 10px}#game .hearts svg{width:16px;height:16px}#game .hearts{gap:1px}}
-/* 寬度夠時，所有畫面都顯示完整「遊戲小小島」文字按鈕；窄手機才縮成圖示 */
-@media (min-width:600px){
-  body:not([data-screen=home]) .lobbyLink{width:auto;padding:0 14px 0 10px}
-  body:not([data-screen=home]) .lobbyLink span{display:inline}
-  body:not([data-screen=home]) .topbar,body:not([data-screen=home]) .omain .topbar{margin-left:152px;width:calc(100% - 152px)}
-}
