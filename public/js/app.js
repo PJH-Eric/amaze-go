@@ -43,7 +43,10 @@
       else b.setAttribute('aria-label', '第 ' + l + ' 關');
       b.onclick = () => startLevel(l);
       g.appendChild(b);
+      if (l === unlockedUpTo(diff) && l <= R.LEVELS_PER_DIFFICULTY) b.dataset.current = '1';
     }
+    $('#progressText').textContent = '（已通 ' + (progress[diff] || 0) + '／' + R.LEVELS_PER_DIFFICULTY + '）';
+    const cur = g.querySelector('[data-current]'); if (cur && (progress[diff] || 0) > 0) requestAnimationFrame(() => cur.scrollIntoView({ block: 'center' }));
   }
   function show(id) { $('#home').hidden = id !== 'home'; $('#game').hidden = id !== 'game'; if (id === 'home') renderHome(); }
 
@@ -57,7 +60,7 @@
     else { h.innerHTML = Array.from({ length: state.maxLives }, (_, i) => heartSvg(i < state.lives)).join(''); h.setAttribute('aria-label', '愛心 ' + state.lives + '／' + state.maxLives); }
     $('#hintCount').textContent = state.hints === Infinity ? '∞' : '×' + state.hints;
     $('#hintBtn').disabled = state.hints <= 0 || state.status !== 'playing';
-    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・第 ' + level + ' 關（剩 ' + R.remaining(state) + ' 支）';
+    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・第 ' + level + ' 關・' + state.shape.name + '（剩 ' + R.remaining(state) + '）';
   }
   function arrowShape(a) {
     const pts = a.cells.map(([x, y]) => [x * C + C / 2, y * C + C / 2]);
@@ -72,8 +75,14 @@
   }
   function drawBoard() {
     const svg = $('#board'); svg.innerHTML = '';
-    svg.setAttribute('viewBox', `-10 -10 ${state.w * C + 20} ${state.h * C + 20}`);
-    const bg = el('rect', { x: -6, y: -6, width: state.w * C + 12, height: state.h * C + 12, rx: 26, fill: '#fffafc', stroke: '#f3cfdc', 'stroke-width': 4 }, svg);
+    svg.setAttribute('viewBox', `-14 -14 ${state.w * C + 28} ${state.h * C + 28}`);
+    // 棋盤底：依輪廓遮罩逐格鋪色，外圍加一圈邊線
+    for (const pass of [0, 1]) for (let y = 0; y < state.h; y++) for (let x = 0; x < state.w; x++) {
+      if (state.mask[y][x] !== '1') continue;
+      el('rect', pass === 0
+        ? { x: x * C - 2, y: y * C - 2, width: C + 4, height: C + 4, rx: 6, fill: '#f3cfdc', stroke: '#f3cfdc', 'stroke-width': 12, 'stroke-linejoin': 'round' }
+        : { x: x * C - 1, y: y * C - 1, width: C + 2, height: C + 2, fill: '#fffafc' }, svg);
+    }
     if (false) for (let y = 0; y < state.h; y++) for (let x = 0; x < state.w; x++) el('circle', { cx: x * C + C / 2, cy: y * C + C / 2, r: 3.500, class: 'cellDot' }, svg);
     state.arrows.forEach((a) => {
       const color = COLORS[a.id % COLORS.length];
@@ -185,5 +194,5 @@
   };
   document.addEventListener('pointerdown', () => A.unlock(), { once: true });
   applySettings(); show('home');
-  window.__amaze = { get state() { return state; }, startLevel };
+  window.__amaze = { get state() { return state; }, startLevel, start(d, l) { diff = d; startLevel(l); } };
 })();

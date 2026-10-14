@@ -1,18 +1,19 @@
 /* 箭頭解密 規則核心：瀏覽器與伺服器（日後線上版）共用，純函式、無 DOM、可注入種子 */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.AmazeRules = factory();
-})(typeof self !== 'undefined' ? self : this, function () {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'));
+  else root.AmazeRules = factory(root.AmazeShapes);
+})(typeof self !== 'undefined' ? self : this, function (Shapes) {
   const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
   const DIR_KEYS = Object.keys(DIRS);
 
+  // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', w: 4, h: 4, minLen: 2, maxLen: 3, fill: 0.9, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', w: 6, h: 6, minLen: 2, maxLen: 4, fill: 0.95, lives: 5, hints: 3 },
-    normal: { name: '普通', w: 8, h: 8, minLen: 2, maxLen: 5, fill: 0.97, lives: 3, hints: 2 },
-    hard: { name: '困難', w: 10, h: 10, minLen: 3, maxLen: 7, fill: 0.98, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', minDim: 6, maxDim: 8, minLen: 2, maxLen: 3, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', minDim: 7, maxDim: 10, minLen: 2, maxLen: 4, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', minDim: 9, maxDim: 13, minLen: 2, maxLen: 5, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', minDim: 11, maxDim: 16, minLen: 3, maxLen: 7, fill: 0.98, lives: 3, hints: 1 },
   };
-  const LEVELS_PER_DIFFICULTY = 10;
+  const LEVELS_PER_DIFFICULTY = 100;
 
   function mulberry32(a) {
     return function () {
@@ -54,12 +55,14 @@
    * 不合就丟棄；最後再用 1～2 格短箭頭補滿剩餘空格，填滿率約 95% 以上。
    */
   function generate(opts) {
-    const { w, h, seed, minLen, maxLen, fill } = opts;
+    const { w, h, seed, minLen, maxLen, fill, mask } = opts;
+    const inM = (x, y) => mask[y][x] === '1';
     const rnd = mulberry32(seed >>> 0);
     const ints = (n) => Math.floor(rnd() * n);
     const occupied = new Set();
     const arrows = [];
-    const total = w * h;
+    let total = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (inM(x, y)) total++;
     const target = Math.floor(total * fill);
 
     function walk(sx, sy, len) {
@@ -67,7 +70,7 @@
       while (cells.length < len) {
         const [cx, cy] = cells[cells.length - 1];
         const next = DIR_KEYS.map((d) => [cx + DIRS[d][0], cy + DIRS[d][1]]).filter(([x, y]) =>
-          x >= 0 && y >= 0 && x < w && y < h && !used.has(key(x, y)) && !occupied.has(key(x, y)));
+          x >= 0 && y >= 0 && x < w && y < h && inM(x, y) && !used.has(key(x, y)) && !occupied.has(key(x, y)));
         if (!next.length) break;
         const n = next[ints(next.length)];
         cells.push(n); used.add(key(n[0], n[1]));
@@ -91,14 +94,14 @@
     let attempts = total * 30;
     while (attempts-- > 0 && occupied.size < target) {
       const sx = ints(w), sy = ints(h);
-      if (occupied.has(key(sx, sy))) continue;
+      if (!inM(sx, sy) || occupied.has(key(sx, sy))) continue;
       const cells = walk(sx, sy, minLen + ints(maxLen - minLen + 1));
       if (cells.length < Math.min(minLen, 2)) continue;
       tryPlace(cells);
     }
     // 補滿零星空格：先試 2 格再試 1 格
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      if (occupied.has(key(x, y))) continue;
+      if (!inM(x, y) || occupied.has(key(x, y))) continue;
       for (const len of [3, 2, 1]) {
         const cells = walk(x, y, len);
         if (cells.length === len && tryPlace(cells)) break;
@@ -107,18 +110,36 @@
     return arrows;
   }
 
-  function createState(difficulty, level) {
-    const cfg = DIFFICULTIES[difficulty];
-    const seed = (Object.keys(DIFFICULTIES).indexOf(difficulty) + 1) * 10007 + level * 131;
-    return createStateFromSeed(difficulty, seed);
+  /** 關卡規格：形狀、解析度、鏡射與種子，全由 (難度, 關卡) 決定 → 可重現 */
+  function levelSpec(difficulty, level) {
+    const cfg = DIFFICULTIES[difficulty], di = Object.keys(DIFFICULTIES).indexOf(difficulty);
+    const rnd = mulberry32(di * 7919 + 17);
+    const pool = Shapes.SHAPES.map((_, i) => i);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const shape = Shapes.SHAPES[pool[(level - 1) % pool.length]];
+    const t = (level - 1) / (LEVELS_PER_DIFFICULTY - 1);
+    const dim = Math.round(cfg.minDim + (cfg.maxDim - cfg.minDim) * t);
+    const seed = (di + 1) * 100003 + level * 131;
+    const flip = mulberry32(seed)() < 0.5;
+    return { shape, dim, flip, seed };
   }
 
-  function createStateFromSeed(difficulty, seed) {
+  function createState(difficulty, level) {
+    const spec = levelSpec(difficulty, level);
+    const st = createStateFromSpec(difficulty, spec);
+    st.level = level;
+    return st;
+  }
+
+  function createStateFromSpec(difficulty, spec) {
     const cfg = DIFFICULTIES[difficulty];
-    const arrows = generate({ ...cfg, seed });
+    let m = Shapes.rasterize(spec.shape, spec.dim, spec.flip);
+    // 細長／鏤空的輪廓在低解析度可能太小：自動放大解析度直到格數足夠
+    for (let extra = 1; extra <= 4 && m.rows.join('').split('1').length - 1 < 12; extra++) m = Shapes.rasterize(spec.shape, spec.dim + extra, spec.flip);
+    const arrows = generate({ ...cfg, w: m.w, h: m.h, mask: m.rows, seed: spec.seed });
     return {
-      difficulty, seed, w: cfg.w, h: cfg.h, arrows,
-      lives: cfg.lives, maxLives: cfg.lives, hints: cfg.hints,
+      difficulty, seed: spec.seed, w: m.w, h: m.h, mask: m.rows, shape: { id: spec.shape.id, name: spec.shape.name, cat: spec.shape.cat },
+      arrows, lives: cfg.lives, maxLives: cfg.lives, hints: cfg.hints,
       moves: 0, mistakes: 0, status: 'playing',
     };
   }
@@ -185,5 +206,5 @@
     }
   }
 
-  return { DIRS, DIFFICULTIES, LEVELS_PER_DIFFICULTY, mulberry32, generate, createState, createStateFromSeed, rayCells, blockersOf, tap, freeArrows, hint, isSolvable, remaining };
+  return { DIRS, DIFFICULTIES, LEVELS_PER_DIFFICULTY, mulberry32, generate, levelSpec, createState, createStateFromSpec, rayCells, blockersOf, tap, freeArrows, hint, isSolvable, remaining };
 });
