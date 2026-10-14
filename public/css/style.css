@@ -427,3 +427,9 @@ body[data-screen=online] .olayout[data-panel=closed] .panel2{height:44px}
 @media (max-width:480px){.omain .chips2{max-width:none;flex-wrap:nowrap;overflow:hidden}.omain .chips2 .mchip{flex:none}}
 @media (max-width:380px){#game .topbar{grid-template-columns:auto 1fr}#game .hearts{justify-self:end;min-width:0}}
 @media (max-width:380px){.topbar{padding-right:58px}.topbar .btn.small{padding:6px 10px}#game .hearts svg{width:16px;height:16px}#game .hearts{gap:1px}}
+/* 寬度夠時，所有畫面都顯示完整「遊戲小小島」文字按鈕；窄手機才縮成圖示 */
+@media (min-width:600px){
+  body:not([data-screen=home]) .lobbyLink{width:auto;padding:0 14px 0 10px}
+  body:not([data-screen=home]) .lobbyLink span{display:inline}
+  body:not([data-screen=home]) .topbar,body:not([data-screen=home]) .omain .topbar{margin-left:152px;width:calc(100% - 152px)}
+}
