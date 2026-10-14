@@ -14,8 +14,8 @@ window.AmazeBoard = (function () {
     const pts = a.cells.map(([x, y]) => [x * C + C / 2, y * C + C / 2]);
     const [dx, dy] = R.DIRS[a.dir], head = pts[0], px = -dy, py = dx;
     const poly = pts.map((p) => p.join(',')).join(' ');
-    const tip = [head[0] + dx * 25, head[1] + dy * 25];
-    const tri = [tip, [head[0] + px * 19 - dx * 2, head[1] + py * 19 - dy * 2], [head[0] - px * 19 - dx * 2, head[1] - py * 19 - dy * 2]].map((p) => p.join(',')).join(' ');
+    const tip = [head[0] + dx * 29, head[1] + dy * 29];
+    const tri = [tip, [head[0] + px * 21 - dx * 6, head[1] + py * 21 - dy * 6], [head[0] - px * 21 - dx * 6, head[1] - py * 21 - dy * 6]].map((p) => p.join(',')).join(' ');
     return { poly, tri, head, dx, dy, px, py };
   }
   function create(svg, opts) {
@@ -36,10 +36,9 @@ window.AmazeBoard = (function () {
         const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] }, svg);
         g.style.setProperty('--sx', s.dx * 10 + 'px'); g.style.setProperty('--sy', s.dy * 10 + 'px');
         el('polyline', { class: 'halo', points: s.poly }, g);
-        el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 36, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polyline', { points: s.poly, fill: 'none', stroke: color, 'stroke-width': 31, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polygon', { points: s.tri, fill: color, stroke: '#fff', 'stroke-width': 3, 'stroke-linejoin': 'round' }, g);
-        [-1, 1].forEach((k) => el('circle', { cx: s.head[0] + s.px * k * 6 - s.dx * 2, cy: s.head[1] + s.py * k * 6 - s.dy * 2, r: 3, fill: '#5a3d4a' }, g));
+        el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 25, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('polyline', { points: s.poly, fill: 'none', stroke: color, 'stroke-width': 19, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('polygon', { points: s.tri, fill: color, stroke: '#fff', 'stroke-width': 3.5, 'stroke-linejoin': 'round' }, g);
         el('polyline', { points: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 40, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         const tap = () => enabled && opts.onTap(a.id);
         g.addEventListener('click', tap);

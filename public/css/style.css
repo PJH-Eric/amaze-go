@@ -44,7 +44,7 @@ h2 small{font-weight:600;opacity:.7;font-size:13px}
 .boardWrap{min-width:0}
 .cellDot{fill:#f6dbe6}
 .arrow{cursor:pointer;transition:transform .5s cubic-bezier(.5,-.2,.8,.6),opacity .5s}
-.arrow .halo{fill:none;stroke:var(--sky);stroke-width:34;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.arrow .halo{fill:none;stroke:var(--sky);stroke-width:30;stroke-linecap:round;stroke-linejoin:round;opacity:0}
 .arrow:focus-visible{outline:none}
 .arrow:focus-visible .halo{opacity:.9}
 .arrow.fly{pointer-events:none;opacity:0;transform:translate(var(--fx),var(--fy))}
