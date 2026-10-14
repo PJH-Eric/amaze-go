@@ -65,7 +65,7 @@ window.AmazeBoard = (function () {
         el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 25, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
         face(g, s.fc[0], s.fc[1]);
-        el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 44, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 50, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         const tap = () => enabled && opts.onTap(a.id);
         g.addEventListener('click', tap);
         g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });

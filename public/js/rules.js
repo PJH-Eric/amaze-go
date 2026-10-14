@@ -8,10 +8,10 @@
 
   // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', minDim: 7, maxDim: 9, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', minDim: 9, maxDim: 12, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
-    normal: { name: '普通', minDim: 11, maxDim: 15, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
-    hard: { name: '困難', minDim: 13, maxDim: 18, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', minDim: 8, maxDim: 10, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', minDim: 11, maxDim: 14, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', minDim: 14, maxDim: 19, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', minDim: 17, maxDim: 24, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
   };
   const LEVELS_PER_DIFFICULTY = 100;
 
@@ -34,20 +34,26 @@
     return out;
   }
 
+  // 依賴圖＋拓撲排序：箭頭 i 被射線上的箭頭擋住 → i 依賴它們；全部可依序清空才算有解（自己擋自己＝無解）
   function solvableList(arrows, w, h) {
-    const alive = new Set(arrows.map((_, i) => i));
-    for (;;) {
-      if (!alive.size) return true;
-      const occ = new Map();
-      for (const i of alive) for (const [x, y] of arrows[i].cells) occ.set(key(x, y), i);
-      const free = [];
-      for (const i of alive) {
-        const a = arrows[i];
-        if (!rayCells(a.cells, a.dir, w, h).some(([x, y]) => occ.has(key(x, y)))) free.push(i);
+    const n = arrows.length;
+    const occ = new Int32Array(w * h).fill(-1);
+    for (let i = 0; i < n; i++) for (const c of arrows[i].cells) occ[c[1] * w + c[0]] = i;
+    const indeg = new Int32Array(n), deps = Array.from({ length: n }, () => []);
+    for (let i = 0; i < n; i++) {
+      const a = arrows[i], d = DIRS[a.dir], seen = new Set();
+      let x = a.cells[0][0] + d[0], y = a.cells[0][1] + d[1];
+      while (x >= 0 && y >= 0 && x < w && y < h) {
+        const o = occ[y * w + x];
+        if (o === i) return false;
+        if (o >= 0 && !seen.has(o)) { seen.add(o); indeg[i]++; deps[o].push(i); }
+        x += d[0]; y += d[1];
       }
-      if (!free.length) return false;
-      free.forEach((i) => alive.delete(i));
     }
+    const q = []; for (let i = 0; i < n; i++) if (!indeg[i]) q.push(i);
+    let done = 0;
+    while (q.length) { const i = q.pop(); done++; for (const j of deps[i]) if (!--indeg[j]) q.push(j); }
+    return done === n;
   }
 
   /**

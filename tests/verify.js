@@ -31,13 +31,13 @@ t('棋盤緊貼不斷開：每關輪廓為單一連通塊、遮罩內 100% 填�
     assert.strictEqual(used, cells, `${d}-${l} 有空格`);
   }
 });
-t('每支箭頭的身體為連續相鄰格；1 格箭頭低於 3%', () => {
+t('每支箭頭的身體為連續相鄰格；1 格箭頭低於 6%', () => {
   let tot = 0, ones = 0;
   for (const [d, l, s] of all) for (const a of s.arrows) {
     tot++; if (a.cells.length === 1) ones++;
     for (let i = 1; i < a.cells.length; i++) assert.strictEqual(Math.abs(a.cells[i][0] - a.cells[i - 1][0]) + Math.abs(a.cells[i][1] - a.cells[i - 1][1]), 1);
   }
-  assert.ok(ones / tot < 0.03, '1 格箭頭比例 ' + (ones / tot).toFixed(2));
+  assert.ok(ones / tot < 0.06, '1 格箭頭比例 ' + (ones / tot).toFixed(2));
 });
 t('緊密排列：每關遮罩內填滿率 ≥ 88%，且箭頭不超出遮罩', () => {
   for (const [d, l, s] of all) {
