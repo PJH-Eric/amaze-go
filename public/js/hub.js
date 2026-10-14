@@ -179,6 +179,7 @@ class Hub {
     if (hs.length === 0) return this.closeRoom(r, '房內沒有真人玩家了');
     if (r.hostId === goneId || !r.members.get(r.hostId) || r.members.get(r.hostId).role !== 'player') r.hostId = hs[0].id;
     if (r.phase === 'playing' && this.humans(r).length + r.ais.length < 2) this.finish(r, true);
+    else if (r.phase !== 'playing' && !r.matchDone && this.seats(r) < 2) r.matchDone = true;   // 盤間人數不足：比賽中止，才不會卡在「設定鎖定」
     this.snapshotAll(r); this.broadcastList();
   }
   closeRoom(r, reason) {
