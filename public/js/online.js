@@ -259,14 +259,15 @@ window.AmazeOnline = (function () {
     }
     if (host && !local) {
       const inv = document.createElement('div'); inv.className = 'invites';
-      const l4 = document.createElement('h3'); l4.textContent = '邀請連結（房主可撤銷重發）'; inv.appendChild(l4);
-      [['play', '邀請玩家'], ['watch', '邀請觀戰']].forEach(([role, label]) => {
+      const l4 = document.createElement('h3'); l4.textContent = '邀請連結'; inv.appendChild(l4);
+      const row = document.createElement('div'); row.className = 'irow';
+      [['play', '複製玩家邀請連結'], ['watch', '複製觀戰邀請連結']].forEach(([role, label]) => {
         const it = (room.invites || []).find((x) => x.role === role); if (!it) return;
-        const row = document.createElement('div'); row.className = 'irow';
         const url = location.origin + location.pathname + '?room=' + room.id + '&invite=' + it.token + '&as=' + role;
-        row.append(btn('複製' + label + '連結', 'btn small', () => copy(url)), btn('撤銷重發', 'btn small ghost', () => send({ t: 'invite', role, action: 'create' })));
-        inv.appendChild(row);
+        row.appendChild(btn(label, 'btn small', () => copy(url)));
       });
+      row.appendChild(btn('撤銷並重發', 'btn small ghost', () => { send({ t: 'invite', role: 'play', action: 'create' }); send({ t: 'invite', role: 'watch', action: 'create' }); toast('舊連結已失效，已產生新連結'); }));
+      inv.appendChild(row);
       v.appendChild(inv);
     }
     if (!host) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '比賽：' + DNAME(room.diff) + '・共 ' + room.totalRounds + ' 盤，累計總分決勝負。'; v.appendChild(n); }
