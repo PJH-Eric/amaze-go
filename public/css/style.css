@@ -173,3 +173,34 @@ h3{margin:10px 0 4px;font-size:14px;text-align:left}
 }
 @media (max-height:520px) and (orientation:landscape){.omain .topbar .btn{min-height:36px;padding:4px 10px}}
 .cform .btn{white-space:nowrap;flex:none}
+
+/* ===== 側欄加寬、字級放大（比之前更好讀）===== */
+.panel2{width:clamp(250px,25vw,310px)}
+.sum{padding:8px 14px 6px;gap:5px;font-size:15px}
+.shead{font-size:16px;padding-bottom:2px}
+.srow{gap:8px;padding:2px 0}
+.srow i{width:12px;height:12px}
+.sfoot{font-size:13px}
+.clog{padding:8px 14px;font-size:14px;gap:4px;line-height:1.45}
+.quick{gap:6px;padding:4px 12px}
+.quick .btn.mini{font-size:13px;min-height:34px;padding:4px 12px}
+.cform{gap:8px;padding:6px 12px 12px}
+.cform input{min-height:42px;font-size:15px;padding:6px 14px}
+.cform .btn{min-height:42px;padding:6px 16px}
+.olayout[data-panel=closed] .panel2{width:44px}
+@media (max-width:899px),(max-aspect-ratio:1/1){
+  .panel2{width:min(90vw,360px);max-height:52%}
+  .pbody{max-height:calc(52dvh - 44px)}
+  .olayout[data-panel=closed] .panel2{width:44px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  /* 手機橫向：棋盤高度受限、左右有餘裕 → 側欄改為左側欄位（不蓋住棋盤） */
+  .olayout{gap:8px}
+  .panel2{position:relative;left:auto;bottom:auto;width:min(44vw,320px);height:100%;max-height:none;flex-direction:column;border-radius:20px}
+  .pbody{max-height:none}
+  .ptoggle{border-radius:0 0 16px 0}
+  .olayout[data-panel=closed] .panel2{width:44px;height:44px;border-radius:0 0 16px 0}
+  .sum{font-size:13px;padding:4px 12px;max-height:34%}.clog{font-size:13px;padding:4px 12px}
+  .chips2{display:none}
+  .omain .title{display:block}
+}
