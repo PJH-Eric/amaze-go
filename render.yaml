@@ -1,0 +1,13 @@
+# Render Blueprint：Web Service 明確指定新加坡節點（免費方案可能休眠，首次連線會冷啟動）
+services:
+  - type: web
+    name: amaze-go-server
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm ci
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: GAME_ALLOWED_ORIGIN
+        sync: false   # 例如 https://<你的帳號>.github.io（可用逗號分隔多個）

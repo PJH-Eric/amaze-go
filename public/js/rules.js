@@ -124,6 +124,15 @@
     return { shape, dim, flip, seed };
   }
 
+  /** 線上／隨機開局：每次隨機輪廓、解析度與種子（rnd 可注入以便測試） */
+  function randomSpec(difficulty, rnd) {
+    rnd = rnd || Math.random;
+    const cfg = DIFFICULTIES[difficulty];
+    const shape = Shapes.SHAPES[Math.floor(rnd() * Shapes.SHAPES.length)];
+    const dim = cfg.minDim + Math.floor(rnd() * (cfg.maxDim - cfg.minDim + 1));
+    return { shape, dim, flip: rnd() < 0.5, seed: Math.floor(rnd() * 2147483647) };
+  }
+
   function createState(difficulty, level) {
     const spec = levelSpec(difficulty, level);
     const st = createStateFromSpec(difficulty, spec);
@@ -206,5 +215,5 @@
     }
   }
 
-  return { DIRS, DIFFICULTIES, LEVELS_PER_DIFFICULTY, mulberry32, generate, levelSpec, createState, createStateFromSpec, rayCells, blockersOf, tap, freeArrows, hint, isSolvable, remaining };
+  return { DIRS, DIFFICULTIES, LEVELS_PER_DIFFICULTY, mulberry32, generate, levelSpec, randomSpec, createState, createStateFromSpec, rayCells, blockersOf, tap, freeArrows, hint, isSolvable, remaining };
 });

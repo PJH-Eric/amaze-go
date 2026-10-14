@@ -75,4 +75,12 @@ t('提示給出自由箭頭並消耗次數', () => {
   const id = R.hint(s);
   assert.ok(R.freeArrows(s).includes(id)); assert.strictEqual(s.hints, 0); assert.strictEqual(R.hint(s), null);
 });
+t('隨機開局：任意種子的盤型都有解、貼合遮罩', () => {
+  const rnd = R.mulberry32(7);
+  for (const d of Object.keys(R.DIFFICULTIES)) for (let i = 0; i < 60; i++) {
+    const s = R.createStateFromSpec(d, R.randomSpec(d, rnd));
+    assert.ok(R.isSolvable(s));
+    for (const a of s.arrows) for (const [x, y] of a.cells) assert.strictEqual(s.mask[y][x], '1');
+  }
+});
 console.log(`\n${n} 項規則測試通過`);
