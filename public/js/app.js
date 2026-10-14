@@ -2,7 +2,7 @@
   const R = window.AmazeRules, A = window.AmazeAudio;
   const $ = (s) => document.querySelector(s);
   const board = window.AmazeBoard.create($('#board'), { onTap: (id) => onTap(id) });
-  const DEFAULTS = { bgm: true, sfx: true, reduce: false };
+  const DEFAULTS = { bgm: true, sfx: true, reduce: false, faces: false };
   let settings = Object.assign({}, DEFAULTS), progress = {}, nick = '';
   try { Object.assign(settings, JSON.parse(localStorage.getItem('amaze.settings') || '{}')); } catch (e) {}
   try { progress = JSON.parse(localStorage.getItem('amaze.progress') || '{}'); } catch (e) {}
@@ -12,6 +12,7 @@
 
   function applySettings() {
     document.body.classList.toggle('reduce', settings.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches);
+    document.body.classList.toggle('nofaces', !settings.faces);
     A.apply(settings); save();
   }
 
@@ -116,7 +117,7 @@
   document.querySelectorAll('.modal').forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) close(); }));
 
   function renderSettings() {
-    const rows = [['bgm', '背景音樂'], ['sfx', '音效'], ['reduce', '減少動態']];
+    const rows = [['bgm', '背景音樂'], ['sfx', '音效'], ['reduce', '減少動態'], ['faces', '箭頭表情']];
     const list = $('#setList'); list.innerHTML = '';
     rows.forEach(([k, label]) => {
       const row = document.createElement('div'); row.className = 'setrow';

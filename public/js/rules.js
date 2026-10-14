@@ -8,10 +8,10 @@
 
   // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', minDim: 6, maxDim: 8, minLen: 2, maxLen: 3, fill: 0.9, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', minDim: 7, maxDim: 10, minLen: 2, maxLen: 4, fill: 0.95, lives: 5, hints: 3 },
-    normal: { name: '普通', minDim: 9, maxDim: 13, minLen: 2, maxLen: 5, fill: 0.97, lives: 3, hints: 2 },
-    hard: { name: '困難', minDim: 11, maxDim: 16, minLen: 3, maxLen: 7, fill: 0.98, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', minDim: 7, maxDim: 9, minLen: 2, maxLen: 3, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', minDim: 9, maxDim: 12, minLen: 2, maxLen: 4, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', minDim: 11, maxDim: 15, minLen: 2, maxLen: 5, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', minDim: 13, maxDim: 18, minLen: 3, maxLen: 7, fill: 0.98, lives: 3, hints: 1 },
   };
   const LEVELS_PER_DIFFICULTY = 100;
 
@@ -159,7 +159,13 @@
     let m = Shapes.rasterize(spec.shape, spec.dim, spec.flip);
     // 細長／鏤空的輪廓在低解析度可能太小：自動放大解析度直到格數足夠
     for (let extra = 1; extra <= 4 && m.rows.join('').split('1').length - 1 < 12; extra++) m = Shapes.rasterize(spec.shape, spec.dim + extra, spec.flip);
-    const arrows = generate({ ...cfg, w: m.w, h: m.h, mask: m.rows, seed: spec.seed });
+    // 盡量不要有「只有箭頭尖端」的 1 格箭頭：換幾個內部種子，挑 1 格箭頭最少的排法
+    let arrows = null, bestOnes = Infinity;
+    for (let k = 0; k < 16 && bestOnes > 0; k++) {
+      const cand = generate({ ...cfg, w: m.w, h: m.h, mask: m.rows, seed: spec.seed + k * 104729 });
+      const ones = cand.filter((a) => a.cells.length === 1).length;
+      if (ones < bestOnes) { bestOnes = ones; arrows = cand; }
+    }
     return {
       difficulty, seed: spec.seed, w: m.w, h: m.h, mask: m.rows, shape: { id: spec.shape.id, name: spec.shape.name, cat: spec.shape.cat },
       arrows, lives: cfg.lives, maxLives: cfg.lives, hints: cfg.hints,
