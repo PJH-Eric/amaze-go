@@ -2,7 +2,7 @@
 const assert = require('assert');
 const WebSocket = require('ws');
 process.env.PORT = 0;
-const { Hub } = require('../lib/hub.js');
+const { Hub } = require('../public/js/hub.js');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 

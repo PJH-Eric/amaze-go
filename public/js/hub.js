@@ -1,7 +1,9 @@
 /* 線上房間中樞：房間生命週期、角色權限、邀請、搶飛計分、電腦對手、聊天。
    與傳輸層分離：Hub 只要求 client.send(obj)；server.js 把 ws 接上來。 */
-const crypto = require('crypto');
-const R = require('../public/js/rules.js');
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./rules.js'), require('crypto'));
+  else root.AmazeHub = factory(root.AmazeRules, null);
+})(typeof self !== 'undefined' ? self : this, function (R, nodeCrypto) {
 
 const GRACE_MS = 30000;            // 斷線寬限：超過就視為離開
 const COUNTDOWN_MS = 3000;
@@ -17,8 +19,13 @@ const AI_PARAMS = { // 反應延遲(ms)、失誤率、是否貪心挑長箭頭
   hard: { delay: [450, 1000], miss: 0.02, greedy: true },
 };
 
-const rid = () => crypto.randomBytes(8).toString('hex');
-const tok = () => crypto.randomBytes(9).toString('base64url');
+function bytes(n) {
+  if (nodeCrypto) return [...nodeCrypto.randomBytes(n)];
+  const a = new Uint8Array(n); (self.crypto || window.crypto).getRandomValues(a); return [...a];
+}
+const hex = (n) => bytes(n).map((b) => b.toString(16).padStart(2, '0')).join('');
+const rid = () => hex(8);
+const tok = () => hex(10);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const randName = () => pick(ADJ) + pick(ANI);
 function cleanName(n) {
@@ -87,7 +94,7 @@ class Hub {
 
   list() {
     return [...this.rooms.values()].map((r) => ({
-      id: r.id, name: r.name, diff: r.diff, max: r.max, phase: r.phase,
+      id: r.id, name: r.name, diff: r.diff, max: r.max, phase: r.phase, rounds: r.totalRounds,
       players: this.seats(r), spectators: this.spectatorCount(r),
     }));
   }
@@ -108,7 +115,8 @@ class Hub {
     const max = Math.min(4, Math.max(2, m.max | 0 || 4));
     const r = {
       id: this.newCode(), name: cleanText(m.name).slice(0, 14) || (c.name + '的房間'), hostId: c.id, diff, max,
-      phase: 'lobby', round: 0, members: new Map(), ais: [], scores: new Map(), invites: new Map(),
+      phase: 'lobby', round: 0, totalRounds: Math.min(5, Math.max(1, (m.rounds | 0) || 3)), matchDone: true, totals: new Map(),
+      members: new Map(), ais: [], scores: new Map(), invites: new Map(),
       chat: [], state: null, startAt: 0, timers: new Set(), lastResult: null,
     };
     this.rooms.set(r.id, r);
@@ -201,7 +209,9 @@ class Hub {
   /* ---------- 設定／電腦席位 ---------- */
   on_config(c, m) {
     const r = this.roomOf(c); if (!r || r.hostId !== c.id || r.phase === 'playing') return;
+    if (!r.matchDone) return this.err(c, 'IN_MATCH', '比賽進行中，打完這一輪才能改設定');
     if (R.DIFFICULTIES[m.diff]) r.diff = m.diff;
+    if (m.rounds) r.totalRounds = Math.min(5, Math.max(1, m.rounds | 0));
     if (m.max) { const mx = Math.min(4, Math.max(2, m.max | 0)); if (mx >= this.seats(r)) r.max = mx; }
     if (m.name != null) r.name = cleanText(m.name).slice(0, 14) || r.name;
     if (m.addAI && this.seats(r) < r.max) {
@@ -220,12 +230,14 @@ class Hub {
     const r = this.roomOf(c); if (!r || r.hostId !== c.id) return;
     if (r.phase === 'playing') return;
     if (this.seats(r) < 2) return this.err(c, 'NEED_MORE', '至少要 2 位玩家（可以加電腦）');
-    for (const k of r.scores.keys()) r.scores.set(k, 0);
+    if (r.matchDone) { r.round = 0; r.totals = new Map(); r.matchDone = false; }   // 新的一場比賽
+    r.round++;
+    for (const p of this.players(r)) { r.scores.set(p.id, 0); if (!r.totals.has(p.id)) r.totals.set(p.id, 0); }
     const spec = R.randomSpec(r.diff);
     const st = R.createStateFromSpec(r.diff, spec);
     st.lives = Infinity; st.maxLives = Infinity;
-    r.state = st; r.phase = 'playing'; r.round++; r.startAt = this.now() + this.countdown; r.lastResult = null;
-    this.sys(r, '第 ' + r.round + ' 局開始！');
+    r.state = st; r.phase = 'playing'; r.startAt = this.now() + this.countdown; r.lastResult = null;
+    this.sys(r, '第 ' + r.round + '／' + r.totalRounds + ' 盤開始！');
     for (const mem of r.members.values()) { const cl = this.clients.get(mem.id); cl && this.sendGame(r, cl); }
     this.snapshotAll(r); this.broadcastList();
     for (const a of r.ais) this.scheduleAI(r, a, this.countdown);
@@ -259,9 +271,16 @@ class Hub {
     if (r.phase !== 'playing') return;
     for (const t of r.timers) clearTimeout(t); r.timers.clear();
     r.phase = 'ended';
-    const rank = this.players(r).map((p) => ({ id: p.id, name: p.name, isAI: !!p.isAI, score: r.scores.get(p.id) || 0 })).sort((a, b) => b.score - a.score);
-    r.lastResult = { rank, aborted: !!aborted };
-    this.broadcast(r, { t: 'end', rank, aborted: !!aborted });
+    const ps = this.players(r);
+    for (const p of ps) r.totals.set(p.id, (r.totals.get(p.id) || 0) + (r.scores.get(p.id) || 0));
+    const final = !!aborted || r.round >= r.totalRounds;
+    r.matchDone = final;
+    const rank = ps.map((p) => ({ id: p.id, name: p.name, isAI: !!p.isAI, score: r.scores.get(p.id) || 0, total: r.totals.get(p.id) || 0 })).sort((a, b) => b.score - a.score);
+    // 累計排名：總分高者勝；同分比最後一盤；仍同分則並列同名次
+    const standings = rank.slice().sort((a, b) => b.total - a.total || b.score - a.score);
+    standings.forEach((x, i) => { x.place = i > 0 && standings[i - 1].total === x.total && standings[i - 1].score === x.score ? standings[i - 1].place : i + 1; });
+    r.lastResult = { round: r.round, totalRounds: r.totalRounds, final, aborted: !!aborted, rank, standings };
+    this.broadcast(r, { t: 'end', ...r.lastResult });
     this.snapshotAll(r); this.broadcastList();
   }
   players(r) {
@@ -303,10 +322,10 @@ class Hub {
   broadcast(r, obj) { for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(obj); } }
   snapshotAll(r) { for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(this.snapshot(r, mem)); } }
   snapshot(r, me) {
-    const players = this.players(r).map((p) => ({ ...p, score: r.scores.get(p.id) || 0, host: p.id === r.hostId, connected: p.isAI ? true : (this.clients.get(p.id) || {}).connected !== false }));
+    const players = this.players(r).map((p) => ({ ...p, score: r.scores.get(p.id) || 0, total: r.totals.get(p.id) || 0, host: p.id === r.hostId, connected: p.isAI ? true : (this.clients.get(p.id) || {}).connected !== false }));
     const spectators = [...r.members.values()].filter((m) => m.role === 'spectator').map((m) => ({ id: m.id, name: m.name }));
     const snap = {
-      t: 'room', id: r.id, name: r.name, hostId: r.hostId, diff: r.diff, max: r.max, phase: r.phase, round: r.round,
+      t: 'room', id: r.id, name: r.name, hostId: r.hostId, diff: r.diff, max: r.max, phase: r.phase, round: r.round, totalRounds: r.totalRounds, matchDone: r.matchDone,
       you: me.id, role: me.role, players, spectators, startAt: r.startAt, serverNow: this.now(),
       remaining: r.state && r.phase === 'playing' ? R.remaining(r.state) : 0, result: r.lastResult,
       chat: r.chat.slice(-30),
@@ -316,4 +335,5 @@ class Hub {
   }
 }
 
-module.exports = { Hub, AI_PARAMS };
+return { Hub, AI_PARAMS };
+});

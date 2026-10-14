@@ -7,7 +7,7 @@ window.AmazeOnline = (function () {
   const PCOLORS = ['#ff8fb1', '#7fd6c2', '#ffc26b', '#8fc7ff'];
 
   let ws = null, myId = null, room = null, gameState = null, startLocal = 0, wantOpen = false, tries = 0, retryT = null, coldT = null, countT = null;
-  let invite = null, addDiff = 'normal', unread = 0, chatInit = false, lastRooms = [], resultShown = false, joined = false;
+  let local = false, hub = null, lc = null, invite = null, addDiff = 'normal', unread = 0, chatInit = false, lastRooms = [], resultShown = false, joined = false;
   const wide = matchMedia('(min-width: 900px) and (min-aspect-ratio: 1/1)');
 
   /* ---------- 連線 ---------- */
@@ -41,12 +41,31 @@ window.AmazeOnline = (function () {
     };
     ws.onerror = () => {};
   }
-  function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+  function send(o) {
+    if (local) { if (hub && lc) hub.handle(lc, JSON.parse(JSON.stringify(o))); return; }
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(o));
+  }
   function disconnect() { wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
 
   /* ---------- 進出 ---------- */
+  // 對電腦對戰：在瀏覽器內跑同一個 Hub（計分、電腦、多盤規則與線上完全相同），不需要連線
+  function enterLocal() {
+    stopLocal(); disconnect();
+    local = true; room = null; gameState = null; joined = false; chatInit = false;
+    $('#online').dataset.local = '1';
+    const mine = hub = new window.AmazeHub.Hub();
+    lc = hub.connect((o) => { const m = JSON.parse(JSON.stringify(o)); queueMicrotask(() => { if (hub === mine) onMsg(m); }); });
+    hub.handle(lc, { t: 'hello', name: App.nick });
+    hub.handle(lc, { t: 'create', name: '對電腦對戰', diff: 'easy', max: 4, rounds: 3 });
+    hub.handle(lc, { t: 'config', addAI: 'easy' });
+  }
+  function stopLocal() {
+    if (hub) { const h = hub; hub = null; lc = null; h.stop(); }
+    local = false; delete $('#online').dataset.local;
+    clearInterval(countT); $('#oresult').hidden = true; room = null; gameState = null;
+  }
   function enter() {
-    wantOpen = true; App.show('lobby'); $('#nickInput').value = App.nick; renderRooms(); connect();
+    stopLocal(); wantOpen = true; App.show('lobby'); $('#nickInput').value = App.nick; renderRooms(); connect();
   }
   function toLobby(msg) {
     room = null; gameState = null; joined = false; chatInit = false; resultShown = false;
@@ -62,10 +81,10 @@ window.AmazeOnline = (function () {
   function onMsg(m) {
     switch (m.t) {
       case 'welcome':
-        myId = m.id; try { sessionStorage.setItem('amaze.cid', m.id); } catch (e) {}
+        myId = m.id; if (!local) try { sessionStorage.setItem('amaze.cid', m.id); } catch (e) {}
         if (!m.resumed && room) toLobby('連線已重置，原本的房間已不存在');
         break;
-      case 'rooms': lastRooms = m.rooms; renderRooms(); break;
+      case 'rooms': if (!local) { lastRooms = m.rooms; renderRooms(); } break;
       case 'room': onRoom(m); break;
       case 'game': onGame(m); break;
       case 'move': onMove(m); break;
@@ -73,8 +92,8 @@ window.AmazeOnline = (function () {
       case 'end': onEnd(m); break;
       case 'chat': addChat(m, true); break;
       case 'notice': toast(m.msg); break;
-      case 'closed': toLobby('房間已結束：' + (m.reason || '')); break;
-      case 'left': toLobby(); break;
+      case 'closed': if (local) { stopLocal(); App.show('home'); } else toLobby('房間已結束：' + (m.reason || '')); break;
+      case 'left': if (local) { stopLocal(); App.show('home'); } else toLobby(); break;
       case 'kicked': toast('你被房主請出房間'); break;
       case 'error': onError(m); break;
     }
@@ -108,17 +127,19 @@ window.AmazeOnline = (function () {
   $('#quickBtn').onclick = () => {
     const r = lastRooms.find((x) => x.phase !== 'playing' && x.players < x.max);
     if (r) joinRoom(r.id, 'player');
-    else send({ t: 'create', name: (App.nick || '快速') + '的房間', diff: 'easy', max: 4 }), syncNick();
+    else send({ t: 'create', name: (App.nick || '快速') + '的房間', diff: 'easy', max: 4, rounds: 3 }), syncNick();
   };
   $('#lobbyBack').onclick = () => { disconnect(); invite = null; App.show('home'); };
+  const ROUNDS = [1, 2, 3, 4, 5].map((n) => [n, n + ' 盤']);
   // 建房
-  let cmDiff = 'easy', cmMax = 4;
+  let cmDiff = 'easy', cmMax = 4, cmRounds = 3;
   function renderCm() {
     App.chipGroup($('#cmDiff'), App.DIFF_ITEMS, cmDiff, (v) => { cmDiff = v; renderCm(); });
     App.chipGroup($('#cmMax'), [[2, '2 人'], [3, '3 人'], [4, '4 人']], cmMax, (v) => { cmMax = v; renderCm(); });
+    App.chipGroup($('#cmRounds'), ROUNDS, cmRounds, (v) => { cmRounds = v; renderCm(); });
   }
   $('#createBtn').onclick = () => { renderCm(); App.open($('#createModal')); };
-  $('#cmGo').onclick = () => { syncNick(); send({ t: 'create', name: $('#cmName').value, diff: cmDiff, max: cmMax }); App.close(); };
+  $('#cmGo').onclick = () => { syncNick(); send({ t: 'create', name: $('#cmName').value, diff: cmDiff, max: cmMax, rounds: cmRounds }); App.close(); };
 
   // 邀請連結：先停在大廳，由使用者確認暱稱才加入
   function parseInvite() {
@@ -147,36 +168,39 @@ window.AmazeOnline = (function () {
       App.show('online'); setPanel(wide.matches ? 'open' : 'closed');
     }
     if (!chatInit) { $('#chatLog').innerHTML = ''; (m.chat || []).forEach((c) => addChat(c, false)); chatInit = true; }
-    $('#roomTitle').textContent = m.name + '・' + m.id;
+    $('#roomTitle').textContent = local ? m.name : m.name + '・' + m.id;
     renderSummary();
     const playing = m.phase === 'playing';
-    $('#boardView').hidden = !playing; $('#roomView').hidden = playing;
+    $('#boardView').hidden = !playing; $('#roomScroll').hidden = playing;
     if (!playing) renderRoomView();
     board.setEnabled(canTap());
-    if (m.phase === 'ended' && m.result && !resultShown && !gameState) { /* 重連時不重彈結算 */ }
   }
   const me = () => room && room.players.find((p) => p.id === myId);
   const isHost = () => room && room.hostId === myId;
   const canTap = () => room && room.role === 'player' && room.phase === 'playing' && Date.now() >= startLocal;
 
+  const multi = () => room && room.totalRounds > 1;
+  const cumOf = (p) => (room.phase === 'playing' ? p.total + p.score : p.total);
+  function roundText() { return room.round > 0 ? '第 ' + room.round + '／' + room.totalRounds + ' 盤' : '共 ' + room.totalRounds + ' 盤'; }
   function renderSummary() {
     const sum = $('#sum'); sum.innerHTML = '';
     const head = document.createElement('div'); head.className = 'shead';
-    head.textContent = DNAME(room.diff) + (room.phase === 'playing' ? '・剩 ' + room.remaining : room.phase === 'ended' ? '・已結束' : '・等待中');
+    head.textContent = roundText() + '・' + DNAME(room.diff) + (room.phase === 'playing' ? '・剩 ' + room.remaining : room.phase === 'ended' ? (room.matchDone ? '・比賽結束' : '・本盤結束') : '');
     sum.appendChild(head);
-    const sorted = room.players.map((p, i) => ({ ...p, i })).sort((a, b) => b.score - a.score);
+    const key = (p) => (multi() ? cumOf(p) * 1000 + p.score : p.score);
+    const sorted = room.players.map((p, i) => ({ ...p, i })).sort((a, b) => key(b) - key(a));
     sorted.forEach((p) => {
       const row = document.createElement('div'); row.className = 'srow' + (p.id === myId ? ' me' : '');
       const dot = document.createElement('i'); dot.style.background = PCOLORS[p.i % 4];
       const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.name + (p.isAI ? '（' + DNAME(p.diff) + '）' : '') + (p.connected ? '' : '（斷線）');
-      const sc = document.createElement('b'); sc.textContent = p.score;
-      row.append(dot, nm, sc); sum.appendChild(row);
+      const sc = document.createElement('b'); sc.textContent = multi() ? '總 ' + cumOf(p) : p.score;
+      row.append(dot, nm);
+      if (multi() && room.round > 0) { const rs = document.createElement('small'); rs.textContent = '本盤 ' + p.score; row.appendChild(rs); }
+      row.appendChild(sc); sum.appendChild(row);
     });
-    const sp = document.createElement('div'); sp.className = 'sfoot';
-    sp.textContent = (room.role === 'spectator' ? '你是觀戰者・' : '') + '觀戰 ' + room.spectators.length;
-    sum.appendChild(sp);
+    if (!local) { const sp = document.createElement('div'); sp.className = 'sfoot'; sp.textContent = (room.role === 'spectator' ? '你是觀戰者・' : '') + '觀戰 ' + room.spectators.length; sum.appendChild(sp); }
     const ms = $('#miniScores'); ms.innerHTML = '';
-    sorted.forEach((p) => { const c = document.createElement('span'); c.className = 'mchip' + (p.id === myId ? ' me' : ''); c.style.borderColor = PCOLORS[p.i % 4]; c.textContent = p.name.slice(0, 4) + ' ' + p.score; ms.appendChild(c); });
+    sorted.forEach((p) => { const c = document.createElement('span'); c.className = 'mchip' + (p.id === myId ? ' me' : ''); c.style.borderColor = PCOLORS[p.i % 4]; c.textContent = p.name.replace('電腦·', '').slice(0, 4) + ' ' + (multi() ? cumOf(p) : p.score); ms.appendChild(c); });
   }
 
   /* ---------- 房間內（等待）畫面 ---------- */
@@ -188,7 +212,7 @@ window.AmazeOnline = (function () {
       const s = document.createElement('div'); s.className = 'seat'; s.style.borderColor = PCOLORS[i % 4];
       const nm = document.createElement('b'); nm.textContent = p.name; s.appendChild(nm);
       const tag = document.createElement('span'); tag.className = 'tag';
-      tag.textContent = (p.host ? '房主' : p.isAI ? '電腦・' + DNAME(p.diff) : '玩家') + (p.id === myId ? '・你' : ''); s.appendChild(tag);
+      tag.textContent = (local ? (p.isAI ? '電腦・' + DNAME(p.diff) : '你') : (p.host ? '房主' : p.isAI ? '電腦・' + DNAME(p.diff) : '玩家') + (p.id === myId ? '・你' : '')) + (multi() && !room.matchDone ? '・總 ' + p.total : ''); s.appendChild(tag);
       if (host && p.isAI) {
         const order = Object.keys(R.DIFFICULTIES);
         s.append(btn('換難度', 'btn mini', () => send({ t: 'config', aiDiff: { id: p.id, diff: order[(order.indexOf(p.diff) + 1) % order.length] } })), btn('移除', 'btn mini', () => send({ t: 'config', removeAI: p.id })));
@@ -199,7 +223,9 @@ window.AmazeOnline = (function () {
     for (let i = room.players.length; i < room.max; i++) { const s = document.createElement('div'); s.className = 'seat empty'; s.textContent = '空位'; seats.appendChild(s); }
     v.appendChild(seats);
 
-    if (host) {
+    const locked = !room.matchDone;   // 比賽進行中：設定鎖定
+    if (host && locked) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '比賽進行中（' + roundText() + '已結束），打完 ' + room.totalRounds + ' 盤才能改設定。'; v.appendChild(n); }
+    if (host && !locked) {
       const cfg = document.createElement('div'); cfg.className = 'cfg';
       const l1 = document.createElement('h3'); l1.textContent = '棋盤難度（每局隨機盤型）';
       const g1 = document.createElement('div'); g1.className = 'chips'; g1.setAttribute('role', 'radiogroup');
@@ -211,8 +237,12 @@ window.AmazeOnline = (function () {
       const g3 = document.createElement('div'); g3.className = 'chips'; g3.setAttribute('role', 'radiogroup');
       App.chipGroup(g3, App.DIFF_ITEMS, addDiff, (d) => { addDiff = d; renderRoomView(); });
       const add = btn('+ 加電腦', 'btn small', () => send({ t: 'config', addAI: addDiff })); add.disabled = room.players.length >= room.max;
-      cfg.append(l1, g1, l2, g2, l3, g3, add); v.appendChild(cfg);
-
+      const l5 = document.createElement('h3'); l5.textContent = '比賽盤數（累計總分決勝負）';
+      const g5 = document.createElement('div'); g5.className = 'chips'; g5.setAttribute('role', 'radiogroup');
+      App.chipGroup(g5, ROUNDS, room.totalRounds, (n) => send({ t: 'config', rounds: n }));
+      cfg.append(l1, g1, l5, g5, l2, g2, l3, g3, add); v.appendChild(cfg);
+    }
+    if (host && !local) {
       const inv = document.createElement('div'); inv.className = 'invites';
       const l4 = document.createElement('h3'); l4.textContent = '邀請連結（房主可撤銷重發）'; inv.appendChild(l4);
       [['play', '邀請玩家'], ['watch', '邀請觀戰']].forEach(([role, label]) => {
@@ -224,16 +254,18 @@ window.AmazeOnline = (function () {
       });
       v.appendChild(inv);
     }
+    if (!host) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '比賽：' + DNAME(room.diff) + '・共 ' + room.totalRounds + ' 盤，累計總分決勝負。'; v.appendChild(n); }
     const act = document.createElement('div'); act.className = 'row';
     if (room.role === 'spectator' && room.players.length < room.max) act.appendChild(btn('入座成為玩家', 'btn', () => send({ t: 'sit' })));
-    if (host) { const st = btn(room.phase === 'ended' ? '再來一局' : '開始遊戲', 'btn primary big', () => { send({ t: 'start' }); A.unlock(); }); st.disabled = room.players.length < 2; act.appendChild(st); if (room.players.length < 2) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '至少 2 位（可加電腦）才能開始'; v.appendChild(n); } }
+    if (host) { const st = btn(locked ? '開始第 ' + (room.round + 1) + ' 盤' : room.phase === 'ended' ? '再來一場' : '開始遊戲', 'btn primary big', () => { send({ t: 'start' }); A.unlock(); }); st.disabled = room.players.length < 2; act.appendChild(st); if (room.players.length < 2) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '至少 2 位（可加電腦）才能開始'; v.appendChild(n); } }
     else { const w = document.createElement('p'); w.className = 'note'; w.textContent = room.role === 'spectator' ? '你是觀戰者，可以聊天與看對戰。' : '等房主開始…'; act.appendChild(w); }
     v.appendChild(act);
   }
   function copy(text) {
     const done = () => toast('已複製連結');
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => prompt('複製這段連結', text));
-    else prompt('複製這段連結', text);
+    const manual = () => { const i = $('#copyText'); i.value = text; App.open($('#copyModal')); i.focus(); i.select(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, manual);
+    else manual();
   }
 
   /* ---------- 對戰 ---------- */
@@ -243,7 +275,7 @@ window.AmazeOnline = (function () {
     $('#oresult').hidden = true;
     startLocal = m.startAt + (Date.now() - m.serverNow);
     board.draw(st); board.setEnabled(false);
-    $('#roomView').hidden = true; $('#boardView').hidden = false;
+    $('#roomScroll').hidden = true; $('#boardView').hidden = false;
     runCountdown();
   }
   function runCountdown() {
@@ -251,7 +283,7 @@ window.AmazeOnline = (function () {
     const el = $('#count');
     const tick = () => {
       const left = startLocal - Date.now();
-      if (left <= 0) { clearInterval(countT); el.textContent = '開始！'; el.hidden = false; board.setEnabled(canTap()); A.sfx.win && A.sfx.tick(); setTimeout(() => { el.hidden = true; }, 600); return; }
+      if (left <= 0) { clearInterval(countT); el.textContent = '開始！'; el.hidden = false; board.setEnabled(canTap()); A.sfx.tick(); setTimeout(() => { el.hidden = true; }, 600); return; }
       const n = Math.ceil(left / 1000); if (el.textContent !== String(n)) A.sfx.tick();
       el.textContent = n; el.hidden = false;
     };
@@ -271,30 +303,52 @@ window.AmazeOnline = (function () {
   }
   function onEnd(m) {
     resultShown = true; clearInterval(countT); $('#count').hidden = true;
-    if (room) { room.phase = 'ended'; room.remaining = 0; }
-    const top = m.rank[0] ? m.rank[0].score : 0;
-    const mine = m.rank.findIndex((r) => r.id === myId);
-    const won = mine >= 0 && m.rank[mine].score === top && top > 0;
-    $('#orIcon').innerHTML = won
+    if (room) { room.phase = 'ended'; room.remaining = 0; room.matchDone = m.final; room.round = m.round; }
+    const st = m.standings, mine = st.findIndex((r) => r.id === myId);
+    const isPlayer = mine >= 0;
+    const myPlace = isPlayer ? st[mine].place : 0;
+    const topTotal = st[0] ? st[0].total : 0;
+    const tied = isPlayer && st.filter((r) => r.place === myPlace).length > 1;
+    const won = m.final && isPlayer && myPlace === 1 && topTotal > 0;
+    const roundRank = m.rank.findIndex((r) => r.id === myId) + 1;
+    $('#orIcon').innerHTML = (m.final ? won : roundRank === 1)
       ? '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#ffc26b" stroke="#f0a93f" stroke-width="5"/><path d="M26 42l10 10 18-22" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       : '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#c9d6ff" stroke="#8fa6f0" stroke-width="5"/><path d="M28 54q12-12 24 0M29 32h.1M51 32h.1" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/></svg>';
-    $('#orTitle').textContent = m.aborted ? '對手都離開了' : mine < 0 ? '本局結束' : won ? '你贏了！' : '第 ' + (mine + 1) + ' 名';
+    const multiR = m.totalRounds > 1;
+    if (m.aborted) { $('#orTitle').textContent = '對手都離開了'; $('#orSub').textContent = '比賽提前結束'; }
+    else if (m.final) {
+      $('#orTitle').textContent = !isPlayer ? '比賽結束' : won ? (tied ? '並列冠軍！' : '你贏了！') : '第 ' + myPlace + ' 名' + (tied ? '（並列）' : '');
+      $('#orSub').textContent = multiR ? '共 ' + m.totalRounds + ' 盤・累計總分' : '單盤決勝';
+    } else {
+      $('#orTitle').textContent = '第 ' + m.round + '／' + m.totalRounds + ' 盤結束';
+      $('#orSub').textContent = (roundRank ? '本盤你是第 ' + roundRank + ' 名・' : '') + '累計排名';
+    }
     const ol = $('#orRank'); ol.innerHTML = '';
-    m.rank.forEach((r) => { const li = document.createElement('li'); li.textContent = r.name + (r.isAI ? '（電腦）' : '') + '　' + r.score + ' 分'; if (r.id === myId) li.className = 'me'; ol.appendChild(li); });
-    won ? A.sfx.win() : A.sfx.lose();
+    st.forEach((r) => {
+      const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.place + '. ' + r.name.replace('電腦·', '') + (r.isAI ? '（電腦）' : '');
+      const sc = document.createElement('b'); sc.textContent = multiR ? r.total + ' 分' : r.score + ' 分';
+      li.append(nm); if (multiR) { const sm = document.createElement('small'); sm.textContent = '本盤 ' + r.score; li.appendChild(sm); } li.appendChild(sc); ol.appendChild(li);
+    });
+    (m.final ? won : roundRank === 1) ? A.sfx.win() : A.sfx.lose();
     const host = isHost();
+    $('#orAgain').textContent = m.final ? (local ? '再來一場' : '再來一場（新比賽）') : '下一盤（第 ' + (m.round + 1) + ' 盤）';
+    $('#orRoom').textContent = local ? '調整設定' : '回到房間';
     $('#orAgain').disabled = !host; $('#orAgain').setAttribute('aria-disabled', String(!host));
-    $('#orNote').textContent = host ? '' : '等房主按「再來一局」';
+    $('#orNote').textContent = host ? '' : m.final ? '等房主開始新比賽' : '等房主開始下一盤';
     $('#oresult').hidden = false; (host ? $('#orAgain') : $('#orRoom')).focus();
     board.setEnabled(false);
     if (room) renderSummary();
+    if (window.AmazeScroll) AmazeScroll.refresh();
   }
-  $('#orAgain').onclick = () => { send({ t: 'start' }); };
-  $('#orRoom').onclick = () => { $('#oresult').hidden = true; $('#boardView').hidden = true; $('#roomView').hidden = false; if (room) renderRoomView(); };
+  $('#orAgain').onclick = () => { $('#oresult').hidden = true; send({ t: 'start' }); A.unlock(); };
+  $('#orRoom').onclick = () => { $('#oresult').hidden = true; $('#boardView').hidden = true; $('#roomScroll').hidden = false; if (room) renderRoomView(); };
   $('#orHome').onclick = () => leaveRoom(true);
   $('#leaveBtn').onclick = () => leaveRoom(false);
   function leaveRoom(home) {
-    $('#oresult').hidden = true; send({ t: 'leave' });
+    $('#oresult').hidden = true;
+    if (local) { stopLocal(); App.show('home'); return; }
+    send({ t: 'leave' });
     if (home) { disconnect(); room = null; App.show('home'); }
   }
 
@@ -322,5 +376,5 @@ window.AmazeOnline = (function () {
 
   parseInvite();
   window.__online = { get room() { return room; }, get ws() { return ws; } };
-  return { enter };
+  return { enter, enterLocal };
 })();

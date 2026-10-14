@@ -3,12 +3,17 @@
   const $ = (s) => document.querySelector(s);
   const board = window.AmazeBoard.create($('#board'), { onTap: (id) => onTap(id) });
   const DEFAULTS = { bgm: true, sfx: true, reduce: false, faces: false };
-  let settings = Object.assign({}, DEFAULTS), progress = {}, nick = '';
+  let settings = Object.assign({}, DEFAULTS), stars = null, nick = '';
   try { Object.assign(settings, JSON.parse(localStorage.getItem('amaze.settings') || '{}')); } catch (e) {}
-  try { progress = JSON.parse(localStorage.getItem('amaze.progress') || '{}'); } catch (e) {}
+  try { stars = JSON.parse(localStorage.getItem('amaze.stars') || 'null'); } catch (e) {}
+  if (!stars || typeof stars !== 'object') { // 由舊版「最高通關數」轉換：舊進度一律先給 1 星
+    stars = {};
+    try { const old = JSON.parse(localStorage.getItem('amaze.progress') || '{}'); Object.keys(old).forEach((d) => { stars[d] = {}; for (let l = 1; l <= (old[d] | 0); l++) stars[d][l] = 1; }); } catch (e) {}
+  }
   try { nick = localStorage.getItem('amaze.nick') || ''; } catch (e) {}
-  const save = () => { try { localStorage.setItem('amaze.settings', JSON.stringify(settings)); localStorage.setItem('amaze.progress', JSON.stringify(progress)); } catch (e) {} };
-  let diff = 'easy', level = 0, state = null, busy = false; // level 0 = 隨機盤
+  const save = () => { try { localStorage.setItem('amaze.settings', JSON.stringify(settings)); localStorage.setItem('amaze.stars', JSON.stringify(stars)); } catch (e) {} };
+  let diff = 'easy', level = 1, state = null, busy = false;
+  try { const d = localStorage.getItem('amaze.diff'); if (R.DIFFICULTIES[d]) diff = d; } catch (e) {}
 
   function applySettings() {
     document.body.classList.toggle('reduce', settings.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -17,15 +22,17 @@
   }
 
   /* ---------- 畫面切換 ---------- */
-  const SCREENS = ['home', 'game', 'lobby', 'online'];
+  const SCREENS = ['home', 'levels', 'game', 'lobby', 'online'];
   function show(id) {
     SCREENS.forEach((s) => { $('#' + s).hidden = s !== id; });
     document.body.dataset.screen = id;
-    if (id === 'home') renderHome();
+    if (id === 'levels') renderLevels();
+    if (window.AmazeScroll) AmazeScroll.refresh();
   }
 
-  /* ---------- 首頁 ---------- */
-  const unlockedUpTo = (d) => (progress[d] || 0) + 1;
+  /* ---------- 闖關：選關 ---------- */
+  const starsOf = (d, l) => (stars[d] && stars[d][l]) || 0;
+  const unlocked = (d, l) => l === 1 || starsOf(d, l - 1) > 0;
   function chipGroup(container, items, current, onPick) {
     container.innerHTML = '';
     items.forEach(([v, label]) => {
@@ -37,18 +44,25 @@
     });
   }
   const DIFF_ITEMS = Object.keys(R.DIFFICULTIES).map((d) => [d, R.DIFFICULTIES[d].name]);
-  function renderHome() {
-    chipGroup($('#diffChips'), DIFF_ITEMS, diff, (d) => { diff = d; renderHome(); });
+  const starSvg = (on) => '<svg viewBox="0 0 24 24" class="' + (on ? 'on' : 'off') + '"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" stroke-linejoin="round"/></svg>';
+  const starRow = (n) => starSvg(n >= 1) + starSvg(n >= 2) + starSvg(n >= 3);
+  function renderLevels() {
+    chipGroup($('#diffChips'), DIFF_ITEMS, diff, (d) => { diff = d; try { localStorage.setItem('amaze.diff', d); } catch (e) {} renderLevels(); $('#levelScroll').scrollTop = 0; });
     const g = $('#levelGrid'); g.innerHTML = '';
+    let cleared = 0, total = 0, firstOpen = 0;
     for (let l = 1; l <= R.LEVELS_PER_DIFFICULTY; l++) {
+      const st = starsOf(diff, l), open = unlocked(diff, l);
+      if (st) { cleared++; total += st; } else if (open && !firstOpen) firstOpen = l;
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'lv'; b.textContent = l;
-      if (l <= (progress[diff] || 0)) { b.classList.add('done'); b.innerHTML = l + '<small>★</small>'; }
-      if (l > unlockedUpTo(diff)) { b.disabled = true; b.setAttribute('aria-label', '第 ' + l + ' 關（尚未解鎖）'); } else b.setAttribute('aria-label', '第 ' + l + ' 關');
-      b.onclick = () => startLevel(l);
+      b.type = 'button'; b.className = 'lv' + (st ? ' done' : '') + (l === firstOpen ? ' next' : '');
+      b.innerHTML = '<b>' + l + '</b>' + (open ? '<span class="st" aria-hidden="true">' + starRow(st) + '</span>' : '<span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.4"/></svg></span>');
+      b.setAttribute('aria-label', '第 ' + l + ' 關' + (open ? (st ? '，' + st + ' 顆星' : '，尚未通關') : '，尚未解鎖'));
+      if (!open) { b.disabled = true; } else b.onclick = () => startLevel(l);
       g.appendChild(b);
     }
-    $('#progressText').textContent = '（已通 ' + (progress[diff] || 0) + '／' + R.LEVELS_PER_DIFFICULTY + '）';
+    $('#progressText').textContent = '已通 ' + cleared + '／' + R.LEVELS_PER_DIFFICULTY + ' 關・星星 ' + total + '／' + R.LEVELS_PER_DIFFICULTY * 3;
+    const target = g.children[(firstOpen || R.LEVELS_PER_DIFFICULTY) - 1];
+    requestAnimationFrame(() => { const sc = $('#levelScroll'); if (target && !sc.dataset.placed) { sc.scrollTop = Math.max(0, target.offsetTop - sc.clientHeight / 3); } sc.dataset.placed = ''; });
   }
 
   /* ---------- 單機遊戲 ---------- */
@@ -61,12 +75,13 @@
     else { h.innerHTML = Array.from({ length: state.maxLives }, (_, i) => heartSvg(i < state.lives)).join(''); h.setAttribute('aria-label', '愛心 ' + state.lives + '／' + state.maxLives); }
     $('#hintCount').textContent = state.hints === Infinity ? '∞' : '×' + state.hints;
     $('#hintBtn').disabled = state.hints <= 0 || state.status !== 'playing';
-    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・' + (level ? '第 ' + level + ' 關' : '隨機盤') + '・' + state.shape.name + '（剩 ' + R.remaining(state) + '）';
+    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・第 ' + level + ' 關・剩 ' + R.remaining(state);
+    $('#gameTitle').title = state.shape.name;
   }
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l) {
     level = l; busy = false;
-    state = l ? R.createState(diff, l) : R.createStateFromSpec(diff, R.randomSpec(diff));
+    state = R.createState(diff, l);
     $('#result').hidden = true; show('game'); board.draw(state); board.setEnabled(true); renderHud(); A.unlock();
   }
   function onTap(id) {
@@ -76,24 +91,30 @@
     if (res.ok) { board.fly(id); A.sfx.pop(); say('飛出去了，還剩 ' + R.remaining(state) + ' 支'); }
     else if (res.reason === 'blocked') { board.shake(id, res.blockers); A.sfx.bonk(); say('被擋住了' + (state.maxLives === Infinity ? '' : '，剩 ' + state.lives + ' 顆愛心')); }
     renderHud();
-    if (state.status !== 'playing') { busy = true; setTimeout(showResult, state.status === 'won' ? 650 : 450); }
+    if (state.status !== 'playing') { busy = true; const cur = state; setTimeout(() => { if (state === cur && !$('#game').hidden) showResult(); }, state.status === 'won' ? 650 : 450); }
   }
   function medal(win) {
     return win
       ? '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#ffc26b" stroke="#f0a93f" stroke-width="5"/><path d="M26 42l10 10 18-22" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       : '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#c9d6ff" stroke="#8fa6f0" stroke-width="5"/><path d="M28 54q12-12 24 0M29 32h.1M51 32h.1" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/></svg>';
   }
+  const rate = (m) => (m === 0 ? 3 : m <= 2 ? 2 : 1);
   function showResult() {
     const win = state.status === 'won';
-    if (win && level) { progress[diff] = Math.max(progress[diff] || 0, level); save(); }
+    const got = win ? rate(state.mistakes) : 0;
+    const prev = starsOf(diff, level);
+    if (win) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
     win ? A.sfx.win() : A.sfx.lose();
     $('#resultIcon').innerHTML = medal(win);
     $('#resultTitle').textContent = win ? '過關囉！' : '愛心用完了';
-    $('#resultText').textContent = win ? '共點 ' + state.moves + ' 次，失誤 ' + state.mistakes + ' 次' + (state.mistakes === 0 ? '，完美！' : '。') : '再試一次，先看清楚誰擋住誰～';
-    const next = win && level && level < R.LEVELS_PER_DIFFICULTY;
-    $('#againBtn').textContent = next ? '下一關' : '再來一局';
+    $('#resultStars').innerHTML = win ? starRow(got) : '';
+    $('#resultStars').hidden = !win;
+    $('#resultText').textContent = win
+      ? '點了 ' + state.moves + ' 次，失誤 ' + state.mistakes + ' 次' + (got === 3 ? '，完美三星！' : got > prev && prev ? '，星星升級！' : '。')
+      : '再試一次，先看清楚誰擋住誰～';
+    const next = win && level < R.LEVELS_PER_DIFFICULTY;
+    $('#againBtn').textContent = next ? '下一關' : win ? '再玩一次' : '再試一次';
     $('#againBtn').onclick = () => startLevel(next ? level + 1 : level);
-    $('#roomNote').hidden = true;
     $('#result').hidden = false; $('#againBtn').focus();
   }
 
@@ -131,13 +152,14 @@
   $('#gearBtn').onclick = () => { renderSettings(); open($('#settings')); };
   $('#resetSet').onclick = () => { settings = Object.assign({}, DEFAULTS); applySettings(); renderSettings(); };
   $('#howBtn').onclick = () => open($('#how'));
-  $('#randomBtn').onclick = () => startLevel(0);
-  $('#levelsBtn').onclick = () => { const p = $('#levelPanel'); p.hidden = !p.hidden; $('#levelsBtn').setAttribute('aria-expanded', String(!p.hidden)); };
+  $('#storyBtn').onclick = () => show('levels');
+  $('#vsAiBtn').onclick = () => window.AmazeOnline.enterLocal();
   $('#onlineBtn').onclick = () => window.AmazeOnline.enter();
-  $('#backBtn').onclick = () => show('home');
+  $('#levelsBack').onclick = () => show('home');
+  $('#backBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
   $('#homeBtn').onclick = () => { $('#result').hidden = true; show('home'); };
   $('#restartBtn').onclick = () => startLevel(level);
-  $('#roomBtn').onclick = () => { $('#roomNote').hidden = false; };
+  $('#roomBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
   $('#hintBtn').onclick = () => {
     const id = R.hint(state); if (id === null) return;
     board.hint(id); say('提示：箭頭 ' + (id + 1) + ' 現在可以飛'); renderHud();
@@ -148,6 +170,10 @@
     $, show, open, close, say, A, DIFF_ITEMS, chipGroup,
     get nick() { return nick; }, set nick(v) { nick = v; try { localStorage.setItem('amaze.nick', v); } catch (e) {} },
   };
+  // 自繪捲軸：所有可能超出裝置的區塊
+  ['#home', '#levelScroll', '#lobbyScroll', '#roomScroll', '#chatLog', '#sum'].forEach((q) => AmazeScroll.attach($(q)));
+  document.querySelectorAll('.card').forEach((c) => AmazeScroll.attach(c));
+  document.querySelectorAll('.boardWrap').forEach((w) => AmazeScroll.attach(w));
   applySettings(); show('home');
-  window.__amaze = { get state() { return state; }, startLevel, start(d, l) { diff = d; startLevel(l); } };
+  window.__amaze = { get state() { return state; }, startLevel, start(d, l) { diff = d; startLevel(l); }, stars };
 })();

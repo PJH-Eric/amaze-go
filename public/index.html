@@ -15,87 +15,27 @@
 
 <main id="app">
   <section id="home" class="screen" aria-labelledby="homeTitle">
-    <div class="logo" aria-hidden="true">
-      <svg viewBox="0 0 160 90"><g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"><path d="M20 70V40h50" stroke="#ff8fb1"/><path d="M60 70h60V25" stroke="#7fd6c2"/><path d="M95 45h45" stroke="#ffc26b"/></g><g><path d="M70 28l16 12-16 12z" fill="#ff8fb1"/><path d="M108 28l12-16 12 16z" fill="#7fd6c2"/><path d="M138 33l16 12-16 12z" fill="#ffc26b"/></g></svg>
+    <div class="homeIn">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 160 90"><g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"><path d="M20 70V40h46" stroke="#d62839"/><path d="M60 70h60V28" stroke="#2a6fdb"/><path d="M98 48h40" stroke="#ef8a2e"/></g><g><path d="M66 26l16 14-16 14z" fill="#d62839"/><path d="M108 28l12-16 12 16z" fill="#2a6fdb"/><path d="M136 34l16 14-16 14z" fill="#ef8a2e"/></g></svg>
+      </div>
+      <h1 id="homeTitle">箭頭解密</h1>
+      <p class="sub">Amaze GO・點一點，讓箭頭飛出去</p>
+      <div class="menu">
+        <button class="btn primary big" id="storyBtn" type="button"><b>闖關模式</b><small>單人・四種難度各 100 關・星級</small></button>
+        <button class="btn big" id="vsAiBtn" type="button"><b>對戰模式・對電腦</b><small>1～3 位電腦・可選 1～5 盤・累計分數</small></button>
+        <button class="btn big" id="onlineBtn" type="button"><b>對戰模式・線上</b><small>跟朋友搶同一個棋盤・觀戰・邀請連結</small></button>
+        <button class="btn ghost" id="howBtn" type="button">怎麼玩</button>
+      </div>
     </div>
-    <h1 id="homeTitle">箭頭解密</h1>
-    <p class="sub">Amaze GO・點一點，讓箭頭飛出去</p>
-    <div class="panel">
-      <h2>選擇難度</h2>
+  </section>
+
+  <section id="levels" class="screen" hidden aria-label="闖關模式">
+    <header class="topbar"><button class="btn small" id="levelsBack" type="button">← 返回</button><div class="title">闖關模式</div><span></span></header>
+    <div class="panel levelsPanel">
       <div class="chips" id="diffChips" role="radiogroup" aria-label="難度"></div>
-      <div class="row big">
-        <button class="btn primary" id="randomBtn" type="button">隨機開局</button>
-        <button class="btn" id="onlineBtn" type="button">線上對戰</button>
-      </div>
-      <div class="row">
-        <button class="btn small ghost" id="levelsBtn" type="button" aria-expanded="false" aria-controls="levelPanel">指定關卡 <span id="progressText"></span></button>
-        <button class="btn small ghost" id="howBtn" type="button">怎麼玩</button>
-      </div>
-      <div id="levelPanel" hidden><div class="levels" id="levelGrid"></div></div>
-    </div>
-  </section>
-
-  <section id="lobby" class="screen" hidden aria-label="線上大廳">
-    <header class="topbar"><button class="btn small" id="lobbyBack" type="button">← 返回</button><div class="title">線上對戰</div><span></span></header>
-    <div class="lobbyBody">
-      <div class="status" id="netStatus" role="status"></div>
-      <div class="panel inviteBox" id="inviteBox" hidden>
-        <h2 id="inviteTitle">受邀加入房間</h2>
-        <p class="note" id="inviteRole"></p>
-        <label class="field"><span>你的暱稱</span><input id="inviteNick" maxlength="12" autocomplete="off"></label>
-        <button class="btn primary" id="inviteGo" type="button">確認加入</button>
-        <p class="err" id="inviteErr" role="alert"></p>
-      </div>
-      <div class="panel">
-        <label class="field"><span>暱稱</span><input id="nickInput" maxlength="12" placeholder="留空會取個可愛名字" autocomplete="off"></label>
-        <div class="row">
-          <button class="btn primary" id="quickBtn" type="button">快速加入</button>
-          <button class="btn" id="createBtn" type="button">建立房間</button>
-        </div>
-      </div>
-      <h2 class="lh">公開房間</h2>
-      <ul class="rooms" id="roomList" aria-live="polite"></ul>
-    </div>
-  </section>
-
-  <section id="online" class="screen" hidden aria-label="線上房間">
-    <div class="olayout" id="olayout" data-panel="open">
-      <aside class="panel2" id="panel2" aria-label="資訊與聊天">
-        <button class="ptoggle" id="panelToggle" type="button" aria-expanded="true" aria-controls="panelBody">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14v9H10l-4 3v-3H5z" fill="#fff"/></svg>
-          <span class="badge" id="unread" hidden>0</span>
-        </button>
-        <div class="pbody" id="panelBody">
-          <div class="sum" id="sum" aria-live="polite"></div>
-          <div class="chat">
-            <div class="clog" id="chatLog" role="log" aria-live="polite"></div>
-            <div class="quick" id="quick"></div>
-            <form class="cform" id="chatForm"><input id="chatInput" maxlength="80" placeholder="說點什麼…" autocomplete="off"><button class="btn small primary" type="submit">送出</button></form>
-          </div>
-        </div>
-      </aside>
-      <div class="omain">
-        <header class="topbar"><button class="btn small" id="leaveBtn" type="button">← 離開</button><div class="title" id="roomTitle"></div><div class="chips2" id="miniScores" aria-hidden="true"></div></header>
-        <div id="roomView" class="roomView"></div>
-        <div id="boardView" class="boardView" hidden>
-          <div class="boardWrap"><svg id="oboard" role="group" aria-label="棋盤"></svg></div>
-          <div class="count" id="count" hidden aria-hidden="true"></div>
-          <div class="live" id="olive" aria-live="polite"></div>
-        </div>
-        <div class="result" id="oresult" hidden role="dialog" aria-modal="true" aria-labelledby="orTitle">
-          <div class="card">
-            <div class="medal" id="orIcon" aria-hidden="true"></div>
-            <h2 id="orTitle"></h2>
-            <ol class="rank" id="orRank"></ol>
-            <div class="stack">
-              <button class="btn primary" id="orAgain" type="button">再來一局</button>
-              <button class="btn" id="orRoom" type="button">回到房間</button>
-              <button class="btn ghost" id="orHome" type="button">回到首頁</button>
-            </div>
-            <p class="note" id="orNote"></p>
-          </div>
-        </div>
-      </div>
+      <p class="note" id="progressText"></p>
+      <div class="levelScroll" id="levelScroll"><div class="levels" id="levelGrid"></div></div>
     </div>
   </section>
 
@@ -115,13 +55,80 @@
       <div class="card">
         <div class="medal" id="resultIcon" aria-hidden="true"></div>
         <h2 id="resultTitle"></h2>
+        <div class="stars" id="resultStars" aria-hidden="true"></div>
         <p id="resultText"></p>
         <div class="stack">
           <button class="btn primary" id="againBtn" type="button">再來一局</button>
-          <button class="btn" id="roomBtn" type="button" aria-disabled="true">回到房間</button>
+          <button class="btn" id="roomBtn" type="button">回到選關</button>
           <button class="btn ghost" id="homeBtn" type="button">回到首頁</button>
         </div>
-        <p class="note" id="roomNote" hidden>單機模式沒有房間，這顆在線上版才會啟用。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="lobby" class="screen" hidden aria-label="線上大廳">
+    <header class="topbar"><button class="btn small" id="lobbyBack" type="button">← 返回</button><div class="title">線上對戰</div><span></span></header>
+    <div class="lobbyScroll" id="lobbyScroll">
+      <div class="lobbyBody">
+        <div class="status" id="netStatus" role="status"></div>
+        <div class="panel inviteBox" id="inviteBox" hidden>
+          <h2 id="inviteTitle">受邀加入房間</h2>
+          <p class="note" id="inviteRole"></p>
+          <label class="field"><span>你的暱稱</span><input id="inviteNick" maxlength="12" autocomplete="off"></label>
+          <button class="btn primary" id="inviteGo" type="button">確認加入</button>
+          <p class="err" id="inviteErr" role="alert"></p>
+        </div>
+        <div class="panel">
+          <label class="field"><span>暱稱</span><input id="nickInput" maxlength="12" placeholder="留空會取個可愛名字" autocomplete="off"></label>
+          <div class="row">
+            <button class="btn primary" id="quickBtn" type="button">快速加入</button>
+            <button class="btn" id="createBtn" type="button">建立房間</button>
+          </div>
+        </div>
+        <h2 class="lh">公開房間</h2>
+        <ul class="rooms" id="roomList" aria-live="polite"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="online" class="screen" hidden aria-label="房間">
+    <div class="olayout" id="olayout" data-panel="open">
+      <aside class="panel2" id="panel2" aria-label="資訊與聊天">
+        <button class="ptoggle" id="panelToggle" type="button" aria-expanded="true" aria-controls="panelBody">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14v9H10l-4 3v-3H5z" fill="#fff"/></svg>
+          <span class="badge" id="unread" hidden>0</span>
+        </button>
+        <div class="pbody" id="panelBody">
+          <div class="sum" id="sum" aria-live="polite"></div>
+          <div class="chat" id="chatBox">
+            <div class="clog" id="chatLog" role="log" aria-live="polite"></div>
+            <div class="quick" id="quick"></div>
+            <form class="cform" id="chatForm"><input id="chatInput" maxlength="80" placeholder="說點什麼…" autocomplete="off"><button class="btn small primary" type="submit">送出</button></form>
+          </div>
+        </div>
+      </aside>
+      <div class="omain">
+        <header class="topbar"><button class="btn small" id="leaveBtn" type="button">← 離開</button><div class="title" id="roomTitle"></div><div class="chips2" id="miniScores" aria-hidden="true"></div></header>
+        <div class="roomScroll" id="roomScroll"><div id="roomView" class="roomView"></div></div>
+        <div id="boardView" class="boardView" hidden>
+          <div class="boardWrap"><svg id="oboard" role="group" aria-label="棋盤"></svg></div>
+          <div class="count" id="count" hidden aria-hidden="true"></div>
+          <div class="live" id="olive" aria-live="polite"></div>
+        </div>
+        <div class="result" id="oresult" hidden role="dialog" aria-modal="true" aria-labelledby="orTitle">
+          <div class="card">
+            <div class="medal" id="orIcon" aria-hidden="true"></div>
+            <h2 id="orTitle"></h2>
+            <p class="note" id="orSub"></p>
+            <ol class="rank" id="orRank"></ol>
+            <div class="stack">
+              <button class="btn primary" id="orAgain" type="button">再來一局</button>
+              <button class="btn" id="orRoom" type="button">回到房間</button>
+              <button class="btn ghost" id="orHome" type="button">回到首頁</button>
+            </div>
+            <p class="note" id="orNote"></p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -133,7 +140,17 @@
     <label class="field"><span>房名</span><input id="cmName" maxlength="14" placeholder="例如：週末對戰" autocomplete="off"></label>
     <h3>棋盤難度</h3><div class="chips" id="cmDiff" role="radiogroup" aria-label="難度"></div>
     <h3>席位上限</h3><div class="chips" id="cmMax" role="radiogroup" aria-label="席位上限"></div>
+    <h3>比賽盤數</h3><div class="chips" id="cmRounds" role="radiogroup" aria-label="比賽盤數"></div>
     <div class="row"><button class="btn ghost" data-close type="button">取消</button><button class="btn primary" id="cmGo" type="button">建立</button></div>
+  </div>
+</div>
+
+<div class="modal" id="copyModal" hidden role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+  <div class="card">
+    <h2 id="cpTitle">複製邀請連結</h2>
+    <p class="note">瀏覽器不允許自動複製，請長按下方連結全選後複製。</p>
+    <label class="field"><span>連結</span><input id="copyText" readonly></label>
+    <div class="row"><button class="btn primary" data-close type="button">完成</button></div>
   </div>
 </div>
 
@@ -141,11 +158,11 @@
   <div class="card">
     <h2 id="howTitle">怎麼玩</h2>
     <ol class="steps">
-      <li>點一支箭頭，它會朝<b>箭頭尖端的方向</b>直直飛出去。</li>
-      <li>前面有別的箭頭擋住就飛不出去，會撞回來並扣一顆愛心。</li>
-      <li>先飛出沒被擋的，再慢慢清出路，把所有箭頭都送出棋盤就過關！</li>
-      <li>卡住時按「提示」，會閃出一支現在可以飛的箭頭。</li>
-      <li><b>線上對戰：</b>大家搶同一個棋盤，誰先點中誰得分（箭頭越長分越高），點到被擋住的扣 1 分，分數最高者獲勝。</li>
+      <li>點一支箭頭，它會朝<b>尖端的方向</b>直直飛出去。</li>
+      <li>前面有別的箭頭擋住就飛不出去，會撞回來；闖關模式扣一顆愛心。</li>
+      <li>先飛出沒被擋的，慢慢清出路，把所有箭頭都送出棋盤就過關！失誤越少星星越多。</li>
+      <li>卡住時按「提示」，會閃出一支現在可以飛的箭頭。棋盤太密可用右上角的＋－放大。</li>
+      <li><b>對戰模式：</b>大家搶同一個棋盤，誰先點中誰得分（箭頭越長分越高），點到被擋住的扣 1 分。可選 1～5 盤，累計總分最高者獲勝。</li>
     </ol>
     <button class="btn primary" data-close type="button">知道了</button>
   </div>
@@ -165,8 +182,10 @@
 <script src="js/config.js"></script>
 <script src="js/shapes.js"></script>
 <script src="js/rules.js"></script>
+<script src="js/hub.js"></script>
 <script src="js/board.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/scroll.js"></script>
 <script src="js/app.js"></script>
 <script src="js/online.js"></script>
 </body>

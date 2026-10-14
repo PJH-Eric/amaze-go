@@ -1,7 +1,7 @@
 // 箭頭解密：靜態檔 + /health + WebSocket 對戰（同一個 port，適合 Render Web Service）
 const http = require('http'), fs = require('fs'), path = require('path');
 const { WebSocketServer } = require('ws');
-const { Hub } = require('./lib/hub.js');
+const { Hub } = require('./public/js/hub.js');
 
 const PORT = process.env.PORT || 3080;
 const ALLOWED = (process.env.GAME_ALLOWED_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
