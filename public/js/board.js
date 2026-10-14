@@ -27,10 +27,14 @@ window.AmazeBoard = (function () {
     const pts = a.cells.map(([x, y]) => [x * C + C / 2, y * C + C / 2]);
     const [dx, dy] = R.DIRS[a.dir], head = pts[0], px = -dy, py = dx;
     // 線身一路延伸過頭部格的中心再往箭頭方向伸出一小段 → 轉折處一定看得到「轉彎後指向哪裡」
-    const stem = [head[0] + dx * 9, head[1] + dy * 9];
-    const poly = rounded([stem].concat(pts), 17);
+    const stem = [head[0] + dx * 12, head[1] + dy * 12];
+    // 尾端也往外多延伸半格（沿最後一段方向），讓前後相接的箭頭之間沒有斷開的縫
+    const L = pts.length, tailDir = L > 1 ? [pts[L - 1][0] - pts[L - 2][0], pts[L - 1][1] - pts[L - 2][1]] : [-dx * C, -dy * C];
+    const tl = Math.hypot(tailDir[0], tailDir[1]) || 1;
+    const tail = [pts[L - 1][0] + tailDir[0] / tl * 17, pts[L - 1][1] + tailDir[1] / tl * 17];
+    const poly = rounded([stem].concat(pts, [tail]), 20);
     const at = (f, w) => [head[0] + dx * f + px * w, head[1] + dy * f + py * w].join(',');
-    const tri = [at(29, 0), at(8, 16), at(8, -16)].join(' ');
+    const tri = [at(30, 0), at(10, 21), at(10, -21)].join(' ');
     return { poly, tri, head, dx, dy, px, py, fc: [head[0] + dx * 12, head[1] + dy * 12] };
   }
   // 可愛臉：白眼睛＋黑瞳孔＋微笑＋粉紅腮紅（臉保持正向，方向由三角形尖端表示）
@@ -58,10 +62,10 @@ window.AmazeBoard = (function () {
         const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] }, svg);
         g.style.setProperty('--sx', s.dx * 10 + 'px'); g.style.setProperty('--sy', s.dy * 10 + 'px');
         el('path', { class: 'halo', d: s.poly }, g);
-        el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 13, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round' }, g);
+        el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 25, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
         face(g, s.fc[0], s.fc[1]);
-        el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 36, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 44, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         const tap = () => enabled && opts.onTap(a.id);
         g.addEventListener('click', tap);
         g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
