@@ -1,0 +1,72 @@
+:root{--bg1:#fff3f7;--bg2:#e8f7f3;--ink:#5a3d4a;--pink:#ff8fb1;--mint:#7fd6c2;--sun:#ffc26b;--sky:#8fc7ff;--lav:#c3a6ff;--card:#fffafc;--line:#f3cfdc;--shadow:0 6px 0 rgba(200,120,150,.28)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));overflow:hidden;touch-action:manipulation;user-select:none}
+#app{height:100dvh;padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.screen{height:100%;display:flex;flex-direction:column;align-items:center;max-width:960px;margin:0 auto}
+.screen[hidden]{display:none}
+#home{overflow-y:auto;gap:8px;padding-top:44px;padding-bottom:16px;justify-content:flex-start}
+.logo svg{width:min(52vw,220px);height:auto;filter:drop-shadow(0 4px 0 rgba(200,120,150,.25))}
+h1{margin:0;font-size:clamp(34px,7vw,52px);letter-spacing:.08em;color:#e0558a;text-shadow:0 3px 0 #fff}
+h2{margin:10px 0 6px;font-size:17px}
+.sub{margin:0 0 6px;opacity:.75}
+.panel{width:100%;max-width:560px;background:var(--card);border:3px solid var(--line);border-radius:26px;padding:8px 18px 18px;box-shadow:var(--shadow)}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+/* 自訂按鈕 */
+.btn{font:inherit;font-weight:700;color:var(--ink);background:#fff;border:3px solid var(--line);border-radius:999px;padding:12px 22px;min-height:48px;min-width:48px;cursor:pointer;box-shadow:0 4px 0 rgba(200,120,150,.3);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(200,120,150,.3)}
+.btn.primary{background:var(--pink);border-color:#f06a95;color:#fff}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.small{padding:8px 14px;min-height:44px}
+.btn[disabled],.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed}
+.btn:focus-visible,.chip:focus-visible,.lv:focus-visible,.gear:focus-visible,.sw:focus-visible{outline:4px solid var(--sky);outline-offset:3px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-weight:700;color:var(--ink);background:#fff;border:3px solid var(--line);border-radius:16px;padding:10px 14px;min-height:46px;cursor:pointer;flex:1 1 auto}
+.chip[aria-checked=true]{background:var(--mint);border-color:#4fbfa6;color:#fff}
+.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lv{font:inherit;font-weight:800;font-size:18px;aspect-ratio:1;border-radius:18px;border:3px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;position:relative;min-height:48px}
+.lv.done{background:var(--sun);border-color:#f0a93f;color:#fff}
+.lv[disabled]{opacity:.4;cursor:not-allowed}
+.lv small{position:absolute;right:4px;bottom:1px;font-size:11px}
+.gear{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:20;width:48px;height:48px;border-radius:50%;border:3px solid #f06a95;background:var(--pink);box-shadow:0 4px 0 rgba(200,120,150,.35);cursor:pointer;padding:9px}
+.gear svg{width:100%;height:100%}
+/* 遊戲畫面 */
+#game{gap:6px}
+.topbar{width:100%;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding-right:60px}
+.title{font-weight:800;text-align:center;font-size:18px}
+.hearts{display:flex;gap:3px;font-size:0}
+.hearts svg{width:26px;height:26px}
+.boardWrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#board{width:100%;height:100%;max-width:min(100%,86dvh);touch-action:manipulation}
+.cellDot{fill:#f6dbe6}
+.arrow{cursor:pointer;transition:transform .5s cubic-bezier(.5,-.2,.8,.6),opacity .5s}
+.arrow .halo{fill:none;stroke:var(--sky);stroke-width:34;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.arrow:focus-visible{outline:none}
+.arrow:focus-visible .halo{opacity:.9}
+.arrow.fly{pointer-events:none;opacity:0;transform:translate(var(--fx),var(--fy))}
+.arrow.shake{animation:shake .35s}
+.arrow.hint .halo{animation:pulse .6s 3;opacity:.9}
+.arrow.blocker .halo{stroke:#ff6b6b;opacity:.9}
+@keyframes shake{0%,100%{transform:translate(0,0)}30%{transform:translate(var(--sx),var(--sy))}60%{transform:translate(calc(var(--sx)*-.5),calc(var(--sy)*-.5))}}
+@keyframes pulse{50%{opacity:.2}}
+.reduce .arrow,.reduce .arrow.shake,.reduce .arrow.hint .halo{transition:none;animation:none}
+.bottombar{display:flex;gap:12px;justify-content:center;padding:6px 0}
+.live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* 結算 overlay 與彈窗 */
+.result,.modal{position:fixed;inset:0;z-index:30;background:rgba(90,61,74,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.result[hidden],.modal[hidden]{display:none}
+.card{background:var(--card);border:4px solid var(--line);border-radius:28px;padding:20px 22px;width:min(100%,420px);max-height:92dvh;overflow:auto;text-align:center;box-shadow:var(--shadow)}
+.card h2{font-size:24px;margin:6px 0}
+.medal{font-size:0;display:flex;justify-content:center}.medal svg{width:84px;height:84px}
+.note{font-size:13px;opacity:.75}
+.steps{text-align:left;line-height:1.7;padding-left:22px}
+.set{display:flex;flex-direction:column;gap:10px;text-align:left}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700}
+.sw{width:64px;height:36px;border-radius:999px;border:3px solid var(--line);background:#eadde3;position:relative;cursor:pointer;padding:0;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 0 rgba(0,0,0,.15);transition:left .15s}
+.sw[aria-checked=true]{background:var(--mint);border-color:#4fbfa6}
+.sw[aria-checked=true]::after{left:31px}
+.reduce *{transition:none!important}
+@media (min-width:900px) and (orientation:landscape){#home{padding-top:60px}.levels{grid-template-columns:repeat(10,1fr)}.panel{max-width:760px}}
+@media (max-height:520px) and (orientation:landscape){#home{padding-top:12px}.logo{display:none}h1{font-size:28px}.topbar{padding-right:56px}}

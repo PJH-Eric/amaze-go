@@ -1,0 +1,12 @@
+{
+  "name": "amaze-go",
+  "version": "0.1.0",
+  "description": "箭頭解密（Amaze GO）— 點箭頭飛出棋盤的可愛益智遊戲",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/verify.js",
+    "verify": "node tests/verify.js"
+  },
+  "engines": { "node": ">=18" }
+}
