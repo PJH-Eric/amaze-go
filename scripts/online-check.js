@@ -6,7 +6,7 @@ const { Hub } = require('../lib/hub.js');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 
-const hub = new Hub({ countdownMs: 50, graceMs: 300, aiScale: 0.02 });
+const hub = new Hub({ countdownMs: 50, graceMs: 300, aiScale: 0.15 });
 const server = http.createServer();
 const wss = new WebSocketServer({ server, path: '/ws' });
 wss.on('connection', (ws) => {
@@ -87,11 +87,17 @@ function client(port) {
     const moves = A.log.filter((m) => m.t === 'move' && m.id === id && m.ok);
     assert.strictEqual(moves.length, 1);
   });
-  await t('被擋住的箭頭：扣分不低於 0', async () => {
-    const R = require('../public/js/rules.js'); const st = A.game.state;
-    const free = new Set(R.freeArrows({ ...st, arrows: st.arrows.map((a) => ({ ...a })) }));
-    const blocked = st.arrows.find((a) => !free.has(a.id) && !A.log.some((m) => m.t === 'move' && m.ok && m.id === a.id));
-    if (blocked) { B.send({ t: 'tap', id: blocked.id }); const mv = await B.until(() => B.log.find((m) => m.t === 'move' && !m.ok && m.id === blocked.id)); assert.ok(mv.scores[B.id] >= 0); }
+  await t('被擋住的箭頭：扣分不低於 0（電腦會同時在清盤，故重試取一支當下仍被擋的）', async () => {
+    const R = require('../public/js/rules.js'); let hit = null;
+    for (let k = 0; k < 8 && !hit; k++) {
+      const st = A.game.state; const removed = new Set(A.log.filter((m) => m.t === 'move' && m.ok).map((m) => m.id));
+      const arrows = st.arrows.map((a) => ({ ...a, removed: removed.has(a.id) }));
+      const cur = { ...st, arrows }; const free = new Set(R.freeArrows(cur));
+      const blocked = arrows.find((a) => !a.removed && !free.has(a.id)); if (!blocked) break;
+      const before = B.log.length; B.send({ t: 'tap', id: blocked.id }); await sleep(120);
+      hit = B.log.slice(before).find((m) => m.t === 'move' && !m.ok && m.id === blocked.id);
+    }
+    if (hit) assert.ok(hit.scores[B.id] >= 0);
   });
   await t('電腦對手會自己玩到結束，產生排名', async () => {
     const end = await S.until(() => S.last('end'), 15000);

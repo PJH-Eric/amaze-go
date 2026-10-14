@@ -8,10 +8,10 @@
 
   // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', minDim: 8, maxDim: 10, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', minDim: 11, maxDim: 14, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
-    normal: { name: '普通', minDim: 14, maxDim: 19, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
-    hard: { name: '困難', minDim: 17, maxDim: 24, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', minDim: 10, maxDim: 12, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', minDim: 14, maxDim: 18, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', minDim: 18, maxDim: 24, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', minDim: 22, maxDim: 30, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
   };
   const LEVELS_PER_DIFFICULTY = 100;
 

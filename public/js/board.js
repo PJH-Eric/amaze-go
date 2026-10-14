@@ -31,11 +31,11 @@ window.AmazeBoard = (function () {
     // 尾端也往外多延伸半格（沿最後一段方向），讓前後相接的箭頭之間沒有斷開的縫
     const L = pts.length, tailDir = L > 1 ? [pts[L - 1][0] - pts[L - 2][0], pts[L - 1][1] - pts[L - 2][1]] : [-dx * C, -dy * C];
     const tl = Math.hypot(tailDir[0], tailDir[1]) || 1;
-    const tail = [pts[L - 1][0] + tailDir[0] / tl * 17, pts[L - 1][1] + tailDir[1] / tl * 17];
+    const tail = [pts[L - 1][0] + tailDir[0] / tl * 9, pts[L - 1][1] + tailDir[1] / tl * 9];
     const poly = rounded([stem].concat(pts, [tail]), 20);
     const at = (f, w) => [head[0] + dx * f + px * w, head[1] + dy * f + py * w].join(',');
-    const tri = [at(30, 0), at(10, 21), at(10, -21)].join(' ');
-    return { poly, tri, head, dx, dy, px, py, fc: [head[0] + dx * 12, head[1] + dy * 12] };
+    const tri = [at(31, 0), at(12, 20), at(12, -20)].join(' ');
+    return { poly, tri, head, dx, dy, px, py, fc: [head[0] + dx * 18, head[1] + dy * 18] };
   }
   // 可愛臉：白眼睛＋黑瞳孔＋微笑＋粉紅腮紅（臉保持正向，方向由三角形尖端表示）
   function face(g, cx, cy) {
@@ -56,13 +56,16 @@ window.AmazeBoard = (function () {
           ? { x: x * C - 2, y: y * C - 2, width: C + 4, height: C + 4, rx: 6, fill: '#f3cfdc', stroke: '#f3cfdc', 'stroke-width': 12, 'stroke-linejoin': 'round' }
           : { x: x * C - 1, y: y * C - 1, width: C + 2, height: C + 2, fill: '#fffafc' }, svg);
       }
-      st.arrows.forEach((a) => {
-        if (a.removed) return;
+      const bodies = svg;
+      const live = st.arrows.filter((a) => !a.removed);
+      // 線身外加白色細邊，相鄰線條與轉角清楚分開
+      live.forEach((a) => {
         const color = COLORS[a.id % COLORS.length], s = shape(a);
-        const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] }, svg);
+        const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] }, bodies);
         g.style.setProperty('--sx', s.dx * 10 + 'px'); g.style.setProperty('--sy', s.dy * 10 + 'px');
         el('path', { class: 'halo', d: s.poly }, g);
-        el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 25, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('path', { d: s.poly, fill: 'none', stroke: '#fffafc', 'stroke-width': 24, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 21, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
         face(g, s.fc[0], s.fc[1]);
         el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 50, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
