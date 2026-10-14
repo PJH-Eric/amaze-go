@@ -410,3 +410,7 @@ h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:te
 .seat.empty .seg button[data-v=toddler]{border-color:#bfeadf}.seat.empty .seg button[data-v=easy]{border-color:#c6e1fb}.seat.empty .seg button[data-v=normal]{border-color:#ffe2b0}.seat.empty .seg button[data-v=hard]{border-color:#ffc6d8}
 .seat .btn.mini{margin-top:4px;min-height:36px;padding:2px 12px}
 .roomView{padding-right:14px}
+/* 首頁：回遊戲大廳 */
+#home{position:relative}
+.lobbyLink{position:fixed;top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:27;display:inline-flex;align-items:center;text-decoration:none;background:rgba(255,255,255,.85);box-shadow:var(--sh-s);border-width:2px}
+#home[hidden] .lobbyLink,.screen[hidden] .lobbyLink{display:none}

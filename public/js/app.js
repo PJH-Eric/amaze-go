@@ -184,11 +184,13 @@
   document.querySelectorAll('.card').forEach((c) => AmazeScroll.attach(c));
   document.querySelectorAll('.boardWrap').forEach((w) => AmazeScroll.attach(w));
   // 瀏覽器／手機「上一頁」：依畫面回到上一層，不會直接離開遊戲
+  const lobbyUrl = (window.AMAZE_CONFIG || {}).lobbyUrl || 'https://pjh-eric.github.io/game-lobby/';
+  $('#lobbyLink').href = lobbyUrl;
   const BACK = { levels: '#levelsBack', game: '#backBtn', lobby: '#lobbyBack', online: '#leaveBtn' };
   try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
   window.addEventListener('popstate', () => {
     const cur = document.body.dataset.screen;
-    if (cur === 'home' && !openModal) return;          // 首頁再按一次才真的離開
+    if (cur === 'home' && !openModal) { location.href = lobbyUrl; return; }   // 首頁按上一頁 → 回遊戲大廳
     try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
     if (openModal) { close(); return; }
     const b = BACK[cur]; b && $(b).click();
