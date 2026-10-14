@@ -210,6 +210,7 @@ window.AmazeOnline = (function () {
     const seats = document.createElement('div'); seats.className = 'seats';
     room.players.forEach((p, i) => {
       const s = document.createElement('div'); s.className = 'seat'; s.style.borderColor = PCOLORS[i % 4];
+      const av = document.createElement('i'); av.className = 'av'; av.style.background = PCOLORS[i % 4]; av.textContent = p.isAI ? '電' : (p.name || '?').slice(0, 1); s.appendChild(av);
       const nm = document.createElement('b'); nm.textContent = p.name; s.appendChild(nm);
       const tag = document.createElement('span'); tag.className = 'tag';
       tag.textContent = (local ? (p.isAI ? '電腦・' + DNAME(p.diff) : '你') : (p.host ? '房主' : p.isAI ? '電腦・' + DNAME(p.diff) : '玩家') + (p.id === myId ? '・你' : '')) + (multi() && !room.matchDone ? '・總 ' + p.total : ''); s.appendChild(tag);
@@ -274,7 +275,7 @@ window.AmazeOnline = (function () {
     gameState = st; resultShown = false;
     $('#oresult').hidden = true;
     startLocal = m.startAt + (Date.now() - m.serverNow);
-    board.draw(st); board.setEnabled(false);
+    board.draw(st); board.setEnabled(false); $('#oprogFill').style.width = '0%';
     $('#roomScroll').hidden = true; $('#boardView').hidden = false;
     runCountdown();
   }
@@ -293,6 +294,7 @@ window.AmazeOnline = (function () {
     if (!gameState) return;
     room && room.players.forEach((p) => { if (m.scores[p.id] != null) p.score = m.scores[p.id]; });
     if (room) room.remaining = m.remaining;
+    if (gameState) $('#oprogFill').style.width = (100 * (1 - m.remaining / gameState.arrows.length)) + '%';
     if (m.ok) {
       gameState.arrows[m.id].removed = true; board.fly(m.id);
       m.by === myId ? A.sfx.pop() : A.sfx.tick();
@@ -325,12 +327,12 @@ window.AmazeOnline = (function () {
     }
     const ol = $('#orRank'); ol.innerHTML = '';
     st.forEach((r) => {
-      const li = document.createElement('li'); if (r.id === myId) li.className = 'me';
+      const li = document.createElement('li'); li.className = 'p' + Math.min(r.place, 4) + (r.id === myId ? ' me' : '');
       const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.place + '. ' + r.name.replace('電腦·', '') + (r.isAI ? '（電腦）' : '');
       const sc = document.createElement('b'); sc.textContent = multiR ? r.total + ' 分' : r.score + ' 分';
       li.append(nm); if (multiR) { const sm = document.createElement('small'); sm.textContent = '本盤 ' + r.score; li.appendChild(sm); } li.appendChild(sc); ol.appendChild(li);
     });
-    (m.final ? won : roundRank === 1) ? A.sfx.win() : A.sfx.lose();
+    (m.final ? won : roundRank === 1) ? (A.sfx.win(), App.confetti($('#oresult'))) : A.sfx.lose();
     const host = isHost();
     $('#orAgain').textContent = m.final ? (local ? '再來一場' : '再來一場（新比賽）') : '下一盤（第 ' + (m.round + 1) + ' 盤）';
     $('#orRoom').textContent = local ? '調整設定' : '回到房間';

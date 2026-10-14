@@ -22,9 +22,9 @@
       <h1 id="homeTitle">箭頭解密</h1>
       <p class="sub">Amaze GO・點一點，讓箭頭飛出去</p>
       <div class="menu">
-        <button class="btn primary big" id="storyBtn" type="button"><b>闖關模式</b><small>單人・四種難度各 100 關・星級</small></button>
-        <button class="btn big" id="vsAiBtn" type="button"><b>對戰模式・對電腦</b><small>1～3 位電腦・可選 1～5 盤・累計分數</small></button>
-        <button class="btn big" id="onlineBtn" type="button"><b>對戰模式・線上</b><small>跟朋友搶同一個棋盤・觀戰・邀請連結</small></button>
+        <button class="btn primary big" id="storyBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" fill="#fff" stroke="#fff" stroke-linejoin="round"/></svg></span><span class="tx"><b>闖關模式</b><small>單人・四種難度各 100 關・星級</small></span></button>
+        <button class="btn big" id="vsAiBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="4" fill="#7fd6c2"/><circle cx="9.5" cy="13" r="1.6" fill="#fff"/><circle cx="14.5" cy="13" r="1.6" fill="#fff"/><path d="M12 8V4.5" stroke="#7fd6c2" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="3.8" r="1.5" fill="#7fd6c2"/></svg></span><span class="tx"><b>對戰模式・對電腦</b><small>1～3 位電腦・可選 1～5 盤・累計分數</small></span></button>
+        <button class="btn big" id="onlineBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#8fc7ff" stroke-width="2.4"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="#8fc7ff" stroke-width="2"/></svg></span><span class="tx"><b>對戰模式・線上</b><small>跟朋友搶同一個棋盤・觀戰・邀請連結</small></span></button>
         <button class="btn ghost" id="howBtn" type="button">怎麼玩</button>
       </div>
     </div>
@@ -45,6 +45,7 @@
       <div class="title" id="gameTitle"></div>
       <div class="hearts" id="hearts" role="img"></div>
     </header>
+    <div class="prog" aria-hidden="true"><i id="progFill"></i></div>
     <div class="boardWrap"><svg id="board" role="group" aria-label="棋盤"></svg></div>
     <div class="live" id="live" aria-live="polite"></div>
     <footer class="bottombar">
@@ -111,6 +112,7 @@
         <header class="topbar"><button class="btn small" id="leaveBtn" type="button">← 離開</button><div class="title" id="roomTitle"></div><div class="chips2" id="miniScores" aria-hidden="true"></div></header>
         <div class="roomScroll" id="roomScroll"><div id="roomView" class="roomView"></div></div>
         <div id="boardView" class="boardView" hidden>
+          <div class="prog" aria-hidden="true"><i id="oprogFill"></i></div>
           <div class="boardWrap"><svg id="oboard" role="group" aria-label="棋盤"></svg></div>
           <div class="count" id="count" hidden aria-hidden="true"></div>
           <div class="live" id="olive" aria-live="polite"></div>

@@ -37,7 +37,7 @@
     container.innerHTML = '';
     items.forEach(([v, label]) => {
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.setAttribute('role', 'radio');
+      b.type = 'button'; b.className = 'chip'; b.dataset.v = v; b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', String(v === current)); b.textContent = label;
       b.onclick = () => { A.sfx.tick(); onPick(v); };
       container.appendChild(b);
@@ -73,10 +73,11 @@
     const h = $('#hearts');
     if (state.maxLives === Infinity) { h.innerHTML = heartSvg(true) + '<span style="font-size:16px;font-weight:800;line-height:26px">∞</span>'; h.setAttribute('aria-label', '愛心無限'); }
     else { h.innerHTML = Array.from({ length: state.maxLives }, (_, i) => heartSvg(i < state.lives)).join(''); h.setAttribute('aria-label', '愛心 ' + state.lives + '／' + state.maxLives); }
+    $('#progFill').style.width = (100 * (1 - R.remaining(state) / state.arrows.length)) + '%';
     $('#hintCount').textContent = state.hints === Infinity ? '∞' : '×' + state.hints;
     $('#hintBtn').disabled = state.hints <= 0 || state.status !== 'playing';
-    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・第 ' + level + ' 關・剩 ' + R.remaining(state);
-    $('#gameTitle').title = state.shape.name;
+    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・第 ' + level + ' 關';
+    $('#gameTitle').title = state.shape.name + '・剩 ' + R.remaining(state) + ' 支';
   }
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l) {
@@ -89,7 +90,7 @@
     A.unlock();
     const res = R.tap(state, id);
     if (res.ok) { board.fly(id); A.sfx.pop(); say('飛出去了，還剩 ' + R.remaining(state) + ' 支'); }
-    else if (res.reason === 'blocked') { board.shake(id, res.blockers); A.sfx.bonk(); say('被擋住了' + (state.maxLives === Infinity ? '' : '，剩 ' + state.lives + ' 顆愛心')); }
+    else if (res.reason === 'blocked') { board.shake(id, res.blockers); const hh = $('#hearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit'); A.sfx.bonk(); say('被擋住了' + (state.maxLives === Infinity ? '' : '，剩 ' + state.lives + ' 顆愛心')); }
     renderHud();
     if (state.status !== 'playing') { busy = true; const cur = state; setTimeout(() => { if (state === cur && !$('#game').hidden) showResult(); }, state.status === 'won' ? 650 : 450); }
   }
@@ -97,6 +98,14 @@
     return win
       ? '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#ffc26b" stroke="#f0a93f" stroke-width="5"/><path d="M26 42l10 10 18-22" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       : '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#c9d6ff" stroke="#8fa6f0" stroke-width="5"/><path d="M28 54q12-12 24 0M29 32h.1M51 32h.1" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/></svg>';
+  }
+  function confetti(host) {
+    if (document.body.classList.contains('reduce')) return;
+    const old = host.querySelector('.confetti'); old && old.remove();
+    const c = document.createElement('div'); c.className = 'confetti'; c.setAttribute('aria-hidden', 'true');
+    const cols = ['#ff8fb1', '#7fd6c2', '#ffc26b', '#8fc7ff', '#c3a6ff'];
+    for (let i = 0; i < 28; i++) { const p = document.createElement('i'); p.style.cssText = 'left:' + Math.random() * 100 + '%;background:' + cols[i % 5] + ';animation-delay:' + Math.random() * 0.5 + 's;animation-duration:' + (1.6 + Math.random() * 1.2) + 's;--r:' + Math.round(Math.random() * 720 - 360) + 'deg;--dx:' + Math.round(Math.random() * 80 - 40) + 'px'; c.appendChild(p); }
+    host.appendChild(c); setTimeout(() => c.remove(), 3200);
   }
   const rate = (m) => (m === 0 ? 3 : m <= 2 ? 2 : 1);
   function showResult() {
@@ -115,7 +124,7 @@
     const next = win && level < R.LEVELS_PER_DIFFICULTY;
     $('#againBtn').textContent = next ? '下一關' : win ? '再玩一次' : '再試一次';
     $('#againBtn').onclick = () => startLevel(next ? level + 1 : level);
-    $('#result').hidden = false; $('#againBtn').focus();
+    $('#result').hidden = false; $('#againBtn').focus(); if (win) confetti($('#result'));
   }
 
   /* ---------- 彈窗（焦點鎖定、Esc、返回原焦點） ---------- */
@@ -167,7 +176,7 @@
   document.addEventListener('pointerdown', () => A.unlock(), { once: true });
 
   window.AmazeApp = {
-    $, show, open, close, say, A, DIFF_ITEMS, chipGroup,
+    $, show, open, close, say, A, DIFF_ITEMS, chipGroup, confetti,
     get nick() { return nick; }, set nick(v) { nick = v; try { localStorage.setItem('amaze.nick', v); } catch (e) {} },
   };
   // 自繪捲軸：所有可能超出裝置的區塊
