@@ -391,3 +391,22 @@ h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:te
 @media (max-height:520px) and (orientation:landscape){.topbar{min-height:48px;padding-top:2px;padding-bottom:2px}.menu .btn.big .ic{width:40px;height:40px}.logo svg{animation:none}}
 @media (max-width:360px){.menu .btn.big .tx b{font-size:17px}.menu .btn.big .ic{width:40px;height:40px}}
 @media (max-width:480px){.hearts svg{width:22px;height:22px}.hearts{gap:1px}.topbar{gap:4px}#game .topbar .title{font-size:15px}}
+
+/* 座位：空位直接加電腦、電腦座位直接換難度 */
+.seats{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.seat.empty{flex-direction:column;align-items:stretch;gap:4px;opacity:1;text-align:center;border-style:dashed;padding:10px;color:var(--ink2)}
+.seat.empty .tag{padding:0;margin:0;text-align:center}
+.seat.empty > b{flex:none;text-align:center;color:var(--ink)}
+.seat:not(.empty) .seg,.seat .btn.mini{margin-left:0}
+.seat .seg{width:100%;margin-top:4px}
+.seg{display:flex;gap:4px}
+.seg button{flex:1;font:inherit;font-weight:800;font-size:14px;min-height:40px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;padding:0;transition:transform .1s}
+.seg button:active{transform:translateY(2px)}
+.seg button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.seg button[aria-checked=true][data-v=toddler]{background:var(--c-toddler);border-color:#4fbfa6;color:#fff}
+.seg button[aria-checked=true][data-v=easy]{background:var(--c-easy);border-color:#5aa5ea;color:#fff}
+.seg button[aria-checked=true][data-v=normal]{background:var(--c-normal);border-color:#eda23a;color:#fff}
+.seg button[aria-checked=true][data-v=hard]{background:var(--c-hard);border-color:#f06a95;color:#fff}
+.seat.empty .seg button[data-v=toddler]{border-color:#bfeadf}.seat.empty .seg button[data-v=easy]{border-color:#c6e1fb}.seat.empty .seg button[data-v=normal]{border-color:#ffe2b0}.seat.empty .seg button[data-v=hard]{border-color:#ffc6d8}
+.seat .btn.mini{margin-top:4px;min-height:36px;padding:2px 12px}
+.roomView{padding-right:14px}

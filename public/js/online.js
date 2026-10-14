@@ -7,7 +7,7 @@ window.AmazeOnline = (function () {
   const PCOLORS = ['#ff8fb1', '#7fd6c2', '#ffc26b', '#8fc7ff'];
 
   let ws = null, myId = null, room = null, gameState = null, startLocal = 0, wantOpen = false, tries = 0, retryT = null, coldT = null, countT = null;
-  let local = false, hub = null, lc = null, invite = null, addDiff = 'normal', unread = 0, chatInit = false, lastRooms = [], resultShown = false, joined = false;
+  let local = false, hub = null, lc = null, invite = null, unread = 0, chatInit = false, lastRooms = [], resultShown = false, joined = false;
   const wide = matchMedia('(min-width: 900px) and (min-aspect-ratio: 1/1)');
 
   /* ---------- 連線 ---------- */
@@ -111,7 +111,7 @@ window.AmazeOnline = (function () {
       const li = document.createElement('li'); li.className = 'roomRow';
       const info = document.createElement('div'); info.className = 'rinfo';
       const nm = document.createElement('b'); nm.textContent = r.name;
-      const sub = document.createElement('span'); sub.textContent = DNAME(r.diff) + '・' + r.players + '/' + r.max + ' 人' + (r.spectators ? '・觀戰 ' + r.spectators : '') + '・' + (r.phase === 'playing' ? '對戰中' : '等待中');
+      const sub = document.createElement('span'); sub.textContent = DNAME(r.diff) + '・' + r.players + '/' + r.max + ' 位' + (r.ais ? '（含電腦 ' + r.ais + '）' : '') + (r.spectators ? '・觀戰 ' + r.spectators : '') + '・' + (r.phase === 'playing' ? '對戰中' : '等待中');
       info.append(nm, sub);
       const full = r.players >= r.max || r.phase === 'playing';
       const join = btn(full ? '滿座' : '加入', 'btn small' + (full ? '' : ' primary'), () => joinRoom(r.id, 'player'));
@@ -127,7 +127,7 @@ window.AmazeOnline = (function () {
   $('#quickBtn').onclick = () => {
     const r = lastRooms.find((x) => x.phase !== 'playing' && x.players < x.max);
     if (r) joinRoom(r.id, 'player');
-    else send({ t: 'create', name: (App.nick || '快速') + '的房間', diff: 'easy', max: 4, rounds: 3 }), syncNick();
+    else { syncNick(); send({ t: 'create', name: (App.nick || '快速') + '的房間', diff: 'easy', max: 4, rounds: 3 }); send({ t: 'config', addAI: 'easy' }); }
   };
   $('#lobbyBack').onclick = () => { disconnect(); invite = null; App.show('home'); };
   const ROUNDS = [1, 2, 3, 4, 5].map((n) => [n, n + ' 盤']);
@@ -208,40 +208,54 @@ window.AmazeOnline = (function () {
     const v = $('#roomView'); v.innerHTML = '';
     const host = isHost();
     const seats = document.createElement('div'); seats.className = 'seats';
+    const locked = !room.matchDone;   // 比賽進行中：設定鎖定
+    const SHORT = { toddler: '幼', easy: '簡', normal: '普', hard: '難' };
+    const seg = (current, label, onPick) => {
+      const d = document.createElement('div'); d.className = 'seg'; d.setAttribute('role', 'radiogroup'); d.setAttribute('aria-label', label);
+      Object.keys(R.DIFFICULTIES).forEach((k) => {
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.v = k; b.textContent = SHORT[k];
+        b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(k === current)); b.setAttribute('aria-label', DNAME(k));
+        b.onclick = () => { A.sfx.tick(); onPick(k); }; d.appendChild(b);
+      });
+      return d;
+    };
     room.players.forEach((p, i) => {
-      const s = document.createElement('div'); s.className = 'seat'; s.style.borderColor = PCOLORS[i % 4];
+      const s = document.createElement('div'); s.className = 'seat' + (p.isAI ? ' ai' : ''); s.style.borderColor = PCOLORS[i % 4];
       const av = document.createElement('i'); av.className = 'av'; av.style.background = PCOLORS[i % 4]; av.textContent = p.isAI ? '電' : (p.name || '?').slice(0, 1); s.appendChild(av);
       const nm = document.createElement('b'); nm.textContent = p.name; s.appendChild(nm);
       const tag = document.createElement('span'); tag.className = 'tag';
       tag.textContent = (local ? (p.isAI ? '電腦・' + DNAME(p.diff) : '你') : (p.host ? '房主' : p.isAI ? '電腦・' + DNAME(p.diff) : '玩家') + (p.id === myId ? '・你' : '')) + (multi() && !room.matchDone ? '・總 ' + p.total : ''); s.appendChild(tag);
-      if (host && p.isAI) {
-        const order = Object.keys(R.DIFFICULTIES);
-        s.append(btn('換難度', 'btn mini', () => send({ t: 'config', aiDiff: { id: p.id, diff: order[(order.indexOf(p.diff) + 1) % order.length] } })), btn('移除', 'btn mini', () => send({ t: 'config', removeAI: p.id })));
+      if (host && p.isAI && !locked) {
+        s.appendChild(seg(p.diff, '電腦難度', (d) => send({ t: 'config', aiDiff: { id: p.id, diff: d } })));
+        s.appendChild(btn('移除電腦', 'btn mini', () => send({ t: 'config', removeAI: p.id })));
       }
       if (host && !p.isAI && p.id !== myId) s.appendChild(btn('請出', 'btn mini', () => send({ t: 'kick', id: p.id })));
       seats.appendChild(s);
     });
-    for (let i = room.players.length; i < room.max; i++) { const s = document.createElement('div'); s.className = 'seat empty'; s.textContent = '空位'; seats.appendChild(s); }
+    for (let i = room.players.length; i < room.max; i++) {
+      const s = document.createElement('div'); s.className = 'seat empty';
+      if (host && !locked) {
+        const t = document.createElement('b'); t.textContent = '＋ 加入電腦'; s.appendChild(t);
+        const sub = document.createElement('span'); sub.className = 'tag'; sub.textContent = '點難度直接入座'; s.appendChild(sub);
+        s.appendChild(seg(null, '加入電腦，選難度', (d) => send({ t: 'config', addAI: d })));
+      } else s.textContent = '空位';
+      seats.appendChild(s);
+    }
     v.appendChild(seats);
 
-    const locked = !room.matchDone;   // 比賽進行中：設定鎖定
     if (host && locked) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '比賽進行中（' + roundText() + '已結束），打完 ' + room.totalRounds + ' 盤才能改設定。'; v.appendChild(n); }
     if (host && !locked) {
       const cfg = document.createElement('div'); cfg.className = 'cfg';
       const l1 = document.createElement('h3'); l1.textContent = '棋盤難度（每局隨機盤型）';
       const g1 = document.createElement('div'); g1.className = 'chips'; g1.setAttribute('role', 'radiogroup');
       App.chipGroup(g1, App.DIFF_ITEMS, room.diff, (d) => send({ t: 'config', diff: d }));
-      const l2 = document.createElement('h3'); l2.textContent = '席位上限';
+      const l2 = document.createElement('h3'); l2.textContent = '座位數（空位可直接加電腦）';
       const g2 = document.createElement('div'); g2.className = 'chips'; g2.setAttribute('role', 'radiogroup');
       App.chipGroup(g2, [[2, '2'], [3, '3'], [4, '4']], room.max, (n) => send({ t: 'config', max: n }));
-      const l3 = document.createElement('h3'); l3.textContent = '加入電腦對手';
-      const g3 = document.createElement('div'); g3.className = 'chips'; g3.setAttribute('role', 'radiogroup');
-      App.chipGroup(g3, App.DIFF_ITEMS, addDiff, (d) => { addDiff = d; renderRoomView(); });
-      const add = btn('+ 加電腦', 'btn small', () => send({ t: 'config', addAI: addDiff })); add.disabled = room.players.length >= room.max;
       const l5 = document.createElement('h3'); l5.textContent = '比賽盤數（累計總分決勝負）';
       const g5 = document.createElement('div'); g5.className = 'chips'; g5.setAttribute('role', 'radiogroup');
       App.chipGroup(g5, ROUNDS, room.totalRounds, (n) => send({ t: 'config', rounds: n }));
-      cfg.append(l1, g1, l5, g5, l2, g2, l3, g3, add); v.appendChild(cfg);
+      cfg.append(l1, g1, l5, g5, l2, g2); v.appendChild(cfg);
     }
     if (host && !local) {
       const inv = document.createElement('div'); inv.className = 'invites';

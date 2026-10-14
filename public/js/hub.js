@@ -95,7 +95,7 @@ class Hub {
   list() {
     return [...this.rooms.values()].map((r) => ({
       id: r.id, name: r.name, diff: r.diff, max: r.max, phase: r.phase, rounds: r.totalRounds,
-      players: this.seats(r), spectators: this.spectatorCount(r),
+      players: this.seats(r), ais: r.ais.length, spectators: this.spectatorCount(r),
     }));
   }
   broadcastList() { for (const c of this.clients.values()) if (c.connected && !c.roomId) c.send({ t: 'rooms', rooms: this.list() }); }
@@ -219,10 +219,10 @@ class Hub {
       const d = R.DIFFICULTIES[m.addAI] ? m.addAI : 'normal';
       const used = new Set(r.ais.map((a) => a.name));
       const name = AI_NAMES.find((n) => !used.has(n)) || '電腦·' + (r.ais.length + 1);
-      const a = { id: 'ai-' + rid().slice(0, 6), name, diff: d }; r.ais.push(a); r.scores.set(a.id, 0);
+      const a = { id: 'ai-' + rid().slice(0, 6), name, diff: d }; r.ais.push(a); r.scores.set(a.id, 0); this.sys(r, '房主加入了 ' + a.name + '（' + R.DIFFICULTIES[d].name + '）');
     }
     if (m.aiDiff && R.DIFFICULTIES[m.aiDiff.diff]) { const a = r.ais.find((x) => x.id === m.aiDiff.id); if (a) a.diff = m.aiDiff.diff; }
-    if (m.removeAI) { r.ais = r.ais.filter((a) => a.id !== m.removeAI); r.scores.delete(m.removeAI); }
+    if (m.removeAI) { const gone = r.ais.find((a) => a.id === m.removeAI); r.ais = r.ais.filter((a) => a.id !== m.removeAI); r.scores.delete(m.removeAI); if (gone) this.sys(r, '房主移除了 ' + gone.name); }
     this.snapshotAll(r); this.broadcastList();
   }
 
