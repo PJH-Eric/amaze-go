@@ -8,10 +8,10 @@
 
   // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', minDim: 7, maxDim: 9, minLen: 2, maxLen: 3, fill: 0.9, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', minDim: 9, maxDim: 12, minLen: 2, maxLen: 4, fill: 0.95, lives: 5, hints: 3 },
-    normal: { name: '普通', minDim: 11, maxDim: 15, minLen: 2, maxLen: 5, fill: 0.97, lives: 3, hints: 2 },
-    hard: { name: '困難', minDim: 13, maxDim: 18, minLen: 3, maxLen: 7, fill: 0.98, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', minDim: 7, maxDim: 9, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', minDim: 9, maxDim: 12, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', minDim: 11, maxDim: 15, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', minDim: 13, maxDim: 18, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
   };
   const LEVELS_PER_DIFFICULTY = 100;
 
@@ -121,6 +121,30 @@
     }
     // 最後手段：1 格短箭頭
     for (const [x, y] of emptyCells()) { if (!occupied.has(key(x, y))) tryPlace([[x, y]]); }
+    // 合併：把尾端相鄰的兩支箭頭接成一條長蛇（像路標圖示那樣一圈圈包覆），仍逐次驗證有解
+    const adj = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) === 1;
+    let merged = true;
+    for (let guard = 0; merged && guard < 12; guard++) {
+      merged = false;
+      const order = arrows.map((_, i) => i).sort(() => rnd() - 0.5);
+      for (const i of order) {
+        const A = arrows[i]; if (!A || A.cells.length >= maxLen) continue;
+        const tail = A.cells[A.cells.length - 1];
+        for (let j = 0; j < arrows.length; j++) {
+          const B = arrows[j]; if (!B || j === i || A.cells.length + B.cells.length > maxLen) continue;
+          let add = null;
+          if (adj(tail, B.cells[0])) add = B.cells.slice();
+          else if (adj(tail, B.cells[B.cells.length - 1])) add = B.cells.slice().reverse();
+          if (!add) continue;
+          const oldA = A.cells; A.cells = oldA.concat(add); arrows[j] = null;
+          const next = arrows.filter(Boolean);
+          if (solvableList(next, w, h)) { arrows.length = 0; next.forEach((x) => arrows.push(x)); merged = true; break; }
+          A.cells = oldA; arrows[j] = B;
+        }
+        if (merged) break;
+      }
+    }
+    arrows.forEach((a, i) => { a.id = i; });
     return arrows;
   }
 

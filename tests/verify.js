@@ -45,7 +45,7 @@ t('緊密排列：每關遮罩內填滿率 ≥ 88%，且箭頭不超出遮罩', 
     for (const row of s.mask) cells += row.split('1').length - 1;
     for (const a of s.arrows) for (const [x, y] of a.cells) { assert.strictEqual(s.mask[y][x], '1', `${d}-${l} 超出遮罩`); used++; }
     assert.ok(used / cells >= 0.88, `${d}-${l} 填滿率 ${(used / cells).toFixed(2)}`);
-    assert.ok(cells >= 10 && s.arrows.length >= 3, `${d}-${l} 盤面太小`);
+    assert.ok(cells >= 10 && s.arrows.length >= 2, `${d}-${l} 盤面太小`);
   }
 });
 t('每種難度用到至少 30 種輪廓，且大量非方形', () => {
