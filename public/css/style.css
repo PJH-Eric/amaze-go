@@ -40,7 +40,7 @@ h2 small{font-weight:600;opacity:.7;font-size:13px}
 .hearts{display:flex;gap:3px;font-size:0}
 .hearts svg{width:26px;height:26px}
 .boardWrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
-#board,#oboard{width:100%;height:100%;max-width:100%;touch-action:manipulation;display:block}
+#board,#oboard{width:100%;height:100%;max-width:100%;touch-action:manipulation;display:block;flex:none;margin:auto}
 .boardWrap{min-width:0}
 .cellDot{fill:#f6dbe6}
 .arrow{cursor:pointer;transition:transform .5s cubic-bezier(.5,-.2,.8,.6),opacity .5s}
@@ -206,3 +206,15 @@ h3{margin:10px 0 4px;font-size:14px;text-align:left}
   .omain .title{display:block}
 }
 .title{font-size:15px;line-height:1.25}.topbar .title{overflow:hidden;text-overflow:ellipsis}
+
+/* 棋盤放大縮小：放大後可捲動／拖曳 */
+.boardWrap{overflow:auto;-webkit-overflow-scrolling:touch}
+#game,.boardView{position:relative}
+.zbar{position:absolute;right:6px;top:52px;z-index:12;display:flex;flex-direction:column;gap:6px}
+.boardView .zbar{top:6px}
+.zbtn{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:22px;font-weight:800;line-height:1;cursor:pointer;box-shadow:0 3px 0 rgba(200,120,150,.3);padding:0}
+.zbtn:active{transform:translateY(2px);box-shadow:none}
+.zbtn[disabled]{opacity:.4;cursor:not-allowed}
+.zbtn:focus-visible{outline:4px solid var(--sky);outline-offset:3px}
+.boardWrap{align-items:flex-start;justify-content:flex-start}
+#board,#oboard{max-width:none}

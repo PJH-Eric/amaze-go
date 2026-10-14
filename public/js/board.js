@@ -45,10 +45,25 @@ window.AmazeBoard = (function () {
     [-1, 1].forEach((k) => el('circle', { cx: cx + k * 10.5, cy: cy + 3.2, r: 3.2, fill: '#ff9db8', opacity: 0.9 }, f));
   }
   function create(svg, opts) {
-    let state = null, enabled = true;
+    let state = null, enabled = true, zoom = 1;
+    const wrap = svg.parentElement, host = wrap.parentElement;
+    function applyZoom(z) {
+      const cx = (wrap.scrollLeft + wrap.clientWidth / 2) / (wrap.scrollWidth || 1), cy = (wrap.scrollTop + wrap.clientHeight / 2) / (wrap.scrollHeight || 1);
+      zoom = Math.max(1, Math.min(3.5, z));
+      svg.style.width = zoom * 100 + '%'; svg.style.height = zoom * 100 + '%';
+      wrap.classList.toggle('zoomed', zoom > 1);
+      zin.disabled = zoom >= 3.5; zout.disabled = zoom <= 1;
+      // 以目前畫面中心為準縮放（不會跳到角落）
+      wrap.scrollLeft = cx * wrap.scrollWidth - wrap.clientWidth / 2; wrap.scrollTop = cy * wrap.scrollHeight - wrap.clientHeight / 2;
+    }
+    const zbtn = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'zbtn'; b.textContent = txt; b.setAttribute('aria-label', label); b.onclick = fn; return b; };
+    const zin = zbtn('＋', '放大棋盤', () => applyZoom(zoom + 0.75));
+    const zout = zbtn('－', '縮小棋盤', () => applyZoom(zoom - 0.75));
+    const zbar = document.createElement('div'); zbar.className = 'zbar'; zbar.append(zin, zout); host.appendChild(zbar);
+    applyZoom(1);
     const node = (id) => svg.querySelector('.arrow[data-id="' + id + '"]');
     function draw(st) {
-      state = st; svg.innerHTML = '';
+      state = st; svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
       svg.setAttribute('viewBox', `-14 -14 ${st.w * C + 28} ${st.h * C + 28}`);
       for (const pass of [0, 1]) for (let y = 0; y < st.h; y++) for (let x = 0; x < st.w; x++) {
         if (st.mask[y][x] !== '1') continue;
