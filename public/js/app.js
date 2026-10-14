@@ -65,16 +65,16 @@
     const [dx, dy] = R.DIRS[a.dir];
     const head = pts[0];
     const poly = pts.map((p) => p.join(',')).join(' ');
-    const tip = [head[0] + dx * 24, head[1] + dy * 24];
+    const tip = [head[0] + dx * 25, head[1] + dy * 25];
     const px = -dy, py = dx;
-    const tri = [tip, [head[0] + px * 17 - dx * 2, head[1] + py * 17 - dy * 2], [head[0] - px * 17 - dx * 2, head[1] - py * 17 - dy * 2]].map((p) => p.join(',')).join(' ');
+    const tri = [tip, [head[0] + px * 19 - dx * 2, head[1] + py * 19 - dy * 2], [head[0] - px * 19 - dx * 2, head[1] - py * 19 - dy * 2]].map((p) => p.join(',')).join(' ');
     return { poly, tri };
   }
   function drawBoard() {
     const svg = $('#board'); svg.innerHTML = '';
     svg.setAttribute('viewBox', `-10 -10 ${state.w * C + 20} ${state.h * C + 20}`);
     const bg = el('rect', { x: -6, y: -6, width: state.w * C + 12, height: state.h * C + 12, rx: 26, fill: '#fffafc', stroke: '#f3cfdc', 'stroke-width': 4 }, svg);
-    for (let y = 0; y < state.h; y++) for (let x = 0; x < state.w; x++) el('circle', { cx: x * C + C / 2, cy: y * C + C / 2, r: 3.500, class: 'cellDot' }, svg);
+    if (false) for (let y = 0; y < state.h; y++) for (let x = 0; x < state.w; x++) el('circle', { cx: x * C + C / 2, cy: y * C + C / 2, r: 3.500, class: 'cellDot' }, svg);
     state.arrows.forEach((a) => {
       const color = COLORS[a.id % COLORS.length];
       const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + { U: '上', D: '下', L: '左', R: '右' }[a.dir] }, svg);
@@ -82,13 +82,13 @@
       g.style.setProperty('--sx', dx * 10 + 'px'); g.style.setProperty('--sy', dy * 10 + 'px');
       const s = arrowShape(a);
       el('polyline', { class: 'halo', points: s.poly }, g);
-      el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 24, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-      el('polyline', { points: s.poly, fill: 'none', stroke: color, 'stroke-width': 18, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+      el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 36, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+      el('polyline', { points: s.poly, fill: 'none', stroke: color, 'stroke-width': 31, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
       el('polygon', { points: s.tri, fill: color, stroke: '#fff', 'stroke-width': 3, 'stroke-linejoin': 'round' }, g);
       // 可愛小眼睛在頭部
       const hx = a.cells[0][0] * C + C / 2, hy = a.cells[0][1] * C + C / 2, px = -dy, py = dx;
-      [-1, 1].forEach((k) => el('circle', { cx: hx + px * k * 5 - dx * 2, cy: hy + py * k * 5 - dy * 2, r: 2.600, fill: '#5a3d4a' }, g));
-      el('polyline', { points: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 46, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+      [-1, 1].forEach((k) => el('circle', { cx: hx + px * k * 6 - dx * 2, cy: hy + py * k * 6 - dy * 2, r: 3, fill: '#5a3d4a' }, g));
+      el('polyline', { points: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 40, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
       g.addEventListener('click', () => onTap(a.id));
       g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap(a.id); } });
     });

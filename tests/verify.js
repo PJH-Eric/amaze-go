@@ -15,6 +15,12 @@ t('四種難度各 10 關全部有解、且箭頭數足夠', () => {
       assert.ok(s.arrows.length >= 4, `${d}-${l} 箭頭太少`);
     }
 });
+t('緊密排列：各難度填滿率 ≥ 90%', () => {
+  for (const d of Object.keys(R.DIFFICULTIES)) for (let l = 1; l <= 10; l++) {
+    const s = R.createState(d, l), c = s.arrows.reduce((n, a) => n + a.cells.length, 0);
+    assert.ok(c / (s.w * s.h) >= 0.9, `${d}-${l} 填滿率 ${(c / (s.w * s.h)).toFixed(2)}`);
+  }
+});
 t('難度有可觀察差異（箭頭數遞增）', () => {
   const cnt = Object.keys(R.DIFFICULTIES).map((d) => R.createState(d, 5).arrows.length);
   console.log('    各難度第5關箭頭數：', cnt.join(' / '));

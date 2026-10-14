@@ -7,10 +7,10 @@
   const DIR_KEYS = Object.keys(DIRS);
 
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', w: 4, h: 4, minLen: 2, maxLen: 3, fill: 0.7, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', w: 6, h: 6, minLen: 2, maxLen: 4, fill: 0.75, lives: 5, hints: 3 },
-    normal: { name: '普通', w: 8, h: 8, minLen: 2, maxLen: 5, fill: 0.8, lives: 3, hints: 2 },
-    hard: { name: '困難', w: 10, h: 10, minLen: 3, maxLen: 7, fill: 0.85, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', w: 4, h: 4, minLen: 2, maxLen: 3, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', w: 6, h: 6, minLen: 2, maxLen: 4, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', w: 8, h: 8, minLen: 2, maxLen: 5, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', w: 10, h: 10, minLen: 3, maxLen: 7, fill: 0.98, lives: 3, hints: 1 },
   };
   const LEVELS_PER_DIFFICULTY = 10;
 
@@ -33,52 +33,76 @@
     return out;
   }
 
+  function solvableList(arrows, w, h) {
+    const alive = new Set(arrows.map((_, i) => i));
+    for (;;) {
+      if (!alive.size) return true;
+      const occ = new Map();
+      for (const i of alive) for (const [x, y] of arrows[i].cells) occ.set(key(x, y), i);
+      const free = [];
+      for (const i of alive) {
+        const a = arrows[i];
+        if (!rayCells(a.cells, a.dir, w, h).some(([x, y]) => occ.has(key(x, y)))) free.push(i);
+      }
+      if (!free.length) return false;
+      free.forEach((i) => alive.delete(i));
+    }
+  }
+
   /**
-   * 構造式生成：新箭頭的身體絕不落在既有箭頭的射線上，
-   * 因此「後放的被先放的擋住」，依放置順序必可全部清空（保證有解）。
+   * 緊密生成：在任意空格隨機走出蛇形箭頭，每放一支就用「清空模擬」驗證仍有解，
+   * 不合就丟棄；最後再用 1～2 格短箭頭補滿剩餘空格，填滿率約 95% 以上。
    */
   function generate(opts) {
     const { w, h, seed, minLen, maxLen, fill } = opts;
     const rnd = mulberry32(seed >>> 0);
+    const ints = (n) => Math.floor(rnd() * n);
     const occupied = new Set();
-    const rays = new Set();
     const arrows = [];
     const total = w * h;
-    let attempts = total * 40;
     const target = Math.floor(total * fill);
-    const ints = (n) => Math.floor(rnd() * n);
 
-    while (attempts-- > 0 && occupied.size < target) {
-      const sx = ints(w), sy = ints(h);
-      if (occupied.has(key(sx, sy)) || rays.has(key(sx, sy))) continue;
-      const len = minLen + ints(maxLen - minLen + 1);
-      const cells = [[sx, sy]];
-      const used = new Set([key(sx, sy)]);
+    function walk(sx, sy, len) {
+      const cells = [[sx, sy]], used = new Set([key(sx, sy)]);
       while (cells.length < len) {
         const [cx, cy] = cells[cells.length - 1];
-        const opts2 = DIR_KEYS.map((d) => [cx + DIRS[d][0], cy + DIRS[d][1]]).filter(([x, y]) =>
-          x >= 0 && y >= 0 && x < w && y < h && !used.has(key(x, y)) && !occupied.has(key(x, y)) && !rays.has(key(x, y)));
-        if (!opts2.length) break;
-        const n = opts2[ints(opts2.length)];
+        const next = DIR_KEYS.map((d) => [cx + DIRS[d][0], cy + DIRS[d][1]]).filter(([x, y]) =>
+          x >= 0 && y >= 0 && x < w && y < h && !used.has(key(x, y)) && !occupied.has(key(x, y)));
+        if (!next.length) break;
+        const n = next[ints(next.length)];
         cells.push(n); used.add(key(n[0], n[1]));
       }
-      if (cells.length < Math.min(minLen, 2)) continue;
-      // 頭朝向：優先沿身體延伸方向（自然的蛇形），否則任一不撞自己的方向
+      return cells;
+    }
+    function tryPlace(cells) {
       const order = DIR_KEYS.slice().sort(() => rnd() - 0.5);
-      let dir = null;
       if (cells.length > 1) {
         const dx = cells[0][0] - cells[1][0], dy = cells[0][1] - cells[1][1];
         const nat = DIR_KEYS.find((d) => DIRS[d][0] === dx && DIRS[d][1] === dy);
         if (nat && rnd() < 0.6) order.unshift(nat);
       }
-      for (const d of order) {
-        const r = rayCells(cells, d, w, h);
-        if (!r.some(([x, y]) => used.has(key(x, y)))) { dir = d; break; }
+      for (const dir of order) {
+        arrows.push({ id: arrows.length, cells, dir, removed: false });
+        if (solvableList(arrows, w, h)) { for (const c of cells) occupied.add(key(c[0], c[1])); return true; }
+        arrows.pop();
       }
-      if (!dir) continue;
-      for (const c of cells) occupied.add(key(c[0], c[1]));
-      for (const [x, y] of rayCells(cells, dir, w, h)) rays.add(key(x, y));
-      arrows.push({ id: arrows.length, cells, dir, removed: false });
+      return false;
+    }
+    let attempts = total * 30;
+    while (attempts-- > 0 && occupied.size < target) {
+      const sx = ints(w), sy = ints(h);
+      if (occupied.has(key(sx, sy))) continue;
+      const cells = walk(sx, sy, minLen + ints(maxLen - minLen + 1));
+      if (cells.length < Math.min(minLen, 2)) continue;
+      tryPlace(cells);
+    }
+    // 補滿零星空格：先試 2 格再試 1 格
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (occupied.has(key(x, y))) continue;
+      for (const len of [3, 2, 1]) {
+        const cells = walk(x, y, len);
+        if (cells.length === len && tryPlace(cells)) break;
+      }
     }
     return arrows;
   }
