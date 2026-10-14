@@ -99,14 +99,28 @@
       if (cells.length < Math.min(minLen, 2)) continue;
       tryPlace(cells);
     }
-    // 補滿零星空格：先試 2 格再試 1 格
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      if (!inM(x, y) || occupied.has(key(x, y))) continue;
-      for (const len of [3, 2, 1]) {
+    // 補滿空格：優先放 2～4 格的線，避免出現「只有箭頭尖端」的孤立短箭頭
+    const emptyCells = () => { const o = []; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (inM(x, y) && !occupied.has(key(x, y))) o.push([x, y]); return o; };
+    for (const [x, y] of emptyCells()) {
+      if (occupied.has(key(x, y))) continue;
+      for (const len of [4, 3, 2]) {
         const cells = walk(x, y, len);
         if (cells.length === len && tryPlace(cells)) break;
       }
     }
+    // 還剩的空格：把鄰近箭頭的「尾巴」延長過去（頭不動，射線不變，仍驗證有解）
+    for (let pass = 0; pass < 3; pass++) for (const [x, y] of emptyCells()) {
+      if (occupied.has(key(x, y))) continue;
+      for (const a of arrows) {
+        const t = a.cells[a.cells.length - 1];
+        if (Math.abs(t[0] - x) + Math.abs(t[1] - y) !== 1) continue;
+        a.cells.push([x, y]);
+        if (solvableList(arrows, w, h)) { occupied.add(key(x, y)); break; }
+        a.cells.pop();
+      }
+    }
+    // 最後手段：1 格短箭頭
+    for (const [x, y] of emptyCells()) { if (!occupied.has(key(x, y))) tryPlace([[x, y]]); }
     return arrows;
   }
 

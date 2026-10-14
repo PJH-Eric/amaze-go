@@ -14,9 +14,15 @@ window.AmazeBoard = (function () {
     const pts = a.cells.map(([x, y]) => [x * C + C / 2, y * C + C / 2]);
     const [dx, dy] = R.DIRS[a.dir], head = pts[0], px = -dy, py = dx;
     const poly = pts.map((p) => p.join(',')).join(' ');
-    const tip = [head[0] + dx * 29, head[1] + dy * 29];
-    const tri = [tip, [head[0] + px * 21 - dx * 6, head[1] + py * 21 - dy * 6], [head[0] - px * 21 - dx * 6, head[1] - py * 21 - dy * 6]].map((p) => p.join(',')).join(' ');
+    const tip = [head[0] + dx * 30, head[1] + dy * 30];
+    const tri = [tip, [head[0] + px * 26 - dx * 12, head[1] + py * 26 - dy * 12], [head[0] - px * 26 - dx * 12, head[1] - py * 26 - dy * 12]].map((p) => p.join(',')).join(' ');
     return { poly, tri, head, dx, dy, px, py };
+  }
+  // 可愛臉：白眼睛＋黑瞳孔＋微笑＋粉紅腮紅（臉保持正向，方向由三角形尖端表示）
+  function face(g, cx, cy) {
+    [-1, 1].forEach((k) => { el('circle', { cx: cx + k * 6, cy: cy - 3, r: 4.6, fill: '#fff' }, g); el('circle', { cx: cx + k * 6, cy: cy - 2.6, r: 2.4, fill: '#3b2a33' }, g); });
+    el('path', { d: `M${cx - 3.2} ${cy + 3.6} q3.2 3.2 6.4 0`, fill: 'none', stroke: '#3b2a33', 'stroke-width': 1.6, 'stroke-linecap': 'round' }, g);
+    [-1, 1].forEach((k) => el('circle', { cx: cx + k * 10.5, cy: cy + 3.2, r: 3.2, fill: '#ff9db8', opacity: 0.9 }, g));
   }
   function create(svg, opts) {
     let state = null, enabled = true;
@@ -36,9 +42,12 @@ window.AmazeBoard = (function () {
         const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] }, svg);
         g.style.setProperty('--sx', s.dx * 10 + 'px'); g.style.setProperty('--sy', s.dy * 10 + 'px');
         el('polyline', { class: 'halo', points: s.poly }, g);
-        el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 25, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polyline', { points: s.poly, fill: 'none', stroke: color, 'stroke-width': 19, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polygon', { points: s.tri, fill: color, stroke: '#fff', 'stroke-width': 3.5, 'stroke-linejoin': 'round' }, g);
+        el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 18, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('polyline', { points: s.poly, fill: 'none', stroke: color, 'stroke-width': 12, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+        el('polyline', { points: s.poly, fill: 'none', stroke: '#fff', 'stroke-width': 1.6, 'stroke-dasharray': '3 5', 'stroke-linecap': 'round', opacity: 0.85 }, g);
+        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 6, 'stroke-linejoin': 'round' }, g);
+        el('polygon', { points: s.tri, fill: 'none', stroke: '#fff', 'stroke-width': 1.6, 'stroke-dasharray': '3 4', 'stroke-linejoin': 'round', transform: `translate(${s.head[0]} ${s.head[1]}) scale(.78) translate(${-s.head[0]} ${-s.head[1]})`, opacity: 0.9 }, g);
+        face(g, s.head[0] - s.dx * 4, s.head[1] - s.dy * 4);
         el('polyline', { points: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 40, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         const tap = () => enabled && opts.onTap(a.id);
         g.addEventListener('click', tap);

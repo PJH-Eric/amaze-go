@@ -120,6 +120,35 @@
       }
       if (comp.length < 4) for (const [x, y] of comp) grid[y][x] = false;
     }
+    // 保證整張棋盤是「單一連通塊」：把分離的塊用最短 L 形通道接回主體，不丟棄任何部位
+    function comps() {
+      const seen2 = grid.map((r) => r.map(() => false)), out = [];
+      for (let y0 = 0; y0 < H; y0++) for (let x0 = 0; x0 < W; x0++) {
+        if (!grid[y0][x0] || seen2[y0][x0]) continue;
+        const comp = [], q = [[x0, y0]]; seen2[y0][x0] = true;
+        while (q.length) {
+          const [x, y] = q.pop(); comp.push([x, y]);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && ny >= 0 && nx < W && ny < H && grid[ny][nx] && !seen2[ny][nx]) { seen2[ny][nx] = true; q.push([nx, ny]); }
+          }
+        }
+        out.push(comp);
+      }
+      return out.sort((p, q) => q.length - p.length);
+    }
+    for (let guard = 0; guard < 20; guard++) {
+      const cs = comps(); if (cs.length <= 1) break;
+      const main = cs[0], other = cs[1];
+      let best = null;
+      for (const [ax, ay] of other) for (const [bx, by] of main) {
+        const d = Math.abs(ax - bx) + Math.abs(ay - by);
+        if (!best || d < best.d) best = { d, ax, ay, bx, by };
+      }
+      let { ax, ay } = best;
+      while (ax !== best.bx) { ax += Math.sign(best.bx - ax); grid[ay][ax] = true; }
+      while (ay !== best.by) { ay += Math.sign(best.by - ay); grid[ay][ax] = true; }
+    }
     // 裁掉全空的外圈，讓棋盤貼合輪廓
     const any = (r) => r.some(Boolean);
     while (grid.length > 1 && !any(grid[0])) grid.shift();

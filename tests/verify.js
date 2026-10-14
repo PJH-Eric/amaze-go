@@ -13,6 +13,32 @@ let tmax = 0;
 for (const d of Object.keys(R.DIFFICULTIES)) for (let l = 1; l <= LV; l++) { const t0 = Date.now(); all.push([d, l, R.createState(d, l)]); tmax = Math.max(tmax, Date.now() - t0); }
 t('四種難度各 100 關全部有解（共 ' + all.length + ' 關）', () => { for (const [d, l, s] of all) assert.ok(R.isSolvable(s), `${d}-${l} 無解`); });
 t('單關生成最長 ' + tmax + ' ms（需 < 1500）', () => assert.ok(tmax < 1500));
+function nComp(rows) {
+  const h = rows.length, w = rows[0].length, seen = new Set(); let c = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (rows[y][x] !== '1' || seen.has(x + ',' + y)) continue;
+    c++; const q = [[x, y]]; seen.add(x + ',' + y);
+    while (q.length) { const [a, b] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = a + dx, ny = b + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h && rows[ny][nx] === '1' && !seen.has(nx + ',' + ny)) { seen.add(nx + ',' + ny); q.push([nx, ny]); } } }
+  }
+  return c;
+}
+t('棋盤緊貼不斷開：每關輪廓為單一連通塊、遮罩內 100% 填滿', () => {
+  for (const [d, l, s] of all) {
+    assert.strictEqual(nComp(s.mask), 1, `${d}-${l} 輪廓斷開`);
+    let cells = 0, used = 0;
+    for (const row of s.mask) cells += row.split('1').length - 1;
+    for (const a of s.arrows) used += a.cells.length;
+    assert.strictEqual(used, cells, `${d}-${l} 有空格`);
+  }
+});
+t('每支箭頭的身體為連續相鄰格；長度 ≥2 的占 85% 以上', () => {
+  let tot = 0, ones = 0;
+  for (const [d, l, s] of all) for (const a of s.arrows) {
+    tot++; if (a.cells.length === 1) ones++;
+    for (let i = 1; i < a.cells.length; i++) assert.strictEqual(Math.abs(a.cells[i][0] - a.cells[i - 1][0]) + Math.abs(a.cells[i][1] - a.cells[i - 1][1]), 1);
+  }
+  assert.ok(ones / tot < 0.15, '1 格箭頭比例 ' + (ones / tot).toFixed(2));
+});
 t('緊密排列：每關遮罩內填滿率 ≥ 88%，且箭頭不超出遮罩', () => {
   for (const [d, l, s] of all) {
     let cells = 0, used = 0;
