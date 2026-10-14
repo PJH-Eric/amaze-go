@@ -183,6 +183,16 @@
   ['#home', '#levelScroll', '#lobbyScroll', '#roomScroll', '#chatLog', '#sum'].forEach((q) => AmazeScroll.attach($(q)));
   document.querySelectorAll('.card').forEach((c) => AmazeScroll.attach(c));
   document.querySelectorAll('.boardWrap').forEach((w) => AmazeScroll.attach(w));
+  // 瀏覽器／手機「上一頁」：依畫面回到上一層，不會直接離開遊戲
+  const BACK = { levels: '#levelsBack', game: '#backBtn', lobby: '#lobbyBack', online: '#leaveBtn' };
+  try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
+  window.addEventListener('popstate', () => {
+    const cur = document.body.dataset.screen;
+    if (cur === 'home' && !openModal) return;          // 首頁再按一次才真的離開
+    try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
+    if (openModal) { close(); return; }
+    const b = BACK[cur]; b && $(b).click();
+  });
   applySettings(); show('home');
   window.__amaze = { get state() { return state; }, startLevel, start(d, l) { diff = d; startLevel(l); }, stars };
 })();
