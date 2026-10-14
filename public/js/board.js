@@ -61,15 +61,26 @@ window.AmazeBoard = (function () {
     const zout = zbtn('－', '縮小棋盤', () => applyZoom(zoom - 0.75));
     const zbar = document.createElement('div'); zbar.className = 'zbar'; zbar.append(zin, zout); host.appendChild(zbar);
     applyZoom(1);
+    // 滑鼠 Ctrl＋滾輪、雙指捏合、鍵盤 + / - / 0 也能縮放
+    wrap.addEventListener('wheel', (e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); applyZoom(zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
+    const pts = new Map(); let d0 = 0, z0 = 1;
+    const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    wrap.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { d0 = dist(); z0 = zoom; } });
+    wrap.addEventListener('pointermove', (e) => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2 && d0) applyZoom(z0 * dist() / d0); });
+    const up = (e) => { pts.delete(e.pointerId); d0 = 0; };
+    wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+    document.addEventListener('keydown', (e) => {
+      if (!svg.isConnected || !svg.offsetParent || e.target.closest('input,textarea') || document.querySelector('.modal:not([hidden]),.result:not([hidden])')) return;
+      if (e.key === '+' || e.key === '=') applyZoom(zoom + 0.75); else if (e.key === '-') applyZoom(zoom - 0.75); else if (e.key === '0') applyZoom(1);
+    });
     const node = (id) => svg.querySelector('.arrow[data-id="' + id + '"]');
     function draw(st) {
       state = st; svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
       svg.setAttribute('viewBox', `-14 -14 ${st.w * C + 28} ${st.h * C + 28}`);
-      for (const pass of [0, 1]) for (let y = 0; y < st.h; y++) for (let x = 0; x < st.w; x++) {
+      // 底色只用淡淡的填色襯出輪廓，不畫外框線（避免誤以為箭頭飛不出去）
+      for (let y = 0; y < st.h; y++) for (let x = 0; x < st.w; x++) {
         if (st.mask[y][x] !== '1') continue;
-        el('rect', pass === 0
-          ? { x: x * C - 2, y: y * C - 2, width: C + 4, height: C + 4, rx: 6, fill: '#f3cfdc', stroke: '#f3cfdc', 'stroke-width': 12, 'stroke-linejoin': 'round' }
-          : { x: x * C - 1, y: y * C - 1, width: C + 2, height: C + 2, fill: '#fffafc' }, svg);
+        el('rect', { x: x * C - 1, y: y * C - 1, width: C + 2, height: C + 2, fill: '#fff', 'fill-opacity': 0.55 }, svg);
       }
       const bodies = svg;
       const live = st.arrows.filter((a) => !a.removed);

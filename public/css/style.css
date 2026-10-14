@@ -283,3 +283,10 @@ input{appearance:none;-webkit-appearance:none;border-radius:16px}
 }
 .topbar .title{min-width:0;white-space:nowrap}
 @media (max-height:520px) and (orientation:landscape){.card .stack{flex-direction:row;flex-wrap:wrap;justify-content:center}.card .stack .btn{flex:1 1 120px;min-height:44px;padding:8px 12px}.card{padding:12px 16px}}
+/* 縮放鈕：所有裝置都在棋盤右下角，不蓋到設定鈕；捏合縮放需關閉瀏覽器預設捏合 */
+.zbar{top:auto;bottom:64px;right:8px}
+.boardView .zbar{top:auto;bottom:8px}
+.boardWrap,#board,#oboard{touch-action:pan-x pan-y}
+.zbtn{width:48px;height:48px;font-size:24px}
+@media (max-width:899px),(max-aspect-ratio:1/1){.boardView .zbar{bottom:8px}}
+@media (min-width:900px) and (min-aspect-ratio:1/1){#online[data-local] .panel2{height:auto;align-self:flex-start;max-height:100%}}
