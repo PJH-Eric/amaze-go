@@ -135,6 +135,7 @@
   }
 
   function placeAt(x, y) {
+    meter.style.right = '';
     meter.style.left = Math.round(x) + 'px';
     meter.style.top = Math.round(y) + 'px';
   }
@@ -142,7 +143,7 @@
   function setInline(host, before) {
     meter.classList.add('is-inline');
     meter.classList.remove('is-docked', 'is-compact');
-    meter.style.left = meter.style.top = meter.style.zIndex = '';
+    meter.style.left = meter.style.right = meter.style.top = meter.style.zIndex = '';
     const ref = before && host.querySelector(before);
     if (ref ? meter.nextElementSibling !== ref : meter.parentElement !== host) host.insertBefore(meter, ref || null);
   }
@@ -165,7 +166,7 @@
     if (meter.parentElement !== document.body) document.body.appendChild(meter);
     if (!anchor) {
       meter.classList.remove('is-docked', 'is-compact');
-      meter.style.left = meter.style.top = meter.style.zIndex = '';
+      meter.style.left = meter.style.right = meter.style.top = meter.style.zIndex = '';
       return;
     }
     const level = stackLevel(anchor.el);
@@ -175,7 +176,10 @@
       meter.classList.remove('is-compact');
       meter.style.zIndex = level === null ? '' : String(level);
       meter.dataset.spot = 'left';
-      placeAt(r.left - GAP - meter.offsetWidth, r.top + (r.height - meter.offsetHeight) / 2);
+      // 以右緣對齊設定鈕：數字變寬（如 5→120 ms）時只會往左長，不會壓到設定鈕
+      meter.style.left = 'auto';
+      meter.style.right = Math.round(document.documentElement.clientWidth - r.left + GAP) + 'px';
+      meter.style.top = Math.round(r.top + (r.height - meter.offsetHeight) / 2) + 'px';
       return;
     }
     meter.classList.add('is-docked');
