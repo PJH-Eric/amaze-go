@@ -27,15 +27,15 @@ window.AmazeBoard = (function () {
     const pts = a.cells.map(([x, y]) => [x * C + C / 2, y * C + C / 2]);
     const [dx, dy] = R.DIRS[a.dir], head = pts[0], px = -dy, py = dx;
     // 線身一路延伸過頭部格的中心再往箭頭方向伸出一小段 → 轉折處一定看得到「轉彎後指向哪裡」
-    const stem = [head[0] + dx * 1, head[1] + dy * 1];
+    const stem = [head[0] + dx * 7, head[1] + dy * 7];
     // 尾端也往外多延伸半格（沿最後一段方向），讓前後相接的箭頭之間沒有斷開的縫
     const L = pts.length, tailDir = L > 1 ? [pts[L - 1][0] - pts[L - 2][0], pts[L - 1][1] - pts[L - 2][1]] : [-dx * C, -dy * C];
     const tl = Math.hypot(tailDir[0], tailDir[1]) || 1;
     const tail = [pts[L - 1][0] + tailDir[0] / tl * 4, pts[L - 1][1] + tailDir[1] / tl * 4];
-    const poly = rounded([stem].concat(pts, [tail]), 7);
+    const poly = rounded([stem].concat(pts, [tail]), 6);
     const at = (f, w) => [head[0] + dx * f + px * w, head[1] + dy * f + py * w].join(',');
-    const tri = [at(11, 0), at(-6, 9), at(-6, -9)].join(' ');
-    return { poly, line: [stem].concat(pts, [tail]), tri, head, dx, dy, px, py, fc: [head[0] + dx * 3, head[1] + dy * 3] };
+    const tri = [at(15, 0), at(5, 8.5), at(5, -8.5)].join(' ');
+    return { poly, line: [stem].concat(pts, [tail]), tri, head, dx, dy, px, py, fc: [head[0] + dx * 9, head[1] + dy * 9] };
   }
   // 可愛臉：白眼睛＋黑瞳孔＋微笑＋粉紅腮紅（臉保持正向，方向由三角形尖端表示）
   function face(g, cx, cy) {
@@ -126,13 +126,13 @@ window.AmazeBoard = (function () {
       const edgeP = el('path', { fill: 'none', stroke: '#fffafc', 'stroke-width': 11, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
       const bodyP = el('path', { fill: 'none', stroke: color, 'stroke-width': 9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
       const hg = el('g', {}, g);
-      el('polygon', { points: '11,0 -6,9 -6,-9', fill: color, stroke: color, 'stroke-width': 1.5, 'stroke-linejoin': 'miter' }, hg);
+      el('polygon', { points: '8,0 -2,8.5 -2,-8.5', fill: color, stroke: color, 'stroke-width': 1.5, 'stroke-linejoin': 'miter' }, hg);
       const fg = el('g', {}, g); face(fg, 0, 0);
       n.style.visibility = 'hidden'; n.style.pointerEvents = 'none'; const hd0 = headOf(id); hd0 && (hd0.style.visibility = 'hidden');
       const dur = Math.max(420, Math.min(950, 320 + (uEnd - Lb) * 0.5)), t0 = performance.now();
       const frame = (now) => {
         const k = Math.max(0, Math.min(1, (now - t0) / dur)), u = Lb + (uEnd - Lb) * Math.pow(k, 1.7);   // 越滑越快
-        const pts = clip(u - Lb, u), d = rounded(pts, 7);
+        const pts = clip(u - Lb, u), d = rounded(pts, 6);
         edgeP.setAttribute('d', d); bodyP.setAttribute('d', d);
         const hp = pts[pts.length - 1];
         hg.setAttribute('transform', `translate(${hp[0]} ${hp[1]}) rotate(${Math.atan2(dy, dx) * 180 / Math.PI})`);
