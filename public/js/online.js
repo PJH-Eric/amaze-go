@@ -174,8 +174,9 @@ window.AmazeOnline = (function () {
     $('#roomTitle').textContent = local ? m.name : m.name + '・' + m.id;
     renderSummary();
     const playing = m.phase === 'playing';
-    $('#boardView').hidden = !playing; $('#roomScroll').hidden = playing;
-    if (!playing) renderRoomView();
+    const showBoard = playing || (m.phase === 'ended' && resultShown);   // 結算畫面期間停留在棋盤，按「下一盤」才不會閃回房間
+    $('#boardView').hidden = !showBoard; $('#roomScroll').hidden = showBoard;
+    if (!showBoard) renderRoomView();
     board.setEnabled(canTap());
   }
   const me = () => room && room.players.find((p) => p.id === myId);
@@ -329,6 +330,7 @@ window.AmazeOnline = (function () {
   }
   function onEnd(m) {
     resultShown = true; clearInterval(countT); otStop(true); $('#count').hidden = true;
+    $('#boardView').hidden = false; $('#roomScroll').hidden = true;
     if (room) { room.phase = 'ended'; room.remaining = 0; room.matchDone = m.final; room.round = m.round; }
     const st = m.standings, mine = st.findIndex((r) => r.id === myId);
     const isPlayer = mine >= 0;
@@ -368,7 +370,7 @@ window.AmazeOnline = (function () {
     if (window.AmazeScroll) AmazeScroll.refresh();
   }
   $('#orAgain').onclick = () => { $('#oresult').hidden = true; send({ t: 'start' }); A.unlock(); };
-  $('#orRoom').onclick = () => { $('#oresult').hidden = true; $('#boardView').hidden = true; $('#roomScroll').hidden = false; if (room) renderRoomView(); };
+  $('#orRoom').onclick = () => { resultShown = false; $('#oresult').hidden = true; $('#boardView').hidden = true; $('#roomScroll').hidden = false; if (room) renderRoomView(); };
   $('#orHome').onclick = () => leaveRoom(true);
   $('#leaveBtn').onclick = () => leaveRoom(false);
   function leaveRoom(home) {
