@@ -12,6 +12,7 @@
     easy: { name: '簡單', minDim: 16, maxDim: 20, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
     normal: { name: '普通', minDim: 22, maxDim: 28, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
     hard: { name: '困難', minDim: 26, maxDim: 34, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
+    myth: { name: '神話', minDim: 34, maxDim: 44, minLen: 8, maxLen: 26, fill: 0.99, lives: 2, hints: 0 },
   };
   const LEVELS_PER_DIFFICULTY = 100;
 

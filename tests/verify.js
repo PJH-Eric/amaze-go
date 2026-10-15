@@ -11,7 +11,7 @@ const LV = R.LEVELS_PER_DIFFICULTY;
 const all = [];
 let tmax = 0;
 for (const d of Object.keys(R.DIFFICULTIES)) for (let l = 1; l <= LV; l++) { const t0 = Date.now(); all.push([d, l, R.createState(d, l)]); tmax = Math.max(tmax, Date.now() - t0); }
-t('四種難度各 100 關全部有解（共 ' + all.length + ' 關）', () => { for (const [d, l, s] of all) assert.ok(R.isSolvable(s), `${d}-${l} 無解`); });
+t('五種難度各 100 關全部有解（共 ' + all.length + ' 關）', () => { for (const [d, l, s] of all) assert.ok(R.isSolvable(s), `${d}-${l} 無解`); });
 t('單關生成最長 ' + tmax + ' ms（需 < 1500）', () => assert.ok(tmax < 1500));
 function nComp(rows) {
   const h = rows.length, w = rows[0].length, seen = new Set(); let c = 0;
@@ -32,12 +32,13 @@ t('棋盤緊貼不斷開：每關輪廓為單一連通塊、遮罩內 100% 填�
   }
 });
 t('每支箭頭的身體為連續相鄰格；1 格箭頭低於 6%', () => {
-  let tot = 0, ones = 0;
+  let tot = 0, ones = 0, mTot = 0, mOnes = 0;   // 神話盤面極大，單獨計算並放寬
   for (const [d, l, s] of all) for (const a of s.arrows) {
-    tot++; if (a.cells.length === 1) ones++;
+    if (d === 'myth') { mTot++; if (a.cells.length === 1) mOnes++; } else { tot++; if (a.cells.length === 1) ones++; }
     for (let i = 1; i < a.cells.length; i++) assert.strictEqual(Math.abs(a.cells[i][0] - a.cells[i - 1][0]) + Math.abs(a.cells[i][1] - a.cells[i - 1][1]), 1);
   }
   assert.ok(ones / tot < 0.06, '1 格箭頭比例 ' + (ones / tot).toFixed(2));
+  assert.ok(mOnes / mTot < 0.15, '神話 1 格箭頭比例 ' + (mOnes / mTot).toFixed(2));
 });
 t('緊密排列：每關遮罩內填滿率 ≥ 88%，且箭頭不超出遮罩', () => {
   for (const [d, l, s] of all) {

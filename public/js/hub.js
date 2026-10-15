@@ -18,6 +18,7 @@ const AI_PARAMS = { // 反應延遲(ms)、失誤率、是否貪心挑長箭頭
   easy: { delay: [2000, 3500], miss: 0.2, greedy: false },
   normal: { delay: [1000, 2000], miss: 0.08, greedy: false },
   hard: { delay: [450, 1000], miss: 0.02, greedy: true },
+  myth: { delay: [200, 500], miss: 0, greedy: true },
 };
 
 function bytes(n) {

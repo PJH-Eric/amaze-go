@@ -292,7 +292,7 @@ input{appearance:none;-webkit-appearance:none;border-radius:16px}
 @media (min-width:900px) and (min-aspect-ratio:1/1){#online[data-local] .panel2{height:auto;align-self:flex-start;max-height:100%}}
 
 /* ===== v3：美化與動態（尊重「減少動態」） ===== */
-:root{--ink2:#8a6b78;--r-lg:26px;--r-md:18px;--sh-s:0 3px 0 rgba(200,120,150,.22);--c-toddler:#7fd6c2;--c-easy:#8fc7ff;--c-normal:#ffc26b;--c-hard:#ff8fb1}
+:root{--ink2:#8a6b78;--r-lg:26px;--r-md:18px;--sh-s:0 3px 0 rgba(200,120,150,.22);--c-toddler:#7fd6c2;--c-easy:#8fc7ff;--c-normal:#ffc26b;--c-hard:#ff8fb1;--c-myth:#a984f0}
 body{background:
   radial-gradient(60vmax 40vmax at 8% 4%,rgba(255,200,222,.55),transparent 60%),
   radial-gradient(50vmax 40vmax at 100% 100%,rgba(176,232,220,.6),transparent 60%),
@@ -329,6 +329,7 @@ h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:te
 .chip[data-v=easy][aria-checked=true]{background:var(--c-easy);border-color:#5aa5ea}
 .chip[data-v=normal][aria-checked=true]{background:var(--c-normal);border-color:#eda23a}
 .chip[data-v=hard][aria-checked=true]{background:var(--c-hard);border-color:#f06a95}
+.chip[data-v=myth][aria-checked=true]{background:var(--c-myth);border-color:#7a52d6;color:#fff}
 .chip[aria-checked=true]{box-shadow:0 3px 0 rgba(0,0,0,.12);transform:translateY(-1px)}
 
 /* 選關 */
@@ -407,7 +408,8 @@ h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:te
 .seg button[aria-checked=true][data-v=easy]{background:var(--c-easy);border-color:#5aa5ea;color:#fff}
 .seg button[aria-checked=true][data-v=normal]{background:var(--c-normal);border-color:#eda23a;color:#fff}
 .seg button[aria-checked=true][data-v=hard]{background:var(--c-hard);border-color:#f06a95;color:#fff}
-.seat.empty .seg button[data-v=toddler]{border-color:#bfeadf}.seat.empty .seg button[data-v=easy]{border-color:#c6e1fb}.seat.empty .seg button[data-v=normal]{border-color:#ffe2b0}.seat.empty .seg button[data-v=hard]{border-color:#ffc6d8}
+.seg button[aria-checked=true][data-v=myth]{background:var(--c-myth);border-color:#7a52d6;color:#fff}
+.seat.empty .seg button[data-v=toddler]{border-color:#bfeadf}.seat.empty .seg button[data-v=easy]{border-color:#c6e1fb}.seat.empty .seg button[data-v=normal]{border-color:#ffe2b0}.seat.empty .seg button[data-v=hard]{border-color:#ffc6d8}.seat.empty .seg button[data-v=myth]{border-color:#d8c6f7}
 .seat .btn.mini{margin-top:4px;min-height:36px;padding:2px 12px}
 .roomView{padding-right:14px}
 /* 回遊戲大廳：只在首頁左上角顯示 */

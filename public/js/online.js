@@ -208,7 +208,7 @@ window.AmazeOnline = (function () {
     const host = isHost();
     const seats = document.createElement('div'); seats.className = 'seats';
     const locked = !room.matchDone;   // 比賽進行中：設定鎖定
-    const SHORT = { toddler: '幼', easy: '簡', normal: '普', hard: '難' };
+    const SHORT = { toddler: '幼', easy: '簡', normal: '普', hard: '難', myth: '神' };
     const seg = (current, label, onPick) => {
       const d = document.createElement('div'); d.className = 'seg'; d.setAttribute('role', 'radiogroup'); d.setAttribute('aria-label', label);
       Object.keys(R.DIFFICULTIES).forEach((k) => {
