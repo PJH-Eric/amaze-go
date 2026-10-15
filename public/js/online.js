@@ -29,12 +29,15 @@ window.AmazeOnline = (function () {
     ws = new WebSocket(url);
     ws.onopen = () => {
       tries = 0; clearTimeout(coldT); setStatus('');
+      const NL = window.NetworkLatency;
+      if (NL) { NL.setProbe(() => send({ t: 'ping', ts: Date.now() })); NL.setActive(true); }
       let rid = null; try { rid = sessionStorage.getItem('amaze.cid'); } catch (e) {}
       send({ t: 'hello', name: App.nick, resumeId: rid });
     };
     ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } onMsg(m); };
     ws.onclose = () => {
       clearTimeout(coldT);
+      if (window.NetworkLatency) window.NetworkLatency.report(null);
       if (!wantOpen) return;
       setStatus('連線中斷，重新連線中…', true);
       clearTimeout(retryT); retryT = setTimeout(connect, Math.min(1000 * 2 ** tries++, 8000));
@@ -45,7 +48,7 @@ window.AmazeOnline = (function () {
     if (local) { if (hub && lc) hub.handle(lc, JSON.parse(JSON.stringify(o))); return; }
     if (ws && ws.readyState === 1) ws.send(JSON.stringify(o));
   }
-  function disconnect() { wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
+  function disconnect() { if (window.NetworkLatency) window.NetworkLatency.setActive(false); wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
 
   /* ---------- 進出 ---------- */
   // 對電腦對戰：在瀏覽器內跑同一個 Hub（計分、電腦、多盤規則與線上完全相同），不需要連線
@@ -80,6 +83,7 @@ window.AmazeOnline = (function () {
   /* ---------- 收訊息 ---------- */
   function onMsg(m) {
     switch (m.t) {
+      case 'pong': if (!local && window.NetworkLatency) window.NetworkLatency.report(Date.now() - m.ts); break;
       case 'welcome':
         myId = m.id; if (!local) try { sessionStorage.setItem('amaze.cid', m.id); } catch (e) {}
         if (!m.resumed && room) toLobby('連線已重置，原本的房間已不存在');

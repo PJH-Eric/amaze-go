@@ -36,7 +36,7 @@ const wss = new WebSocketServer({
 wss.on('connection', (ws) => {
   const c = hub.connect((obj) => { if (ws.readyState === 1) ws.send(JSON.stringify(obj)); });
   ws.isAlive = true; ws.on('pong', () => { ws.isAlive = true; });
-  ws.on('message', (data) => { let m; try { m = JSON.parse(data); } catch (e) { return; } hub.handle(c, m); });
+  ws.on('message', (data) => { let m; try { m = JSON.parse(data); } catch (e) { return; } if (m && m.t === 'ping') { if (ws.readyState === 1) ws.send(JSON.stringify({ t: 'pong', ts: m.ts })); return; } hub.handle(c, m); });
   ws.on('close', () => hub.disconnect(c));
   ws.on('error', () => {});
 });

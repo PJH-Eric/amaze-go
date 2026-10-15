@@ -1,0 +1,94 @@
+/* 連線延遲徽章：由 latency.js 擺在設定鈕左邊或下方的空位（.is-docked），
+   有頂端狀態列的遊戲則直接放進狀態列（.is-inline）；都不適用時退回右上角 */
+#network-latency {
+  --meter-surface: #fffdf8;
+  --meter-ink: #4a3b55;
+  --meter-edge: #765a62;
+  --meter-dot: #958d91;
+  --meter-tint: #786f79;
+  position: fixed;
+  z-index: 40;
+  top: calc(64px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: 20px;
+  padding: 0 7px 0 6px;
+  border: 1.5px solid var(--meter-edge);
+  border-radius: 999px;
+  color: var(--meter-ink);
+  background: var(--meter-surface);
+  box-shadow: 0 1px 0 #ffffffb3 inset, 0 2px 5px #2e233026;
+  font: 800 11px/1 "Yuanti TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  transition: border-color .25s ease, background-color .25s ease;
+}
+#network-latency.is-docked { right: auto; }
+#network-latency.is-compact { padding: 0 6px 0 5px; }
+#network-latency.is-compact .latency-meter__unit { display: none; }
+#network-latency.is-inline { position: static; z-index: auto; flex: none; align-self: center; height: 22px; box-shadow: 0 1px 0 #ffffffb3 inset; }
+/* 爬樓梯：橫向是左側資訊欄的一列，直向是上方薄狀態列裡的一顆（省掉單位才塞得下） */
+#side #network-latency.is-inline { align-self: flex-start; }
+@media (orientation: portrait) {
+  #side #network-latency.is-inline { align-self: center; padding: 0 6px 0 5px; }
+  #side #network-latency.is-inline .latency-meter__unit { display: none; }
+  /* 薄狀態列放不下第五樣：世界名稱優先序最低（見 style.css 註解），線上對局顯示延遲時先收起來 */
+  #side:has(> #network-latency.is-inline:not([hidden])) #side-world { display: none; }
+}
+#network-latency[hidden] { display: none; }
+#network-latency .latency-meter__icon { display: none; }
+
+#network-latency .latency-meter__light {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--meter-dot);
+}
+#network-latency.is-good .latency-meter__light::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: var(--meter-dot);
+  opacity: .45;
+  animation: latency-pulse 2.5s ease-out infinite;
+}
+#network-latency .latency-meter__value {
+  color: var(--meter-tint);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+#network-latency .latency-meter__unit {
+  margin-left: -2px;
+  opacity: .6;
+  font-size: 8.5px;
+  font-weight: 900;
+}
+
+#network-latency.is-good { --meter-dot: #34b45b; --meter-tint: #23763f; }
+#network-latency.is-warn { --meter-dot: #f0a126; --meter-tint: #a35a07; }
+#network-latency.is-bad  { --meter-dot: #e04444; --meter-tint: #b8302f; border-color: #e04444; }
+
+@keyframes latency-pulse {
+  0% { transform: scale(.6); opacity: .5; }
+  70%, 100% { transform: scale(1.9); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #network-latency.is-good .latency-meter__light::after { animation: none; display: none; }
+}
+
+/* 箭頭解密：粉嫩圓潤，與 .btn / .panel 的粉紅描邊同一語彙 */
+#network-latency[data-skin="amaze-go"] { --meter-surface: #fffafc; --meter-ink: #5a3d4a; --meter-edge: #f3cfdc; --meter-tint: #8b6b79; height: 26px; padding: 0 10px 0 9px; border-width: 3px; font-size: 13px; box-shadow: 0 3px 0 rgba(200,120,150,.28); }
+#network-latency[data-skin="amaze-go"] .latency-meter__light { width: 8px; height: 8px; }
+#network-latency[data-skin="amaze-go"] .latency-meter__unit { font-size: 11px; opacity: .75; }
+#network-latency[data-skin="amaze-go"].is-good { --meter-dot: #4fbfa6; --meter-tint: #2c8b76; }
+#network-latency[data-skin="amaze-go"].is-warn { --meter-dot: #f0a93f; --meter-tint: #a8650f; }
+#network-latency[data-skin="amaze-go"].is-bad  { --meter-dot: #f06a95; --meter-tint: #c63567; border-color: #f06a95; }
+#network-latency[data-skin="amaze-go"].is-compact { padding: 0 9px 0 8px; } #network-latency[data-skin="amaze-go"].is-compact .latency-meter__unit { display: inline; }
