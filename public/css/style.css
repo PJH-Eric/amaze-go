@@ -49,11 +49,17 @@ h2 small{font-weight:600;opacity:.7;font-size:13px}
 .arrow:focus-visible .halo{opacity:.9}
 .arrow.fly{pointer-events:none;opacity:0;transform:translate(var(--fx),var(--fy))}
 .arrow.shake{animation:shake .35s}
-.arrow.hint .halo{animation:pulse .6s 3;opacity:.9}
+.arrow.hint .halo{stroke:#ffc400;stroke-width:22;animation:pulse .8s infinite;opacity:1}
+svg.hinting .arrow:not(.hint),svg.hinting .head:not(.hint){opacity:.3;transition:opacity .25s}
+.hintRing circle{fill:none;stroke:#ffb000;stroke-width:4}
+.hintRing .r1{animation:ringOut 1s ease-out infinite}
+.hintRing .r2{animation:ringOut 1s ease-out .5s infinite}
+@keyframes ringOut{0%{transform:scale(.6);opacity:1}100%{transform:scale(3.2);opacity:0}}
 .arrow.blocker .halo{stroke:#ff6b6b;opacity:.9}
 @keyframes shake{0%,100%{transform:translate(0,0)}30%{transform:translate(var(--sx),var(--sy))}60%{transform:translate(calc(var(--sx)*-.5),calc(var(--sy)*-.5))}}
 @keyframes pulse{50%{opacity:.2}}
 .reduce .arrow,.reduce .arrow.shake,.reduce .arrow.hint .halo{transition:none;animation:none}
+.reduce .hintRing circle{animation:none}
 .bottombar{display:flex;gap:12px;justify-content:center;padding:6px 0}
 .live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 /* 結算 overlay 與彈窗 */

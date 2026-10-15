@@ -76,7 +76,7 @@ window.AmazeBoard = (function () {
     const node = (id) => svg.querySelector('.arrow[data-id="' + id + '"]');
     const headOf = (id) => svg.querySelector('.head[data-id="' + id + '"]');   // 箭頭尖端畫在最上層：永遠不會被任何線條蓋住
     function draw(st) {
-      state = st; svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
+      state = st; clearHint(); svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
       // 小螢幕上大盤面：格子太小不好點 → 自動放大到每格至少約 16px（可再用 －/捏合調整）
       requestAnimationFrame(() => { if (state !== st || !svg.clientWidth) return; const cellPx = C * svg.clientWidth / (st.w * C + 24); if (cellPx < 16) { applyZoom(Math.min(2.5, 16 / cellPx)); wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2; wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2; } });
       svg.setAttribute('viewBox', `-12 -12 ${st.w * C + 24} ${st.h * C + 24}`);
@@ -109,6 +109,7 @@ window.AmazeBoard = (function () {
     // 沿著自己的路徑滑出去：頭領先、身體隨路徑轉彎、尾巴最後離開（參考錄影）
     function fly(id) {
       const a = state.arrows[id], n = node(id); if (!n) return;
+      clearHint();
       if (document.body.classList.contains('reduce')) { n.remove(); const h1 = headOf(id); h1 && h1.remove(); return; }
       const sh = shape(a), [dx, dy] = R.DIRS[a.dir], color = COLORS[a.id % COLORS.length];
       const base = sh.line.slice().reverse();                 // 尾 → 頭（stem）
@@ -139,6 +140,12 @@ window.AmazeBoard = (function () {
       };
       requestAnimationFrame(frame);
     }
+    let hintTimer = 0;
+    function clearHint() {
+      clearTimeout(hintTimer); svg.classList.remove('hinting');
+      svg.querySelectorAll('.hintRing').forEach((r) => r.remove());
+      svg.querySelectorAll('.hint').forEach((e) => e.classList.remove('hint'));
+    }
     function flash(id, cls, ms) {
       const n = node(id); if (!n) return; const h = headOf(id), all = h ? [n, h] : [n];
       all.forEach((e) => e.classList.remove(cls)); void n.getBBox(); all.forEach((e) => e.classList.add(cls)); setTimeout(() => all.forEach((e) => e.classList.remove(cls)), ms);
@@ -146,7 +153,21 @@ window.AmazeBoard = (function () {
     return {
       draw, fly,
       shake: (id, blockers) => { flash(id, 'shake', 400); (blockers || []).forEach((b) => flash(b, 'blocker', 700)); },
-      hint: (id) => flash(id, 'hint', 2000),
+      hint: (id) => {
+        const n = node(id), a = state && state.arrows[id]; if (!n || !a) return;
+        clearHint();
+        // 放大狀態下先把被提示的箭頭捲到畫面中央
+        if (wrap.scrollWidth > wrap.clientWidth || wrap.scrollHeight > wrap.clientHeight) {
+          const [cx, cy] = shape(a).head, vb = svg.viewBox.baseVal;
+          wrap.scrollLeft = (cx + 12) / vb.width * wrap.scrollWidth - wrap.clientWidth / 2;
+          wrap.scrollTop = (cy + 12) / vb.height * wrap.scrollHeight - wrap.clientHeight / 2;
+        }
+        const heads = svg.querySelector('.heads'), [hx, hy] = shape(a).head;
+        const ring = el('g', { class: 'hintRing', transform: `translate(${hx} ${hy})` }, heads);
+        el('circle', { class: 'r1', r: 16 }, ring); el('circle', { class: 'r2', r: 16 }, ring);
+        svg.classList.add('hinting'); flash(id, 'hint', 4000);
+        hintTimer = setTimeout(clearHint, 4000);
+      },
       late: (id) => flash(id, 'late', 500),
       setEnabled: (v) => { enabled = v; },
       get state() { return state; },
