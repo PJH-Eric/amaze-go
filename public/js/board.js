@@ -77,6 +77,8 @@ window.AmazeBoard = (function () {
     const headOf = (id) => svg.querySelector('.head[data-id="' + id + '"]');   // 箭頭尖端畫在最上層：永遠不會被任何線條蓋住
     function draw(st) {
       state = st; svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
+      // 小螢幕上大盤面：格子太小不好點 → 自動放大到每格至少約 16px（可再用 －/捏合調整）
+      requestAnimationFrame(() => { if (state !== st || !svg.clientWidth) return; const cellPx = C * svg.clientWidth / (st.w * C + 16); if (cellPx < 16) { applyZoom(Math.min(2.5, 16 / cellPx)); wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2; wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2; } });
       svg.setAttribute('viewBox', `-8 -8 ${st.w * C + 16} ${st.h * C + 16}`);
       // 底色只用淡淡的填色襯出輪廓，不畫外框線（避免誤以為箭頭飛不出去）
       for (let y = 0; y < st.h; y++) for (let x = 0; x < st.w; x++) {
