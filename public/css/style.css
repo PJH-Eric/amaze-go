@@ -433,3 +433,9 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 /* 箭頭不要有黑色（瀏覽器預設）對焦外框；鍵盤對焦改用天藍光暈（.halo）顯示 */
 #board,#board *,#oboard,#oboard *{outline:none!important;-webkit-tap-highlight-color:transparent}
 #board .arrow:focus,#oboard .arrow:focus{outline:none!important}
+/* 邀請連結：網址直接顯示（可點一下全選） */
+.invites .inv{display:flex;align-items:center;gap:8px;margin:6px 0;min-width:0}
+.invites .inv b{flex:0 0 auto;font-size:13px;color:var(--ink,#5b3b4b)}
+.invites .invUrl{flex:1 1 auto;min-width:0;font:12px/1.3 ui-monospace,Menlo,Consolas,monospace;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.8);border:2px solid #f3d5df;color:#6b4a5a;white-space:normal;word-break:break-all;user-select:text;-webkit-user-select:text;cursor:text}
+.invites .inv .btn{flex:0 0 auto}
+@media (max-width:480px){.invites .inv{flex-wrap:wrap}.invites .invUrl{flex-basis:100%;order:3}}

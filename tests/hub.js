@@ -12,7 +12,7 @@ const ends = () => log.filter((m) => m.t === 'end');
 
 (async () => {
   hub.handle(c, { t: 'hello', name: '測試' });
-  hub.handle(c, { t: 'create', name: '單機', diff: 'easy', max: 4, rounds: 3 });
+  hub.handle(c, { t: 'create', name: '單機', diff: 'easy', rounds: 3 });
   const room = await until(() => last('room'));
   await t('可設 1～5 盤，超出範圍會被夾住', async () => {
     assert.strictEqual(room.totalRounds, 3);
@@ -20,9 +20,9 @@ const ends = () => log.filter((m) => m.t === 'end');
     hub.handle(c, { t: 'config', rounds: 0 }); assert.ok(last('room').totalRounds >= 1);
     hub.handle(c, { t: 'config', rounds: 3 });
   });
-  await t('1 位真人＋最多 3 位電腦（第 4 位加不進去）', async () => {
+  await t('固定最多 3 位玩家：1 位真人＋最多 2 位電腦（第 3 位電腦加不進去）', async () => {
     for (const d of ['easy', 'normal', 'hard', 'toddler']) hub.handle(c, { t: 'config', addAI: d });
-    assert.strictEqual(last('room').players.length, 4);
+    assert.strictEqual(last('room').players.length, 3);
   });
   await t('累計賽：前兩盤非最終、第三盤才決勝負；總分＝每盤分數相加', async () => {
     const perRound = [];
@@ -55,7 +55,7 @@ const ends = () => log.filter((m) => m.t === 'end');
     const h2 = new Hub({ countdownMs: 0, aiScale: 0.005 }), l1 = [], l2 = [];
     const a = h2.connect((m) => l1.push(JSON.parse(JSON.stringify(m)))), b = h2.connect((m) => l2.push(JSON.parse(JSON.stringify(m))));
     h2.handle(a, { t: 'hello', name: 'A' }); h2.handle(b, { t: 'hello', name: 'B' });
-    h2.handle(a, { t: 'create', name: 'x', diff: 'easy', max: 2, rounds: 3 });
+    h2.handle(a, { t: 'create', name: 'x', diff: 'easy', rounds: 3 });
     const code = [...l1].reverse().find((m) => m.t === 'room').id;
     h2.handle(b, { t: 'join', room: code, want: 'player' });
     h2.handle(a, { t: 'start' });

@@ -56,7 +56,7 @@ window.AmazeOnline = (function () {
     const mine = hub = new window.AmazeHub.Hub();
     lc = hub.connect((o) => { const m = JSON.parse(JSON.stringify(o)); queueMicrotask(() => { if (hub === mine) onMsg(m); }); });
     hub.handle(lc, { t: 'hello', name: App.nick });
-    hub.handle(lc, { t: 'create', name: '對電腦對戰', diff: 'easy', max: 4, rounds: 3 });
+    hub.handle(lc, { t: 'create', name: '對電腦對戰', diff: 'easy', rounds: 3 });
     hub.handle(lc, { t: 'config', addAI: 'easy' });
   }
   function stopLocal() {
@@ -127,19 +127,18 @@ window.AmazeOnline = (function () {
   $('#quickBtn').onclick = () => {
     const r = lastRooms.find((x) => x.phase !== 'playing' && x.players < x.max);
     if (r) joinRoom(r.id, 'player');
-    else { syncNick(); send({ t: 'create', name: (App.nick || '快速') + '的房間', diff: 'easy', max: 4, rounds: 3 }); send({ t: 'config', addAI: 'easy' }); }
+    else { syncNick(); send({ t: 'create', name: (App.nick || '快速') + '的房間', diff: 'easy', rounds: 3 }); send({ t: 'config', addAI: 'easy' }); }
   };
   $('#lobbyBack').onclick = () => { disconnect(); invite = null; App.show('home'); };
   const ROUNDS = [1, 2, 3, 4, 5].map((n) => [n, n + ' 盤']);
   // 建房
-  let cmDiff = 'easy', cmMax = 4, cmRounds = 3;
+  let cmDiff = 'easy', cmRounds = 3;
   function renderCm() {
     App.chipGroup($('#cmDiff'), App.DIFF_ITEMS, cmDiff, (v) => { cmDiff = v; renderCm(); });
-    App.chipGroup($('#cmMax'), [[2, '2 人'], [3, '3 人'], [4, '4 人']], cmMax, (v) => { cmMax = v; renderCm(); });
     App.chipGroup($('#cmRounds'), ROUNDS, cmRounds, (v) => { cmRounds = v; renderCm(); });
   }
   $('#createBtn').onclick = () => { renderCm(); App.open($('#createModal')); };
-  $('#cmGo').onclick = () => { syncNick(); send({ t: 'create', name: $('#cmName').value, diff: cmDiff, max: cmMax, rounds: cmRounds }); App.close(); };
+  $('#cmGo').onclick = () => { syncNick(); send({ t: 'create', name: $('#cmName').value, diff: cmDiff, rounds: cmRounds }); App.close(); };
 
   // 邀請連結：先停在大廳，由使用者確認暱稱才加入
   function parseInvite() {
@@ -249,23 +248,25 @@ window.AmazeOnline = (function () {
       const l1 = document.createElement('h3'); l1.textContent = '棋盤難度（每局隨機盤型）';
       const g1 = document.createElement('div'); g1.className = 'chips'; g1.setAttribute('role', 'radiogroup');
       App.chipGroup(g1, App.DIFF_ITEMS, room.diff, (d) => send({ t: 'config', diff: d }));
-      const l2 = document.createElement('h3'); l2.textContent = '座位數（空位可直接加電腦）';
-      const g2 = document.createElement('div'); g2.className = 'chips'; g2.setAttribute('role', 'radiogroup');
-      App.chipGroup(g2, [[2, '2'], [3, '3'], [4, '4']], room.max, (n) => send({ t: 'config', max: n }));
       const l5 = document.createElement('h3'); l5.textContent = '比賽盤數（累計總分決勝負）';
       const g5 = document.createElement('div'); g5.className = 'chips'; g5.setAttribute('role', 'radiogroup');
       App.chipGroup(g5, ROUNDS, room.totalRounds, (n) => send({ t: 'config', rounds: n }));
-      cfg.append(l1, g1, l5, g5, l2, g2); v.appendChild(cfg);
+      cfg.append(l1, g1, l5, g5); v.appendChild(cfg);
     }
     if (host && !local) {
       const inv = document.createElement('div'); inv.className = 'invites';
       const l4 = document.createElement('h3'); l4.textContent = '邀請連結'; inv.appendChild(l4);
-      const row = document.createElement('div'); row.className = 'irow';
-      [['play', '複製玩家邀請連結'], ['watch', '複製觀戰邀請連結']].forEach(([role, label]) => {
-        const it = (room.invites || []).find((x) => x.role === role); if (!it) return;
-        const url = location.origin + location.pathname + '?room=' + room.id + '&invite=' + it.token + '&as=' + role;
-        row.appendChild(btn(label, 'btn small', () => copy(url)));
+      const urlOf = (role) => { const it = (room.invites || []).find((x) => x.role === role); return it ? location.origin + location.pathname + '?room=' + room.id + '&invite=' + it.token + '&as=' + role : ''; };
+      [['play', '玩家邀請'], ['watch', '觀戰邀請']].forEach(([role, label]) => {
+        const url = urlOf(role); if (!url) return;
+        const li = document.createElement('div'); li.className = 'inv';
+        const nm = document.createElement('b'); nm.textContent = label;
+        const u = document.createElement('div'); u.className = 'invUrl'; u.textContent = url; u.title = url; u.tabIndex = 0;
+        u.addEventListener('click', () => { const r = document.createRange(); r.selectNodeContents(u); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); });
+        li.append(nm, u, btn('複製', 'btn small', () => copy(url)));
+        inv.appendChild(li);
       });
+      const row = document.createElement('div'); row.className = 'irow';
       row.appendChild(btn('撤銷並重發', 'btn small ghost', () => { send({ t: 'invite', role: 'play', action: 'create' }); send({ t: 'invite', role: 'watch', action: 'create' }); toast('舊連結已失效，已產生新連結'); }));
       inv.appendChild(row);
       v.appendChild(inv);

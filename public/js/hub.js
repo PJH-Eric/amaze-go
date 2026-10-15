@@ -9,6 +9,7 @@ const GRACE_MS = 30000;            // 斷線寬限：超過就視為離開
 const COUNTDOWN_MS = 3000;
 const INVITE_TTL_MS = 6 * 3600e3;  // 邀請 6 小時過期（也隨房間關閉失效）
 const MAX_SPECTATORS = 20;
+const MAX_SEATS = 3;               // 每個房間固定最多 3 位玩家（真人＋電腦），不開放設定
 const ADJ = ['開心', '勇敢', '好奇', '貪睡', '閃亮', '軟綿綿', '圓滾滾', '機靈'];
 const ANI = ['小貓', '小狗', '兔兔', '企鵝', '小熊', '狐狸', '鴨鴨', '刺蝟'];
 const AI_NAMES = ['電腦·糰子', '電腦·年糕', '電腦·布丁'];
@@ -112,7 +113,7 @@ class Hub {
   on_create(c, m) {
     if (c.roomId) return this.err(c, 'IN_ROOM', '請先離開目前的房間');
     const diff = R.DIFFICULTIES[m.diff] ? m.diff : 'easy';
-    const max = Math.min(4, Math.max(2, m.max | 0 || 4));
+    const max = MAX_SEATS;
     const r = {
       id: this.newCode(), name: cleanText(m.name).slice(0, 14) || (c.name + '的房間'), hostId: c.id, diff, max,
       phase: 'lobby', round: 0, totalRounds: Math.min(5, Math.max(1, (m.rounds | 0) || 3)), matchDone: true, totals: new Map(),
@@ -213,7 +214,6 @@ class Hub {
     if (!r.matchDone) return this.err(c, 'IN_MATCH', '比賽進行中，打完這一輪才能改設定');
     if (R.DIFFICULTIES[m.diff]) r.diff = m.diff;
     if (m.rounds) r.totalRounds = Math.min(5, Math.max(1, m.rounds | 0));
-    if (m.max) { const mx = Math.min(4, Math.max(2, m.max | 0)); if (mx >= this.seats(r)) r.max = mx; }
     if (m.name != null) r.name = cleanText(m.name).slice(0, 14) || r.name;
     if (m.addAI && this.seats(r) < r.max) {
       const d = R.DIFFICULTIES[m.addAI] ? m.addAI : 'normal';

@@ -43,7 +43,7 @@ function client(port) {
 
   let code, playToken, watchToken;
   await t('建房：房主為真人玩家，列表可見', async () => {
-    A.send({ t: 'hello', name: '甲' }); A.send({ t: 'create', name: '測試房', diff: 'normal', max: 3 });
+    A.send({ t: 'hello', name: '甲' }); A.send({ t: 'create', name: '測試房', diff: 'normal' });
     await A.until(() => A.room);
     code = A.room.id; assert.strictEqual(A.room.role, 'player'); assert.strictEqual(A.room.hostId, A.id);
     playToken = A.room.invites.find((i) => i.role === 'play').token; watchToken = A.room.invites.find((i) => i.role === 'watch').token;
@@ -131,7 +131,7 @@ function client(port) {
   });
   await t('只剩電腦＋觀戰者（真人斷線超過寬限）也會關閉房間', async () => {
     const P = client(port), V = client(port); await P.open; await V.open; await P.until(() => P.id); await V.until(() => V.id);
-    P.send({ t: 'create', diff: 'easy', max: 2 }); const r = await P.until(() => P.room);
+    P.send({ t: 'create', diff: 'easy' }); const r = await P.until(() => P.room);
     V.send({ t: 'join', room: r.id, want: 'spectator' }); await V.until(() => V.room);
     P.send({ t: 'config', addAI: 'easy' }); await sleep(30);
     P.ws.close(); const c = await V.until(() => V.last('closed'), 2000); assert.ok(c);
