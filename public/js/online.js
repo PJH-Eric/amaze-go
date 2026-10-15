@@ -302,7 +302,7 @@ window.AmazeOnline = (function () {
     runCountdown();
   }
   let otT = 0;
-  function otStart() { clearInterval(otT); const tk = () => { $('#otimerText').textContent = App.fmtTime(Math.max(0, Date.now() - startLocal)); }; tk(); otT = setInterval(tk, 100); }
+  function otStart() { clearInterval(otT); const tk = () => { $('#otimerText').textContent = App.fmtTime(Math.max(0, Date.now() - startLocal)); }; tk(); otT = setInterval(tk, 10); }
   function otStop(final) { clearInterval(otT); if (final) $('#otimerText').textContent = App.fmtTime(Math.max(0, Date.now() - startLocal)); }
   function runCountdown() {
     clearInterval(countT);

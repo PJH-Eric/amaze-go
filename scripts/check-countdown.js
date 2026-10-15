@@ -27,6 +27,7 @@ async function checkCountdown(page, name, width, height) {
     samples.push(await layout(page));
     assert.equal(await page.locator('#count').evaluate((n) => getComputedStyle(n).transform), 'none', '覆蓋層不可跟著數字縮放');
     if (digit !== '開始！') {
+      assert.equal(await page.locator('#otimerText').textContent(), '0:00.00');
       const removed = await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length);
       await page.locator('#oboard .arrow').first().press('Enter');
       assert.equal(await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length), removed, '倒數期間不可操作棋盤');
@@ -34,6 +35,7 @@ async function checkCountdown(page, name, width, height) {
     await page.screenshot({ path: path.join(output, `${name}-${width}x${height}-${digit === '開始！' ? 'start' : digit}.png`) });
   }
   await page.locator('#count').waitFor({ state: 'hidden' });
+  assert.match(await page.locator('#otimerText').textContent(), /^\d+:\d{2}\.\d{2}$/);
   const playing = await layout(page);
   for (const sample of samples) {
     assert.deepEqual(sample.board, playing.board, '倒數時棋盤布局改變');

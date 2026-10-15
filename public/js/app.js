@@ -33,11 +33,17 @@
   }
 
   /* ---------- 闖關：選關 ---------- */
-  const fmtTime = (ms) => { const t = Math.floor(Math.max(0, ms) / 100) / 10, m = Math.floor(t / 60); return m + ':' + (t - m * 60).toFixed(1).padStart(4, '0'); };
+  const fmtTime = (ms) => {
+    const centiseconds = Math.floor(Math.max(0, ms) / 10);
+    const minutes = Math.floor(centiseconds / 6000);
+    const seconds = Math.floor(centiseconds / 100) % 60;
+    const fraction = centiseconds % 100;
+    return minutes + ':' + String(seconds).padStart(2, '0') + '.' + String(fraction).padStart(2, '0');
+  };
   const bestOf = (d, l) => (times[d] && times[d][l]) || 0;
   let t0 = 0, elapsed = 0, tickT = 0, hintsUsed = 0;
   const showTimer = () => { $('#timerText').textContent = fmtTime(elapsed); };
-  function startTimer() { clearInterval(tickT); t0 = performance.now(); elapsed = 0; showTimer(); tickT = setInterval(() => { elapsed = performance.now() - t0; showTimer(); }, 100); }
+  function startTimer() { clearInterval(tickT); t0 = performance.now(); elapsed = 0; showTimer(); tickT = setInterval(() => { elapsed = performance.now() - t0; showTimer(); }, 10); }
   function stopTimer() { clearInterval(tickT); elapsed = performance.now() - t0; showTimer(); }
   const starsOf = (d, l) => (stars[d] && stars[d][l]) || 0;
   const unlocked = (d, l) => l === 1 || starsOf(d, l - 1) > 0;
@@ -134,7 +140,7 @@
     const rt = win ? rate() : null, got = win ? rt.stars : 0;
     const prev = starsOf(diff, level);
     const prevBest = bestOf(diff, level), newBest = win && (!prevBest || elapsed < prevBest);
-    if (newBest) (times[diff] = times[diff] || {})[level] = Math.round(elapsed);
+    if (newBest) (times[diff] = times[diff] || {})[level] = Math.floor(elapsed);
     if (win) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
     win ? A.sfx.win() : A.sfx.lose();
     $('#resultIcon').innerHTML = medal(win);
