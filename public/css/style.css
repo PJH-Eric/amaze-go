@@ -44,7 +44,7 @@ h2 small{font-weight:600;opacity:.7;font-size:13px}
 .cellDot{fill:#f6dbe6}
 .arrow{cursor:pointer;transition:transform .5s cubic-bezier(.5,-.2,.8,.6),opacity .5s}
 .nofaces .face{display:none}
-.arrow .halo{fill:none;stroke:var(--sky);stroke-width:38;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.arrow .halo{fill:none;stroke:var(--sky);stroke-width:13;stroke-linecap:round;stroke-linejoin:round;opacity:0}
 .arrow:focus-visible{outline:none}
 .arrow:focus-visible .halo{opacity:.9}
 .arrow.fly{pointer-events:none;opacity:0;transform:translate(var(--fx),var(--fy))}
@@ -423,7 +423,7 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 #board,#oboard{overflow:visible}
 .head{transition:transform .16s ease-out,filter .16s ease-out}
 .arrow{transition:transform .16s ease-out,filter .16s ease-out}
-.arrow.lift,.head.lift{transform:translateY(-6px);filter:drop-shadow(0 10px 4px rgba(70,30,50,.34))}
+.arrow.lift,.head.lift{transform:translateY(-4px);filter:drop-shadow(0 7px 3px rgba(70,30,50,.34))}
 .arrow.shake,.head.shake{animation:shake .35s}
 .arrow.blocker .halo{stroke:#ff6b6b;opacity:.9}
 .head.late{opacity:.35}

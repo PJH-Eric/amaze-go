@@ -8,10 +8,10 @@
 
   // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
-    toddler: { name: '幼幼班', minDim: 10, maxDim: 12, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
-    easy: { name: '簡單', minDim: 14, maxDim: 18, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
-    normal: { name: '普通', minDim: 18, maxDim: 24, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
-    hard: { name: '困難', minDim: 22, maxDim: 30, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
+    toddler: { name: '幼幼班', minDim: 11, maxDim: 13, minLen: 3, maxLen: 6, fill: 0.9, lives: Infinity, hints: Infinity },
+    easy: { name: '簡單', minDim: 16, maxDim: 20, minLen: 4, maxLen: 9, fill: 0.95, lives: 5, hints: 3 },
+    normal: { name: '普通', minDim: 22, maxDim: 28, minLen: 5, maxLen: 13, fill: 0.97, lives: 3, hints: 2 },
+    hard: { name: '困難', minDim: 26, maxDim: 34, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
   };
   const LEVELS_PER_DIFFICULTY = 100;
 
@@ -190,11 +190,12 @@
     // 細長／鏤空的輪廓在低解析度可能太小：自動放大解析度直到格數足夠
     for (let extra = 1; extra <= 4 && m.rows.join('').split('1').length - 1 < 12; extra++) m = Shapes.rasterize(spec.shape, spec.dim + extra, spec.flip);
     // 盡量不要有「只有箭頭尖端」的 1 格箭頭：換幾個內部種子，挑 1 格箭頭最少的排法
-    let arrows = null, bestOnes = Infinity;
-    for (let k = 0; k < 16 && bestOnes > 0; k++) {
+    let arrows = null, bestOnes = Infinity; const tStart = Date.now();
+    for (let k = 0; k < 40 && bestOnes > 0; k++) {
       const cand = generate({ ...cfg, w: m.w, h: m.h, mask: m.rows, seed: spec.seed + k * 104729 });
       const ones = cand.filter((a) => a.cells.length === 1).length;
       if (ones < bestOnes) { bestOnes = ones; arrows = cand; }
+      if (bestOnes <= cand.length * 0.02 || (arrows && Date.now() - tStart > 350)) break;   // 夠緊密或超過時間預算就收手   // 已夠緊密就收手，避免大盤面生成太久
     }
     return {
       difficulty, seed: spec.seed, w: m.w, h: m.h, mask: m.rows, shape: { id: spec.shape.id, name: spec.shape.name, cat: spec.shape.cat },
