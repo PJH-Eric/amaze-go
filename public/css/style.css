@@ -447,3 +447,10 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 .invites .invUrl{flex:1 1 auto;min-width:0;font:12px/1.3 ui-monospace,Menlo,Consolas,monospace;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.8);border:2px solid #f3d5df;color:#6b4a5a;white-space:normal;word-break:break-all;user-select:text;-webkit-user-select:text;cursor:text}
 .invites .inv .btn{flex:0 0 auto}
 @media (max-width:480px){.invites .inv{flex-wrap:wrap}.invites .invUrl{flex-basis:100%;order:3}}
+
+/* 縮放鍵：縮小並平常半透明，避免擋到箭頭；碰到／聚焦時才變清楚 */
+.zbar{gap:4px}
+.zbtn{width:34px;height:34px;font-size:18px;border-width:2px;opacity:.5;transition:opacity .15s;box-shadow:none}
+.zbtn:hover,.zbtn:focus-visible,.zbtn:active{opacity:1}
+.zbtn[disabled]{opacity:.25}
+@media (pointer:coarse){.zbtn{width:40px;height:40px;font-size:20px}}
