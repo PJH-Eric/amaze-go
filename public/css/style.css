@@ -67,6 +67,10 @@ svg.hinting .arrow:not(.hint),svg.hinting .head:not(.hint){opacity:.3;transition
 .result[hidden],.modal[hidden]{display:none}
 .card{background:var(--card);border:4px solid var(--line);border-radius:28px;padding:20px 22px;width:min(100%,420px);max-height:92dvh;overflow:auto;text-align:center;box-shadow:var(--shadow)}
 .card h2{font-size:24px;margin:6px 0}
+#result{padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+#result .card{max-height:100%;min-width:0}
+#resultText{overflow-wrap:anywhere;line-height:1.6}
+#result .stack .btn{flex-shrink:0;min-height:48px;white-space:normal;overflow-wrap:anywhere}
 .medal{font-size:0;display:flex;justify-content:center}.medal svg{width:84px;height:84px}
 .note{font-size:13px;opacity:.75}
 .steps{text-align:left;line-height:1.7;padding-left:22px}
@@ -314,7 +318,7 @@ body{background:
 @keyframes bob{50%{transform:translateY(-6px) rotate(-1.5deg)}}
 h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #fff)}
 .menu .btn.big{flex-direction:row;justify-content:flex-start;gap:14px;text-align:left;padding:12px 18px 12px 14px;border-radius:24px}
-.menu .btn.big .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.menu .btn.big .tx{display:flex;flex-direction:column;gap:2px;min-width:0;white-space:normal;overflow-wrap:anywhere}
 .menu .btn.big .tx b{font-size:19px;line-height:1.2}
 .menu .btn.big .ic{flex:none;width:48px;height:48px;border-radius:16px;background:#fff;display:grid;place-items:center;box-shadow:inset 0 0 0 3px var(--line)}
 .menu .btn.primary .ic{background:rgba(255,255,255,.28);box-shadow:none}

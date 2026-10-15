@@ -14,7 +14,7 @@
   try { times = JSON.parse(localStorage.getItem('amaze.times') || '{}') || {}; } catch (e) {}
   try { nick = localStorage.getItem('amaze.nick') || ''; } catch (e) {}
   const save = () => { try { localStorage.setItem('amaze.settings', JSON.stringify(settings)); localStorage.setItem('amaze.stars', JSON.stringify(stars)); localStorage.setItem('amaze.times', JSON.stringify(times)); } catch (e) {} };
-  let diff = 'easy', level = 1, state = null, busy = false;
+  let diff = 'easy', level = 1, state = null, levelStart = null, busy = false;
   try { const d = localStorage.getItem('amaze.diff'); if (R.DIFFICULTIES[d]) diff = d; } catch (e) {}
 
   function applySettings() {
@@ -88,10 +88,14 @@
     $('#gameTitle').title = state.shape.name + '・剩 ' + R.remaining(state) + ' 支';
   }
   const say = (t) => { $('#live').textContent = t; };
-  function startLevel(l) {
+  function startLevel(l, replay = false) {
     level = l; busy = false;
-    state = R.createState(diff, l); hintsUsed = 0; startTimer();
+    // 生成器有時間預算；重玩還原開局快照，避免同關重生出不同棋盤。
+    state = replay && levelStart ? structuredClone(levelStart) : R.createState(diff, l);
+    levelStart = structuredClone(state);
+    hintsUsed = 0; startTimer();
     $('#result').hidden = true; show('game'); board.draw(state); board.setEnabled(true); renderHud(); A.unlock();
+    $('#restartBtn').focus();
   }
   function onTap(id) {
     if (!state || state.status !== 'playing' || busy) return;
@@ -141,8 +145,9 @@
       ? '耗時 ' + fmtTime(elapsed) + (newBest ? (prevBest ? '（新紀錄！）' : '') : '（最佳 ' + fmtTime(prevBest) + '）') + '・失誤 ' + state.mistakes + ' 次・提示 ' + hintsUsed + ' 次（目標 ' + fmtTime(parMs()) + (rt.fast ? ' ✓' : ' ✗') + '）' + (got === 5 ? '，完美五星！' : got > prev && prev ? '，星星升級！' : '。')
       : '再試一次，先看清楚誰擋住誰～';
     const next = win && level < R.LEVELS_PER_DIFFICULTY;
-    $('#againBtn').textContent = next ? '下一關' : win ? '再玩一次' : '再試一次';
-    $('#againBtn').onclick = () => startLevel(next ? level + 1 : level);
+    $('#againBtn').textContent = next ? '下一關' : win ? '重玩這關' : '再試一次';
+    $('#againBtn').onclick = () => startLevel(next ? level + 1 : level, !next);
+    $('#replayBtn').hidden = !next;
     $('#result').hidden = false; $('#againBtn').focus(); if (win) confetti($('#result'));
   }
 
@@ -155,7 +160,7 @@
     if (!m) return;
     if (e.key === 'Escape' && openModal) { e.preventDefault(); close(); return; }
     if (e.key === 'Tab') {
-      const f = [...m.querySelectorAll('button:not([disabled]),input')];
+      const f = [...m.querySelectorAll('button:not([disabled]),input')].filter((x) => x.getClientRects().length);
       if (!f.length) return;
       const first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -186,7 +191,8 @@
   $('#levelsBack').onclick = () => show('home');
   $('#backBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
   $('#homeBtn').onclick = () => { $('#result').hidden = true; show('home'); };
-  $('#restartBtn').onclick = () => startLevel(level);
+  $('#restartBtn').onclick = () => startLevel(level, true);
+  $('#replayBtn').onclick = () => startLevel(level, true);
   $('#roomBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
   $('#hintBtn').onclick = () => {
     const id = R.hint(state); if (id === null) return; hintsUsed++;
