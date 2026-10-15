@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/verify.js",
-    "verify": "node tests/verify.js && node tests/hub.js && node scripts/online-check.js"
+    "test": "node tests/determinism.js && node tests/verify.js",
+    "verify": "node tests/determinism.js && node tests/verify.js && node tests/hub.js && node scripts/online-check.js"
   },
   "engines": {
     "node": ">=18"

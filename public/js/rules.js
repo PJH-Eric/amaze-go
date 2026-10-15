@@ -1,8 +1,8 @@
 /* 箭頭解密 規則核心：瀏覽器與伺服器（日後線上版）共用，純函式、無 DOM、可注入種子 */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'));
-  else root.AmazeRules = factory(root.AmazeShapes);
-})(typeof self !== 'undefined' ? self : this, function (Shapes) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'), require('./levels-v1.js'));
+  else root.AmazeRules = factory(root.AmazeShapes, root.AmazeLevels);
+})(typeof self !== 'undefined' ? self : this, function (Shapes, Levels) {
   const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
   const DIR_KEYS = Object.keys(DIRS);
 
@@ -180,11 +180,23 @@
     return { shape, dim, flip: rnd() < 0.5, seed: Math.floor(rnd() * 2147483647) };
   }
 
+  // 闖關只讀取固定版本資料；裝置時間、效能與瀏覽器演算法不參與盤面生成。
   function createState(difficulty, level) {
-    const spec = levelSpec(difficulty, level);
-    const st = createStateFromSpec(difficulty, spec);
-    st.level = level;
-    return st;
+    const boards = Levels.boards[difficulty];
+    const entry = Number.isInteger(level) && boards && boards[level - 1];
+    if (!entry) throw new RangeError('無效的闖關難度或關卡');
+    const cfg = DIFFICULTIES[difficulty];
+    const [seed, w, h, shape, mask, arrows] = entry;
+    return {
+      difficulty, level, boardVersion: Levels.version, seed, w, h,
+      mask: mask.slice(), shape: { ...shape },
+      arrows: arrows.map(([dir, cells], id) => ({
+        id, dir, removed: false,
+        cells: Array.from({ length: cells.length / 2 }, (_, i) => [cells[i * 2], cells[i * 2 + 1]]),
+      })),
+      lives: cfg.lives, maxLives: cfg.lives, hints: cfg.hints,
+      moves: 0, mistakes: 0, status: 'playing',
+    };
   }
 
   function createStateFromSpec(difficulty, spec) {

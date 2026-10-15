@@ -90,7 +90,7 @@
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l, replay = false) {
     level = l; busy = false;
-    // 生成器有時間預算；重玩還原開局快照，避免同關重生出不同棋盤。
+    // 重玩還原獨立開局快照，不修改固定關卡資料與其他局的狀態。
     state = replay && levelStart ? structuredClone(levelStart) : R.createState(diff, l);
     levelStart = structuredClone(state);
     hintsUsed = 0; startTimer();
