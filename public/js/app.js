@@ -35,7 +35,7 @@
   /* ---------- 闖關：選關 ---------- */
   const fmtTime = (ms) => { const t = Math.floor(Math.max(0, ms) / 100) / 10, m = Math.floor(t / 60); return m + ':' + (t - m * 60).toFixed(1).padStart(4, '0'); };
   const bestOf = (d, l) => (times[d] && times[d][l]) || 0;
-  let t0 = 0, elapsed = 0, tickT = 0;
+  let t0 = 0, elapsed = 0, tickT = 0, hintsUsed = 0;
   const showTimer = () => { $('#timerText').textContent = fmtTime(elapsed); };
   function startTimer() { clearInterval(tickT); t0 = performance.now(); elapsed = 0; showTimer(); tickT = setInterval(() => { elapsed = performance.now() - t0; showTimer(); }, 100); }
   function stopTimer() { clearInterval(tickT); elapsed = performance.now() - t0; showTimer(); }
@@ -53,7 +53,7 @@
   }
   const DIFF_ITEMS = Object.keys(R.DIFFICULTIES).map((d) => [d, R.DIFFICULTIES[d].name]);
   const starSvg = (on) => '<svg viewBox="0 0 24 24" class="' + (on ? 'on' : 'off') + '"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" stroke-linejoin="round"/></svg>';
-  const starRow = (n) => starSvg(n >= 1) + starSvg(n >= 2) + starSvg(n >= 3);
+  const starRow = (n) => starSvg(n >= 1) + starSvg(n >= 2) + starSvg(n >= 3) + starSvg(n >= 4) + starSvg(n >= 5);
   function renderLevels() {
     chipGroup($('#diffChips'), DIFF_ITEMS, diff, (d) => { diff = d; try { localStorage.setItem('amaze.diff', d); } catch (e) {} renderLevels(); $('#levelScroll').scrollTop = 0; });
     const g = $('#levelGrid'); g.innerHTML = '';
@@ -68,7 +68,7 @@
       if (!open) { b.disabled = true; } else b.onclick = () => startLevel(l);
       g.appendChild(b);
     }
-    $('#progressText').textContent = '已通 ' + cleared + '／' + R.LEVELS_PER_DIFFICULTY + ' 關・星星 ' + total + '／' + R.LEVELS_PER_DIFFICULTY * 3;
+    $('#progressText').textContent = '已通 ' + cleared + '／' + R.LEVELS_PER_DIFFICULTY + ' 關・星星 ' + total + '／' + R.LEVELS_PER_DIFFICULTY * 5;
     const target = g.children[(firstOpen || R.LEVELS_PER_DIFFICULTY) - 1];
     requestAnimationFrame(() => { const sc = $('#levelScroll'); if (target && !sc.dataset.placed) { sc.scrollTop = Math.max(0, target.offsetTop - sc.clientHeight / 3); } sc.dataset.placed = ''; });
   }
@@ -90,7 +90,7 @@
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l) {
     level = l; busy = false;
-    state = R.createState(diff, l); startTimer();
+    state = R.createState(diff, l); hintsUsed = 0; startTimer();
     $('#result').hidden = true; show('game'); board.draw(state); board.setEnabled(true); renderHud(); A.unlock();
   }
   function onTap(id) {
@@ -115,10 +115,19 @@
     for (let i = 0; i < 28; i++) { const p = document.createElement('i'); p.style.cssText = 'left:' + Math.random() * 100 + '%;background:' + cols[i % 5] + ';animation-delay:' + Math.random() * 0.5 + 's;animation-duration:' + (1.6 + Math.random() * 1.2) + 's;--r:' + Math.round(Math.random() * 720 - 360) + 'deg;--dx:' + Math.round(Math.random() * 80 - 40) + 'px'; c.appendChild(p); }
     host.appendChild(c); setTimeout(() => c.remove(), 3200);
   }
-  const rate = (m) => (m === 0 ? 3 : m <= 2 ? 2 : 1);
+  // 五星制（門檻皆依難度）：過關 1 星＋失誤（0 次 +2、≤門檻 +1）＋提示用量在允許內 +1＋耗時在目標內 +1
+  const RULE = {
+    toddler: { miss: 4, hint: 2, sec: 1.0 }, easy: { miss: 2, hint: 1, sec: 1.2 }, normal: { miss: 1, hint: 0, sec: 1.5 },
+    hard: { miss: 1, hint: 0, sec: 1.8 }, myth: { miss: 1, hint: 0, sec: 2.2 },   // 越難允許的失誤／提示越少，但每支箭給的思考時間越多
+  };
+  const parMs = () => (5 + state.arrows.length * RULE[diff].sec) * 1000;
+  function rate() {
+    const r = RULE[diff], m = state.mistakes, fast = elapsed <= parMs();
+    return { stars: 1 + (m === 0 ? 2 : m <= r.miss ? 1 : 0) + (hintsUsed <= r.hint ? 1 : 0) + (fast ? 1 : 0), fast };
+  }
   function showResult() {
     const win = state.status === 'won';
-    const got = win ? rate(state.mistakes) : 0;
+    const rt = win ? rate() : null, got = win ? rt.stars : 0;
     const prev = starsOf(diff, level);
     const prevBest = bestOf(diff, level), newBest = win && (!prevBest || elapsed < prevBest);
     if (newBest) (times[diff] = times[diff] || {})[level] = Math.round(elapsed);
@@ -129,7 +138,7 @@
     $('#resultStars').innerHTML = win ? starRow(got) : '';
     $('#resultStars').hidden = !win;
     $('#resultText').textContent = win
-      ? '耗時 ' + fmtTime(elapsed) + (newBest ? (prevBest ? '（新紀錄！）' : '') : '（最佳 ' + fmtTime(prevBest) + '）') + '，點了 ' + state.moves + ' 次，失誤 ' + state.mistakes + ' 次' + (got === 3 ? '，完美三星！' : got > prev && prev ? '，星星升級！' : '。')
+      ? '耗時 ' + fmtTime(elapsed) + (newBest ? (prevBest ? '（新紀錄！）' : '') : '（最佳 ' + fmtTime(prevBest) + '）') + '・失誤 ' + state.mistakes + ' 次・提示 ' + hintsUsed + ' 次（目標 ' + fmtTime(parMs()) + (rt.fast ? ' ✓' : ' ✗') + '）' + (got === 5 ? '，完美五星！' : got > prev && prev ? '，星星升級！' : '。')
       : '再試一次，先看清楚誰擋住誰～';
     const next = win && level < R.LEVELS_PER_DIFFICULTY;
     $('#againBtn').textContent = next ? '下一關' : win ? '再玩一次' : '再試一次';
@@ -180,7 +189,7 @@
   $('#restartBtn').onclick = () => startLevel(level);
   $('#roomBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
   $('#hintBtn').onclick = () => {
-    const id = R.hint(state); if (id === null) return;
+    const id = R.hint(state); if (id === null) return; hintsUsed++;
     board.hint(id); say('提示：箭頭 ' + (id + 1) + ' 現在可以飛'); renderHud();
   };
   document.addEventListener('pointerdown', () => A.unlock(), { once: true });

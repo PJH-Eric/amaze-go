@@ -498,3 +498,6 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 .otimerRow{display:flex;justify-content:center;padding:4px 0 2px}
 @media (max-width:360px){.timer{font-size:13px;padding:3px 8px 3px 6px}.timer svg{width:15px;height:15px}.tright{gap:5px}}
 @media (max-width:480px){.tright{flex-direction:column;align-items:flex-end;gap:3px}.tright .timer{font-size:13px;padding:3px 8px 3px 6px;border-width:2px}.tright .timer svg{width:14px;height:14px}.tright .hearts svg{width:20px;height:20px}.tright .hearts{gap:1px}}
+
+.lv .st svg{width:11px;height:11px}.result .stars svg{width:34px;height:34px}
+@media (max-width:480px){.lv .st svg{width:10px;height:10px}.result .stars svg{width:30px;height:30px}}
