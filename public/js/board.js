@@ -34,7 +34,7 @@ window.AmazeBoard = (function () {
     const tail = [pts[L - 1][0] + tailDir[0] / tl * 9, pts[L - 1][1] + tailDir[1] / tl * 9];
     const poly = rounded([stem].concat(pts, [tail]), 20);
     const at = (f, w) => [head[0] + dx * f + px * w, head[1] + dy * f + py * w].join(',');
-    const tri = [at(31, 0), at(12, 20), at(12, -20)].join(' ');
+    const tri = [at(38, 0), at(12, 17), at(12, -17)].join(' ');
     return { poly, line: [stem].concat(pts, [tail]), tri, head, dx, dy, px, py, fc: [head[0] + dx * 18, head[1] + dy * 18] };
   }
   // 可愛臉：白眼睛＋黑瞳孔＋微笑＋粉紅腮紅（臉保持正向，方向由三角形尖端表示）
@@ -96,7 +96,7 @@ window.AmazeBoard = (function () {
         el('path', { class: 'halo', d: s.poly }, g);
         el('path', { d: s.poly, fill: 'none', stroke: '#fffafc', 'stroke-width': 24, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 21, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, hd);
+        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 1.5, 'stroke-linejoin': 'miter' }, hd);
         face(hd, s.fc[0], s.fc[1]);
         el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 50, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         const tap = () => enabled && opts.onTap(a.id);
@@ -126,7 +126,7 @@ window.AmazeBoard = (function () {
       const edgeP = el('path', { fill: 'none', stroke: '#fffafc', 'stroke-width': 24, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
       const bodyP = el('path', { fill: 'none', stroke: color, 'stroke-width': 21, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
       const hg = el('g', {}, g);
-      el('polygon', { points: '19,0 0,20 0,-20', fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, hg);
+      el('polygon', { points: '26,0 0,17 0,-17', fill: color, stroke: color, 'stroke-width': 1.5, 'stroke-linejoin': 'miter' }, hg);
       const fg = el('g', {}, g); face(fg, 0, 0);
       n.style.visibility = 'hidden'; n.style.pointerEvents = 'none'; const hd0 = headOf(id); hd0 && (hd0.style.visibility = 'hidden');
       const dur = Math.max(420, Math.min(950, 320 + (uEnd - Lb) * 0.5)), t0 = performance.now();
