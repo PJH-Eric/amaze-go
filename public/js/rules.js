@@ -133,7 +133,9 @@
     let merged = true;
     for (let guard = 0; merged && guard < 12; guard++) {
       merged = false;
-      const order = arrows.map((_, i) => i).sort(() => rnd() - 0.5);
+      // 先合併短箭頭，避免有限的合併次數先用在長箭頭，留下過多孤立單格。
+      const order = arrows.map((_, i) => i).sort(() => rnd() - 0.5)
+        .sort((i, j) => arrows[i].cells.length - arrows[j].cells.length);
       for (const i of order) {
         const A = arrows[i]; if (!A || A.cells.length >= maxLen) continue;
         const tail = A.cells[A.cells.length - 1];

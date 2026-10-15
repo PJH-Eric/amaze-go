@@ -1,11 +1,24 @@
 const assert = require('assert');
 const R = require('../public/js/rules.js');
+const Shapes = require('../public/js/shapes.js');
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log('  ✓', name); };
 
 t('同種子產生相同盤面（可重現）', () => {
   const a = R.createState('normal', 3), b = R.createState('normal', 3);
   assert.deepStrictEqual(a.arrows, b.arrows);
+});
+t('神話固定種子優先合併短箭頭，單格比例低於 15%', () => {
+  let ones = 0, total = 0;
+  for (const level of [3, 6, 10]) {
+    const spec = R.levelSpec('myth', level);
+    const mask = Shapes.rasterize(spec.shape, spec.dim, spec.flip);
+    const arrows = R.generate({ ...R.DIFFICULTIES.myth, w: mask.w, h: mask.h, mask: mask.rows, seed: spec.seed });
+    total += arrows.length;
+    ones += arrows.filter((a) => a.cells.length === 1).length;
+    assert.ok(R.isSolvable({ arrows, w: mask.w, h: mask.h }));
+  }
+  assert.ok(ones / total < 0.15, '固定種子單格比例 ' + (100 * ones / total).toFixed(2) + '%');
 });
 const LV = R.LEVELS_PER_DIFFICULTY;
 const all = [];
