@@ -430,3 +430,6 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 .reduce .arrow.lift,.reduce .head.lift{transform:none}
 @media (hover:none){.arrow.lift,.head.lift{transform:none;filter:none}}
 .reduce .head,.reduce .head.shake{transition:none;animation:none}
+/* 箭頭不要有黑色（瀏覽器預設）對焦外框；鍵盤對焦改用天藍光暈（.halo）顯示 */
+#board,#board *,#oboard,#oboard *{outline:none!important;-webkit-tap-highlight-color:transparent}
+#board .arrow:focus,#oboard .arrow:focus{outline:none!important}
