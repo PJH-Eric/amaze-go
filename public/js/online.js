@@ -226,7 +226,7 @@ window.AmazeOnline = (function () {
       tag.textContent = (local ? (p.isAI ? '電腦・' + DNAME(p.diff) : '你') : (p.host ? '房主' : p.isAI ? '電腦・' + DNAME(p.diff) : '玩家') + (p.id === myId ? '・你' : '')) + (multi() && !room.matchDone ? '・總 ' + p.total : ''); s.appendChild(tag);
       if (host && p.isAI && !locked) {
         s.appendChild(seg(p.diff, '電腦難度', (d) => send({ t: 'config', aiDiff: { id: p.id, diff: d } })));
-        s.appendChild(btn('移除電腦', 'btn mini', () => send({ t: 'config', removeAI: p.id })));
+        const x = btn('✕', 'seatX', () => send({ t: 'config', removeAI: p.id })); x.setAttribute('aria-label', '移除電腦'); x.title = '移除電腦'; s.classList.add('hasX'); s.appendChild(x);
       }
       if (host && !p.isAI && p.id !== myId) s.appendChild(btn('請出', 'btn mini', () => send({ t: 'kick', id: p.id })));
       seats.appendChild(s);

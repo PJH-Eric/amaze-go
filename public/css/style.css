@@ -475,3 +475,18 @@ body:not([data-screen=home]) .lobbyLink{display:none}
   #game .zbar.inbar{justify-content:center}
 }
 @media (max-width:380px){.bottombar{gap:6px}.bottombar .btn{min-width:0;padding:8px 14px}.zbar.inbar{gap:5px}.zbar.inbar .zbtn{width:38px;height:38px}}
+
+/* 縮放鍵加大 */
+.zbar.inbar{gap:10px}
+.zbar.inbar .zbtn{width:56px;height:56px;font-size:30px}
+.boardView .zbtn{width:48px;height:48px;font-size:26px}
+@media (max-width:380px){.zbar.inbar{gap:6px}.zbar.inbar .zbtn{width:48px;height:48px;font-size:26px}}
+@media (max-height:520px) and (orientation:landscape){.zbar.inbar .zbtn{width:52px;height:52px}}
+
+/* 移除電腦：右上角 ✕ */
+.seat{position:relative}
+.seat.hasX{padding-right:46px}
+.seatX{position:absolute;top:6px;right:6px;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:#fff;color:var(--ink2);font:inherit;font-size:16px;font-weight:800;line-height:1;padding:0;cursor:pointer;display:grid;place-items:center}
+.seatX:hover,.seatX:focus-visible{background:#ffe3ea;color:#d6336c;border-color:#ff8fb1}
+.seatX:active{transform:scale(.92)}
+@media (pointer:coarse){.seatX{width:40px;height:40px}.seat.hasX{padding-right:52px}}
