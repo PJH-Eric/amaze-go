@@ -490,3 +490,11 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 .seatX:hover,.seatX:focus-visible{background:#ffe3ea;color:#d6336c;border-color:#ff8fb1}
 .seatX:active{transform:scale(.92)}
 @media (pointer:coarse){.seatX{width:40px;height:40px}.seat.hasX{padding-right:52px}}
+
+.lv .tm{position:static;font-size:10px;font-weight:800;line-height:1;color:#a2677f}
+.tright{display:flex;align-items:center;gap:8px;justify-self:end}
+.timer{display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 8px;border-radius:999px;background:#fff;border:3px solid var(--line);color:#e0558a;font-weight:900;font-size:15px;font-variant-numeric:tabular-nums;line-height:1;box-shadow:0 3px 0 rgba(200,120,150,.2);white-space:nowrap}
+.timer svg{width:17px;height:17px;fill:none;stroke:#e0558a;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.otimerRow{display:flex;justify-content:center;padding:4px 0 2px}
+@media (max-width:360px){.timer{font-size:13px;padding:3px 8px 3px 6px}.timer svg{width:15px;height:15px}.tright{gap:5px}}
+@media (max-width:480px){.tright{flex-direction:column;align-items:flex-end;gap:3px}.tright .timer{font-size:13px;padding:3px 8px 3px 6px;border-width:2px}.tright .timer svg{width:14px;height:14px}.tright .hearts svg{width:20px;height:20px}.tright .hearts{gap:1px}}

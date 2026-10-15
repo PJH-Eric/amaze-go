@@ -297,14 +297,18 @@ window.AmazeOnline = (function () {
     startLocal = m.startAt + (Date.now() - m.serverNow);
     board.draw(st); board.setEnabled(false); $('#oprogFill').style.width = '0%';
     $('#roomScroll').hidden = true; $('#boardView').hidden = false;
+    otStop(); $('#otimerText').textContent = App.fmtTime(0);
     runCountdown();
   }
+  let otT = 0;
+  function otStart() { clearInterval(otT); const tk = () => { $('#otimerText').textContent = App.fmtTime(Math.max(0, Date.now() - startLocal)); }; tk(); otT = setInterval(tk, 100); }
+  function otStop(final) { clearInterval(otT); if (final) $('#otimerText').textContent = App.fmtTime(Math.max(0, Date.now() - startLocal)); }
   function runCountdown() {
     clearInterval(countT);
     const el = $('#count');
     const tick = () => {
       const left = startLocal - Date.now();
-      if (left <= 0) { clearInterval(countT); el.textContent = '開始！'; el.hidden = false; board.setEnabled(canTap()); A.sfx.tick(); setTimeout(() => { el.hidden = true; }, 600); return; }
+      if (left <= 0) { clearInterval(countT); otStart(); el.textContent = '開始！'; el.hidden = false; board.setEnabled(canTap()); A.sfx.tick(); setTimeout(() => { el.hidden = true; }, 600); return; }
       const n = Math.ceil(left / 1000); if (el.textContent !== String(n)) A.sfx.tick();
       el.textContent = n; el.hidden = false;
     };
@@ -324,7 +328,7 @@ window.AmazeOnline = (function () {
     if (room) renderSummary();
   }
   function onEnd(m) {
-    resultShown = true; clearInterval(countT); $('#count').hidden = true;
+    resultShown = true; clearInterval(countT); otStop(true); $('#count').hidden = true;
     if (room) { room.phase = 'ended'; room.remaining = 0; room.matchDone = m.final; room.round = m.round; }
     const st = m.standings, mine = st.findIndex((r) => r.id === myId);
     const isPlayer = mine >= 0;

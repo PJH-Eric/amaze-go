@@ -10,8 +10,10 @@
     stars = {};
     try { const old = JSON.parse(localStorage.getItem('amaze.progress') || '{}'); Object.keys(old).forEach((d) => { stars[d] = {}; for (let l = 1; l <= (old[d] | 0); l++) stars[d][l] = 1; }); } catch (e) {}
   }
+  let times = {};
+  try { times = JSON.parse(localStorage.getItem('amaze.times') || '{}') || {}; } catch (e) {}
   try { nick = localStorage.getItem('amaze.nick') || ''; } catch (e) {}
-  const save = () => { try { localStorage.setItem('amaze.settings', JSON.stringify(settings)); localStorage.setItem('amaze.stars', JSON.stringify(stars)); } catch (e) {} };
+  const save = () => { try { localStorage.setItem('amaze.settings', JSON.stringify(settings)); localStorage.setItem('amaze.stars', JSON.stringify(stars)); localStorage.setItem('amaze.times', JSON.stringify(times)); } catch (e) {} };
   let diff = 'easy', level = 1, state = null, busy = false;
   try { const d = localStorage.getItem('amaze.diff'); if (R.DIFFICULTIES[d]) diff = d; } catch (e) {}
 
@@ -31,6 +33,12 @@
   }
 
   /* ---------- 闖關：選關 ---------- */
+  const fmtTime = (ms) => { const t = Math.floor(Math.max(0, ms) / 100) / 10, m = Math.floor(t / 60); return m + ':' + (t - m * 60).toFixed(1).padStart(4, '0'); };
+  const bestOf = (d, l) => (times[d] && times[d][l]) || 0;
+  let t0 = 0, elapsed = 0, tickT = 0;
+  const showTimer = () => { $('#timerText').textContent = fmtTime(elapsed); };
+  function startTimer() { clearInterval(tickT); t0 = performance.now(); elapsed = 0; showTimer(); tickT = setInterval(() => { elapsed = performance.now() - t0; showTimer(); }, 100); }
+  function stopTimer() { clearInterval(tickT); elapsed = performance.now() - t0; showTimer(); }
   const starsOf = (d, l) => (stars[d] && stars[d][l]) || 0;
   const unlocked = (d, l) => l === 1 || starsOf(d, l - 1) > 0;
   function chipGroup(container, items, current, onPick) {
@@ -55,8 +63,8 @@
       if (st) { cleared++; total += st; } else if (open && !firstOpen) firstOpen = l;
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'lv' + (st ? ' done' : '') + (l === firstOpen ? ' next' : '');
-      b.innerHTML = '<b>' + l + '</b>' + (open ? '<span class="st" aria-hidden="true">' + starRow(st) + '</span>' : '<span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.4"/></svg></span>');
-      b.setAttribute('aria-label', '第 ' + l + ' 關' + (open ? (st ? '，' + st + ' 顆星' : '，尚未通關') : '，尚未解鎖'));
+      b.innerHTML = '<b>' + l + '</b>' + (open ? '<span class="st" aria-hidden="true">' + starRow(st) + '</span>' + (bestOf(diff, l) ? '<small class="tm" aria-hidden="true">' + fmtTime(bestOf(diff, l)) + '</small>' : '') : '<span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.4"/></svg></span>');
+      b.setAttribute('aria-label', '第 ' + l + ' 關' + (open ? (st ? '，' + st + ' 顆星' + (bestOf(diff, l) ? '，最佳 ' + fmtTime(bestOf(diff, l)) : '') : '，尚未通關') : '，尚未解鎖'));
       if (!open) { b.disabled = true; } else b.onclick = () => startLevel(l);
       g.appendChild(b);
     }
@@ -82,7 +90,7 @@
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l) {
     level = l; busy = false;
-    state = R.createState(diff, l);
+    state = R.createState(diff, l); startTimer();
     $('#result').hidden = true; show('game'); board.draw(state); board.setEnabled(true); renderHud(); A.unlock();
   }
   function onTap(id) {
@@ -92,7 +100,7 @@
     if (res.ok) { board.fly(id); A.sfx.pop(); say('飛出去了，還剩 ' + R.remaining(state) + ' 支'); }
     else if (res.reason === 'blocked') { board.shake(id, res.blockers); const hh = $('#hearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit'); A.sfx.bonk(); say('被擋住了' + (state.maxLives === Infinity ? '' : '，剩 ' + state.lives + ' 顆愛心')); }
     renderHud();
-    if (state.status !== 'playing') { busy = true; const cur = state; setTimeout(() => { if (state === cur && !$('#game').hidden) showResult(); }, state.status === 'won' ? 650 : 450); }
+    if (state.status !== 'playing') { busy = true; stopTimer(); const cur = state; setTimeout(() => { if (state === cur && !$('#game').hidden) showResult(); }, state.status === 'won' ? 650 : 450); }
   }
   function medal(win) {
     return win
@@ -112,6 +120,8 @@
     const win = state.status === 'won';
     const got = win ? rate(state.mistakes) : 0;
     const prev = starsOf(diff, level);
+    const prevBest = bestOf(diff, level), newBest = win && (!prevBest || elapsed < prevBest);
+    if (newBest) (times[diff] = times[diff] || {})[level] = Math.round(elapsed);
     if (win) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
     win ? A.sfx.win() : A.sfx.lose();
     $('#resultIcon').innerHTML = medal(win);
@@ -119,7 +129,7 @@
     $('#resultStars').innerHTML = win ? starRow(got) : '';
     $('#resultStars').hidden = !win;
     $('#resultText').textContent = win
-      ? '點了 ' + state.moves + ' 次，失誤 ' + state.mistakes + ' 次' + (got === 3 ? '，完美三星！' : got > prev && prev ? '，星星升級！' : '。')
+      ? '耗時 ' + fmtTime(elapsed) + (newBest ? (prevBest ? '（新紀錄！）' : '') : '（最佳 ' + fmtTime(prevBest) + '）') + '，點了 ' + state.moves + ' 次，失誤 ' + state.mistakes + ' 次' + (got === 3 ? '，完美三星！' : got > prev && prev ? '，星星升級！' : '。')
       : '再試一次，先看清楚誰擋住誰～';
     const next = win && level < R.LEVELS_PER_DIFFICULTY;
     $('#againBtn').textContent = next ? '下一關' : win ? '再玩一次' : '再試一次';
@@ -176,7 +186,7 @@
   document.addEventListener('pointerdown', () => A.unlock(), { once: true });
 
   window.AmazeApp = {
-    $, show, open, close, say, A, DIFF_ITEMS, chipGroup, confetti,
+    fmtTime, $, show, open, close, say, A, DIFF_ITEMS, chipGroup, confetti,
     get nick() { return nick; }, set nick(v) { nick = v; try { localStorage.setItem('amaze.nick', v); } catch (e) {} },
   };
   // 自繪捲軸：所有可能超出裝置的區塊
