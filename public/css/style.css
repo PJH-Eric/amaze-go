@@ -167,7 +167,7 @@ h3{margin:10px 0 4px;font-size:14px;text-align:left}
 .cfg,.invites{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:6px 12px 12px;text-align:left}
 .cfg .btn.small{margin-top:8px}
 .irow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(30vw,160px);font-weight:900;color:#e0558a;text-shadow:0 6px 0 #fff,0 0 30px rgba(255,255,255,.9);pointer-events:none}
+.count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:clip;font-size:min(18vw,18dvh,120px);font-weight:900;color:#e0558a;text-shadow:0 6px 0 #fff,0 0 30px rgba(255,255,255,.9);pointer-events:none}
 .count[hidden]{display:none}
 .rank{list-style:none;margin:6px 0;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px}
 .rank li{background:#fff;border:3px solid var(--line);border-radius:14px;padding:6px 12px;font-weight:700}
@@ -432,10 +432,10 @@ h1{background:linear-gradient(180deg,#ff7aa6,#e0558a);-webkit-background-clip:te
 .cl b{color:#e0558a}
 .toast{box-shadow:0 6px 0 rgba(0,0,0,.15)}
 
-/* 倒數字 */
-.count{animation:cnt .9s ease-out infinite}
+/* 僅縮放數字，覆蓋層保持固定尺寸，避免動畫造成頁面溢出。 */
+.count>span{animation:cnt .9s ease-out infinite}
 @keyframes cnt{from{transform:scale(1.5);opacity:.2}30%{opacity:1}to{transform:scale(1)}}
-.reduce .count{animation:none}
+.reduce .count>span{animation:none}
 @media (max-height:520px) and (orientation:landscape){.topbar{min-height:48px;padding-top:2px;padding-bottom:2px}.menu .btn.big .ic{width:40px;height:40px}.logo svg{animation:none}}
 @media (max-width:360px){.menu .btn.big .tx b{font-size:17px}.menu .btn.big .ic{width:40px;height:40px}}
 @media (max-width:480px){.hearts svg{width:22px;height:22px}.hearts{gap:1px}.topbar{gap:4px}#game .topbar .title{font-size:15px}}

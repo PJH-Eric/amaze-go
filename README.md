@@ -7,6 +7,7 @@
 - `npm test`：規則測試（有解保證、緊密排列、400 關、隨機開局）
 - `npm run verify`：規則測試 + 線上整合測試（真 WebSocket：房間、邀請、觀戰、搶飛、電腦、重連、零真人關房）
 - `node scripts/check-replay.js`：闖關重玩、末關、失敗重試、鍵盤焦點與 8 種視窗尺寸巡檢（需環境提供 Playwright 與 Chromium；截圖預設存於系統暫存目錄，可用 `REPLAY_SCREENSHOTS` 指定）。
+- `node scripts/check-countdown.js`：對電腦／線上模式的 8 種尺寸倒數回歸，涵蓋下一盤、開始提示、背景布局穩定與倒數期間禁止操作（需 Playwright 與 Chromium；可用 `COUNTDOWN_SCREENSHOTS` 指定截圖目錄）。
 
 ## 模式
 - **過關重玩**：結算可選「下一關」或「重玩這關」；重玩還原開局棋盤並重設計時、愛心、失誤及提示，保留最佳成績。最後一關提供「重玩這關」，失敗則提供「再試一次」。窄版與橫向視窗沿用自繪捲軸，所有操作皆可到達。

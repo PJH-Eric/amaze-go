@@ -306,12 +306,12 @@ window.AmazeOnline = (function () {
   function otStop(final) { clearInterval(otT); if (final) $('#otimerText').textContent = App.fmtTime(Math.max(0, Date.now() - startLocal)); }
   function runCountdown() {
     clearInterval(countT);
-    const el = $('#count');
+    const el = $('#count'), text = $('#countText');
     const tick = () => {
       const left = startLocal - Date.now();
-      if (left <= 0) { clearInterval(countT); otStart(); el.textContent = '開始！'; el.hidden = false; board.setEnabled(canTap()); A.sfx.tick(); setTimeout(() => { el.hidden = true; }, 600); return; }
-      const n = Math.ceil(left / 1000); if (el.textContent !== String(n)) A.sfx.tick();
-      el.textContent = n; el.hidden = false;
+      if (left <= 0) { clearInterval(countT); otStart(); text.textContent = '開始！'; el.hidden = false; board.setEnabled(canTap()); A.sfx.tick(); setTimeout(() => { el.hidden = true; }, 600); return; }
+      const n = Math.ceil(left / 1000); if (text.textContent !== String(n)) A.sfx.tick();
+      text.textContent = n; el.hidden = false;
     };
     tick(); if (startLocal > Date.now()) countT = setInterval(tick, 100);
   }
