@@ -118,7 +118,7 @@
   // 五星制（門檻皆依難度）：過關 1 星＋失誤（0 次 +2、≤門檻 +1）＋提示用量在允許內 +1＋耗時在目標內 +1
   const RULE = {
     toddler: { miss: 4, hint: 2, sec: 1.0 }, easy: { miss: 2, hint: 1, sec: 1.2 }, normal: { miss: 1, hint: 0, sec: 1.5 },
-    hard: { miss: 1, hint: 0, sec: 1.8 }, myth: { miss: 1, hint: 0, sec: 2.2 },   // 越難允許的失誤／提示越少，但每支箭給的思考時間越多
+    hard: { miss: 1, hint: 0, sec: 1.7 }, myth: { miss: 1, hint: 0, sec: 2.0 },   // 越難允許的失誤／提示越少，但每支箭給的思考時間越多
   };
   const parMs = () => (5 + state.arrows.length * RULE[diff].sec) * 1000;
   function rate() {
