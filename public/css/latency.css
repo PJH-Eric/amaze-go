@@ -92,3 +92,6 @@
 #network-latency[data-skin="amaze-go"].is-warn { --meter-dot: #f0a93f; --meter-tint: #a8650f; }
 #network-latency[data-skin="amaze-go"].is-bad  { --meter-dot: #f06a95; --meter-tint: #c63567; border-color: #f06a95; }
 #network-latency[data-skin="amaze-go"].is-compact { padding: 0 9px 0 8px; } #network-latency[data-skin="amaze-go"].is-compact .latency-meter__unit { display: inline; }
+/* 線上時頂端列替延遲框（約 66px）多留一段，標題與分數晶片往左讓位 */
+html.latency-on #lobby .topbar, html.latency-on #online .topbar { padding-right: 132px; }
+@media (max-height:520px) and (orientation:landscape) { html.latency-on #lobby .topbar, html.latency-on #online .topbar { padding-right: 126px; } }
