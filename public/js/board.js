@@ -78,13 +78,9 @@ window.AmazeBoard = (function () {
     function draw(st) {
       state = st; svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
       // 小螢幕上大盤面：格子太小不好點 → 自動放大到每格至少約 16px（可再用 －/捏合調整）
-      requestAnimationFrame(() => { if (state !== st || !svg.clientWidth) return; const cellPx = C * svg.clientWidth / (st.w * C + 16); if (cellPx < 16) { applyZoom(Math.min(2.5, 16 / cellPx)); wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2; wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2; } });
-      svg.setAttribute('viewBox', `-8 -8 ${st.w * C + 16} ${st.h * C + 16}`);
-      // 底色只用淡淡的填色襯出輪廓，不畫外框線（避免誤以為箭頭飛不出去）
-      for (let y = 0; y < st.h; y++) for (let x = 0; x < st.w; x++) {
-        if (st.mask[y][x] !== '1') continue;
-        el('rect', { x: x * C - 1, y: y * C - 1, width: C + 2, height: C + 2, fill: '#fff', 'fill-opacity': 0.55, 'pointer-events': 'none' }, svg);
-      }
+      requestAnimationFrame(() => { if (state !== st || !svg.clientWidth) return; const cellPx = C * svg.clientWidth / (st.w * C + 24); if (cellPx < 16) { applyZoom(Math.min(2.5, 16 / cellPx)); wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2; wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2; } });
+      svg.setAttribute('viewBox', `-12 -12 ${st.w * C + 24} ${st.h * C + 24}`);
+      // 棋盤不畫底色、不畫外框，只剩箭頭本身
       const bodies = svg, heads = el('g', { class: 'heads', 'pointer-events': 'none' }, svg);
       const live = st.arrows.filter((a) => !a.removed);
       // 線身外加白色細邊，相鄰線條與轉角清楚分開
