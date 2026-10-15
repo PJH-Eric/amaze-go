@@ -418,3 +418,15 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 @media (max-width:380px){.lobbyLink{height:44px;min-height:44px;font-size:14px}}
 @media (max-width:380px){#game .topbar .title{display:none}.omain .chips2{display:none}.omain .topbar{grid-template-columns:auto 1fr}#game .topbar{grid-template-columns:auto 1fr}#game .hearts{justify-self:end;min-width:0}.topbar{padding-right:58px}.topbar .btn.small{padding:6px 10px}#game .hearts svg{width:16px;height:16px}#game .hearts{gap:1px}}
 @media (max-width:480px){.omain .chips2{max-width:none;flex-wrap:nowrap;overflow:hidden}.omain .chips2 .mchip{flex:none}}
+
+/* 箭頭：滑鼠移上去浮起（陰影＋上移）；尖端畫在最上層、與身體同步動作；飛出改由 JS 沿路徑滑動 */
+#board,#oboard{overflow:visible}
+.head{transition:transform .16s ease-out,filter .16s ease-out}
+.arrow{transition:transform .16s ease-out,filter .16s ease-out}
+.arrow.lift,.head.lift{transform:translateY(-6px);filter:drop-shadow(0 10px 4px rgba(70,30,50,.34))}
+.arrow.shake,.head.shake{animation:shake .35s}
+.arrow.blocker .halo{stroke:#ff6b6b;opacity:.9}
+.head.late{opacity:.35}
+.reduce .arrow.lift,.reduce .head.lift{transform:none}
+@media (hover:none){.arrow.lift,.head.lift{transform:none;filter:none}}
+.reduce .head,.reduce .head.shake{transition:none;animation:none}

@@ -35,7 +35,7 @@ window.AmazeBoard = (function () {
     const poly = rounded([stem].concat(pts, [tail]), 20);
     const at = (f, w) => [head[0] + dx * f + px * w, head[1] + dy * f + py * w].join(',');
     const tri = [at(31, 0), at(12, 20), at(12, -20)].join(' ');
-    return { poly, tri, head, dx, dy, px, py, fc: [head[0] + dx * 18, head[1] + dy * 18] };
+    return { poly, line: [stem].concat(pts, [tail]), tri, head, dx, dy, px, py, fc: [head[0] + dx * 18, head[1] + dy * 18] };
   }
   // 可愛臉：白眼睛＋黑瞳孔＋微笑＋粉紅腮紅（臉保持正向，方向由三角形尖端表示）
   function face(g, cx, cy) {
@@ -74,6 +74,7 @@ window.AmazeBoard = (function () {
       if (e.key === '+' || e.key === '=') applyZoom(zoom + 0.75); else if (e.key === '-') applyZoom(zoom - 0.75); else if (e.key === '0') applyZoom(1);
     });
     const node = (id) => svg.querySelector('.arrow[data-id="' + id + '"]');
+    const headOf = (id) => svg.querySelector('.head[data-id="' + id + '"]');   // 箭頭尖端畫在最上層：永遠不會被任何線條蓋住
     function draw(st) {
       state = st; svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
       svg.setAttribute('viewBox', `-14 -14 ${st.w * C + 28} ${st.h * C + 28}`);
@@ -82,35 +83,67 @@ window.AmazeBoard = (function () {
         if (st.mask[y][x] !== '1') continue;
         el('rect', { x: x * C - 1, y: y * C - 1, width: C + 2, height: C + 2, fill: '#fff', 'fill-opacity': 0.55 }, svg);
       }
-      const bodies = svg;
+      const bodies = svg, heads = el('g', { class: 'heads', 'pointer-events': 'none' }, svg);
       const live = st.arrows.filter((a) => !a.removed);
       // 線身外加白色細邊，相鄰線條與轉角清楚分開
       live.forEach((a) => {
         const color = COLORS[a.id % COLORS.length], s = shape(a);
-        const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] }, bodies);
+        const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] });
+        bodies.insertBefore(g, heads);
+        const hd = el('g', { class: 'head', 'data-id': a.id }, heads);
+        hd.style.setProperty('--sx', s.dx * 10 + 'px'); hd.style.setProperty('--sy', s.dy * 10 + 'px');
         g.style.setProperty('--sx', s.dx * 10 + 'px'); g.style.setProperty('--sy', s.dy * 10 + 'px');
         el('path', { class: 'halo', d: s.poly }, g);
         el('path', { d: s.poly, fill: 'none', stroke: '#fffafc', 'stroke-width': 24, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         el('path', { d: s.poly, fill: 'none', stroke: color, 'stroke-width': 21, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
-        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
-        face(g, s.fc[0], s.fc[1]);
+        el('polygon', { points: s.tri, fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, hd);
+        face(hd, s.fc[0], s.fc[1]);
         el('path', { d: s.poly, fill: 'none', stroke: 'transparent', 'stroke-width': 50, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
         const tap = () => enabled && opts.onTap(a.id);
+        const lift = (on) => { g.classList.toggle('lift', on); hd.classList.toggle('lift', on); };
+        g.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'mouse' || !enabled) return; if (g.nextSibling !== heads) bodies.insertBefore(g, heads); lift(true); });   // 滑鼠移上去：浮起
+        g.addEventListener('pointerleave', () => lift(false));
+        g.addEventListener('focus', () => lift(true)); g.addEventListener('blur', () => lift(false));
         g.addEventListener('click', tap);
         g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
       });
     }
+    // 沿著自己的路徑滑出去：頭領先、身體隨路徑轉彎、尾巴最後離開（參考錄影）
     function fly(id) {
       const a = state.arrows[id], n = node(id); if (!n) return;
-      const h = a.cells[0];
-      const dist = (a.dir === 'U' ? h[1] + 1 : a.dir === 'D' ? state.h - h[1] : a.dir === 'L' ? h[0] + 1 : state.w - h[0]) + a.cells.length + 1;
-      const [dx, dy] = R.DIRS[a.dir];
-      n.style.setProperty('--fx', dx * dist * C + 'px'); n.style.setProperty('--fy', dy * dist * C + 'px');
-      n.classList.add('fly'); setTimeout(() => n.remove(), 520);
+      if (document.body.classList.contains('reduce')) { n.remove(); const h1 = headOf(id); h1 && h1.remove(); return; }
+      const sh = shape(a), [dx, dy] = R.DIRS[a.dir], color = COLORS[a.id % COLORS.length];
+      const base = sh.line.slice().reverse();                 // 尾 → 頭（stem）
+      const cum = [0]; for (let i = 1; i < base.length; i++) cum.push(cum[i - 1] + Math.hypot(base[i][0] - base[i - 1][0], base[i][1] - base[i - 1][1]));
+      const Lb = cum[cum.length - 1], h = a.cells[0];
+      const edge = (a.dir === 'U' ? h[1] + 1 : a.dir === 'D' ? state.h - h[1] : a.dir === 'L' ? h[0] + 1 : state.w - h[0]) * C;
+      const uEnd = 2 * Lb + edge + 80;
+      const end = base[base.length - 1], far = [end[0] + dx * (uEnd - Lb + 20), end[1] + dy * (uEnd - Lb + 20)];
+      const P = base.concat([far]); cum.push(Lb + Math.hypot(far[0] - end[0], far[1] - end[1]));
+      const at = (u) => { for (let i = 1; i < P.length; i++) if (u <= cum[i] || i === P.length - 1) { const t = (u - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return [P[i - 1][0] + (P[i][0] - P[i - 1][0]) * t, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * t, i]; } };
+      const clip = (u0, u1) => { const A = at(Math.max(0, u0)), B = at(u1), pts = [[A[0], A[1]]]; for (let i = A[2]; i < B[2]; i++) pts.push(P[i]); pts.push([B[0], B[1]]); return pts; };
+      const g = el('g', { class: 'snake' }, svg);
+      const edgeP = el('path', { fill: 'none', stroke: '#fffafc', 'stroke-width': 24, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+      const bodyP = el('path', { fill: 'none', stroke: color, 'stroke-width': 21, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+      const hg = el('g', {}, g);
+      el('polygon', { points: '19,0 0,20 0,-20', fill: color, stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, hg);
+      const fg = el('g', {}, g); face(fg, 0, 0);
+      n.style.visibility = 'hidden'; n.style.pointerEvents = 'none'; const hd0 = headOf(id); hd0 && (hd0.style.visibility = 'hidden');
+      const dur = Math.max(420, Math.min(950, 320 + (uEnd - Lb) * 0.5)), t0 = performance.now();
+      const frame = (now) => {
+        const k = Math.max(0, Math.min(1, (now - t0) / dur)), u = Lb + (uEnd - Lb) * Math.pow(k, 1.7);   // 越滑越快
+        const pts = clip(u - Lb, u), d = rounded(pts, 20);
+        edgeP.setAttribute('d', d); bodyP.setAttribute('d', d);
+        const hp = pts[pts.length - 1];
+        hg.setAttribute('transform', `translate(${hp[0]} ${hp[1]}) rotate(${Math.atan2(dy, dx) * 180 / Math.PI})`);
+        fg.setAttribute('transform', `translate(${hp[0] + dx * 6} ${hp[1] + dy * 6})`);
+        if (k < 1) requestAnimationFrame(frame); else { g.remove(); n.remove(); hd0 && hd0.remove(); }
+      };
+      requestAnimationFrame(frame);
     }
     function flash(id, cls, ms) {
-      const n = node(id); if (!n) return;
-      n.classList.remove(cls); void n.getBBox(); n.classList.add(cls); setTimeout(() => n.classList.remove(cls), ms);
+      const n = node(id); if (!n) return; const h = headOf(id), all = h ? [n, h] : [n];
+      all.forEach((e) => e.classList.remove(cls)); void n.getBBox(); all.forEach((e) => e.classList.add(cls)); setTimeout(() => all.forEach((e) => e.classList.remove(cls)), ms);
     }
     return {
       draw, fly,
