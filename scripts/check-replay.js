@@ -53,11 +53,14 @@ async function checkBounds(page, selector) {
     assert.deepEqual(await page.evaluate(() => [localStorage.getItem('amaze.stars'), localStorage.getItem('amaze.times')]), saved);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'restartBtn');
     await clearLevel(page);
-    assert.match(await page.locator('#resultText').textContent(), /提示 0 次/);
+    assert.equal(await page.locator('#resultHints').textContent(), '0');
+    assert.equal(await page.locator('#resultMistakes').textContent(), '0');
+    assert.equal(await page.locator('#resultTargetStatus').textContent(), '已達標');
+    assert.match(await page.locator('#resultLevel').textContent(), /第 2 關/);
     fs.mkdirSync(output, { recursive: true });
     for (const [width, height] of sizes) {
       await page.setViewportSize({ width, height });
-      await checkBounds(page, '#result .card, #result .btn, #resultText');
+      await checkBounds(page, '#result .card, #result .btn, #resultText, .result-stat, .result-stat dd, #resultBest');
       const card = await page.locator('#result .card').boundingBox();
       assert.ok(card.y >= 0 && card.y + card.height <= height + 1);
       for (const id of ['againBtn', 'replayBtn', 'roomBtn', 'homeBtn']) {
@@ -86,6 +89,8 @@ async function checkBounds(page, selector) {
     await page.locator('#result').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#againBtn').textContent(), '再試一次');
     assert.equal(await page.locator('#replayBtn').isVisible(), false);
+    assert.equal(await page.locator('#resultTargetStatus').textContent(), '未完成');
+    await page.screenshot({ path: path.join(output, 'result-failure.png') });
     await page.locator('#againBtn').tap();
     assert.equal(await page.evaluate(() => __amaze.state.status), 'playing');
     await clearLevel(page);

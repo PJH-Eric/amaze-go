@@ -138,12 +138,23 @@
     if (win) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
     win ? A.sfx.win() : A.sfx.lose();
     $('#resultIcon').innerHTML = medal(win);
-    $('#resultTitle').textContent = win ? '過關囉！' : '愛心用完了';
+    $('#resultLevel').textContent = R.DIFFICULTIES[diff].name + ' · 第 ' + level + ' 關';
+    $('#resultTitle').textContent = win ? '過關囉！' : '再挑戰一次吧！';
     $('#resultStars').innerHTML = win ? starRow(got) : '';
     $('#resultStars').hidden = !win;
+    $('#resultStars').setAttribute('aria-label', '本次獲得 ' + got + ' 顆星，滿分 5 顆星');
     $('#resultText').textContent = win
-      ? '耗時 ' + fmtTime(elapsed) + (newBest ? (prevBest ? '（新紀錄！）' : '') : '（最佳 ' + fmtTime(prevBest) + '）') + '・失誤 ' + state.mistakes + ' 次・提示 ' + hintsUsed + ' 次（目標 ' + fmtTime(parMs()) + (rt.fast ? ' ✓' : ' ✗') + '）' + (got === 5 ? '，完美五星！' : got > prev && prev ? '，星星升級！' : '。')
-      : '再試一次，先看清楚誰擋住誰～';
+      ? (got === 5 ? '完美五星，漂亮過關！' : got > prev && prev ? '星星升級了，再接再厲！' : '成功解開箭頭，繼續前進吧！')
+      : '愛心用完了，先找出能飛走的箭頭。';
+    $('#resultTime').textContent = fmtTime(elapsed);
+    $('#resultMistakes').textContent = state.mistakes;
+    $('#resultHints').textContent = hintsUsed;
+    $('#resultTarget').textContent = fmtTime(parMs());
+    $('#resultTargetStatus').textContent = win ? (rt.fast ? '已達標' : '再加油') : '未完成';
+    $('#resultTargetStatus').classList.toggle('achieved', win && rt.fast);
+    const best = bestOf(diff, level);
+    $('#resultBest').hidden = !best;
+    $('#resultBest').textContent = (newBest && prevBest ? '刷新最佳紀錄！ · ' : '本關最佳 · ') + fmtTime(best);
     const next = win && level < R.LEVELS_PER_DIFFICULTY;
     $('#againBtn').textContent = next ? '下一關' : win ? '重玩這關' : '再試一次';
     $('#againBtn').onclick = () => startLevel(next ? level + 1 : level, !next);

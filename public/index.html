@@ -58,9 +58,17 @@
     <div class="result" id="result" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
       <div class="card">
         <div class="medal" id="resultIcon" aria-hidden="true"></div>
+        <p class="result-level" id="resultLevel"></p>
         <h2 id="resultTitle"></h2>
-        <div class="stars" id="resultStars" aria-hidden="true"></div>
+        <div class="stars" id="resultStars" role="img"></div>
         <p id="resultText"></p>
+        <dl class="result-stats">
+          <div class="result-stat"><dt>本次耗時</dt><dd id="resultTime"></dd></div>
+          <div class="result-stat" id="resultTargetStat"><dt>目標時間 <span class="result-badge" id="resultTargetStatus"></span></dt><dd id="resultTarget"></dd></div>
+          <div class="result-stat"><dt>失誤次數</dt><dd><span id="resultMistakes"></span><small> 次</small></dd></div>
+          <div class="result-stat"><dt>使用提示</dt><dd><span id="resultHints"></span><small> 次</small></dd></div>
+        </dl>
+        <p class="result-best" id="resultBest"></p>
         <div class="stack">
           <button class="btn primary" id="againBtn" type="button">再來一局</button>
           <button class="btn" id="replayBtn" type="button" hidden>重玩這關</button>
