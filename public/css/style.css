@@ -423,7 +423,7 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 #board,#oboard{overflow:visible}
 .head{transition:transform .16s ease-out,filter .16s ease-out}
 .arrow{transition:transform .16s ease-out,filter .16s ease-out}
-.arrow.lift,.head.lift{transform:translateY(-4px);filter:drop-shadow(0 7px 3px rgba(70,30,50,.34))}
+.arrow.lift,.head.lift{transform:translateY(-2px);filter:drop-shadow(0 3px 1.5px rgba(70,30,50,.3))}
 .arrow.shake,.head.shake{animation:shake .35s}
 .arrow.blocker .halo{stroke:#ff6b6b;opacity:.9}
 .head.late{opacity:.35}
