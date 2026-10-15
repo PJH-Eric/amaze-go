@@ -59,7 +59,9 @@ window.AmazeBoard = (function () {
     const zbtn = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'zbtn'; b.textContent = txt; b.setAttribute('aria-label', label); b.onclick = fn; return b; };
     const zin = zbtn('＋', '放大棋盤', () => applyZoom(zoom + 0.75));
     const zout = zbtn('－', '縮小棋盤', () => applyZoom(zoom - 0.75));
-    const zbar = document.createElement('div'); zbar.className = 'zbar'; zbar.append(zin, zout); host.appendChild(zbar);
+    const zbar = document.createElement('div'); zbar.className = 'zbar'; zbar.append(zin, zout);
+    // 單機：放在底部列「重來」右邊；線上沒有底部列，維持浮在棋盤右下角
+    const bar = host.querySelector('.bottombar'); if (bar) { zbar.classList.add('inbar'); bar.appendChild(zbar); } else host.appendChild(zbar);
     applyZoom(1);
     // 滑鼠 Ctrl＋滾輪、雙指捏合、鍵盤 + / - / 0 也能縮放
     wrap.addEventListener('wheel', (e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); applyZoom(zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });

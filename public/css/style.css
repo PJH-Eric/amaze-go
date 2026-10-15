@@ -454,3 +454,24 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 .zbtn:hover,.zbtn:focus-visible,.zbtn:active{opacity:1}
 .zbtn[disabled]{opacity:.25}
 @media (pointer:coarse){.zbtn{width:40px;height:40px;font-size:20px}}
+
+.zbar.inbar{position:static;flex-direction:row;gap:8px;align-items:center}
+.zbar.inbar .zbtn{opacity:1;border-width:3px;box-shadow:0 3px 0 rgba(200,120,150,.3)}
+.zbar.inbar .zbtn[disabled]{opacity:.4}
+
+/* RWD 補強 */
+/* 五個難度在手機上排成同一列，不讓「神話」單獨掉到下一行 */
+@media (max-width:560px){.chips{flex-wrap:nowrap;gap:5px}.chips .chip,.chips .chip{min-width:0;padding:10px 2px;font-size:14px;white-space:nowrap}}
+@media (max-width:360px){.chips .chip{font-size:12.5px}}
+/* 手機直向：標題可換行，愛心縮小，才看得到「第 N 關」 */
+@media (max-width:480px){#game .topbar .title{white-space:normal;line-height:1.15;font-size:14px}#game .hearts svg{width:18px;height:18px}}
+/* 手機橫向：按鈕列移到棋盤右側直排，棋盤才能用滿高度 */
+@media (max-height:520px) and (orientation:landscape){
+  #game:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto minmax(0,1fr);column-gap:10px;align-items:stretch;justify-items:stretch}
+  #game .topbar,#game .prog{grid-column:1/-1}
+  #game .boardWrap{grid-column:1;grid-row:3;min-height:0}
+  #game .bottombar{grid-column:2;grid-row:3;flex-direction:column;justify-content:center;align-items:stretch;padding:0 8px 0 0;gap:10px}
+  #game .bottombar .btn{min-width:112px;min-height:44px}
+  #game .zbar.inbar{justify-content:center}
+}
+@media (max-width:380px){.bottombar{gap:6px}.bottombar .btn{min-width:0;padding:8px 14px}.zbar.inbar{gap:5px}.zbar.inbar .zbtn{width:38px;height:38px}}
