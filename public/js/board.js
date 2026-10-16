@@ -45,36 +45,35 @@ window.AmazeBoard = (function () {
     [-1, 1].forEach((k) => el('circle', { cx: cx + k * 10.5, cy: cy + 3.2, r: 3.2, fill: '#ff9db8', opacity: 0.9 }, f));
   }
   function create(svg, opts) {
-    let state = null, enabled = true, zoom = 1;
+    let state = null, enabled = true, zoom = 1, manualZoom = false;
     const wrap = svg.parentElement, host = wrap.parentElement;
-    function applyZoom(z) {
+    function applyZoom(z, manual = true) {
       const cx = (wrap.scrollLeft + wrap.clientWidth / 2) / (wrap.scrollWidth || 1), cy = (wrap.scrollTop + wrap.clientHeight / 2) / (wrap.scrollHeight || 1);
       zoom = Math.max(1, Math.min(3.5, z));
+      manualZoom = manual;
       svg.style.width = zoom * 100 + '%'; svg.style.height = zoom * 100 + '%';
       wrap.classList.toggle('zoomed', zoom > 1);
       zin.disabled = zoom >= 3.5; zout.disabled = zoom <= 1;
       // 以目前畫面中心為準縮放（不會跳到角落）
       wrap.scrollLeft = cx * wrap.scrollWidth - wrap.clientWidth / 2; wrap.scrollTop = cy * wrap.scrollHeight - wrap.clientHeight / 2;
     }
-    function ensureCellSize() {
-      if (!state || !svg.clientWidth || !wrap.clientHeight) return;
-      // SVG 可能由高度限制比例，橫向裝置不能只用寬度推算格子大小。
-      const matrix = svg.getScreenCTM();
-      const cellPx = matrix && C * Math.hypot(matrix.a, matrix.b);
-      if (cellPx > 0 && cellPx < 17.99) {
-        applyZoom(zoom * 18 / cellPx);
-        wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2;
-        wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2;
-      }
+    function fitInitialView() {
+      if (!state || manualZoom || !wrap.clientWidth || !wrap.clientHeight) return;
+      const vb = svg.viewBox.baseVal;
+      const cellPx = C * Math.min(wrap.clientWidth / vb.width, wrap.clientHeight / vb.height);
+      // 可辨識時優先完整顯示；只有過密盤面才適度放大，不強制所有裝置達到同一格寬。
+      applyZoom(cellPx >= 10 ? 1 : 14 / cellPx, false);
+      wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2;
+      wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2;
     }
-    if (window.ResizeObserver) new ResizeObserver(ensureCellSize).observe(wrap);
+    if (window.ResizeObserver) new ResizeObserver(fitInitialView).observe(wrap);
     const zbtn = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'zbtn'; b.textContent = txt; b.setAttribute('aria-label', label); b.onclick = fn; return b; };
     const zin = zbtn('＋', '放大棋盤', () => applyZoom(zoom + 0.75));
     const zout = zbtn('－', '縮小棋盤', () => applyZoom(zoom - 0.75));
     const zbar = document.createElement('div'); zbar.className = 'zbar'; zbar.append(zin, zout);
     // 單機：放在底部列「重來」右邊；線上沒有底部列，維持浮在棋盤右下角
     const bar = host.querySelector('.bottombar'); if (bar) { zbar.classList.add('inbar'); bar.appendChild(zbar); } else host.appendChild(zbar);
-    applyZoom(1);
+    applyZoom(1, false);
     // 滑鼠 Ctrl＋滾輪、雙指捏合、鍵盤 + / - / 0 也能縮放
     wrap.addEventListener('wheel', (e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); applyZoom(zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
     const pts = new Map(); let d0 = 0, z0 = 1;
@@ -84,15 +83,15 @@ window.AmazeBoard = (function () {
     const up = (e) => { pts.delete(e.pointerId); d0 = 0; };
     wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
     document.addEventListener('keydown', (e) => {
-      if (!svg.isConnected || !svg.offsetParent || e.target.closest('input,textarea') || document.querySelector('.modal:not([hidden]),.result:not([hidden])')) return;
+      if (!svg.isConnected || !wrap.offsetParent || e.target.closest('input,textarea') || document.querySelector('.modal:not([hidden]),.result:not([hidden])')) return;
       if (e.key === '+' || e.key === '=') applyZoom(zoom + 0.75); else if (e.key === '-') applyZoom(zoom - 0.75); else if (e.key === '0') applyZoom(1);
     });
     const node = (id) => svg.querySelector('.arrow[data-id="' + id + '"]');
     const headOf = (id) => svg.querySelector('.head[data-id="' + id + '"]');   // 箭頭尖端畫在最上層：永遠不會被任何線條蓋住
     function draw(st) {
-      state = st; clearHint(); svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
-      // 密集盤面自動放大至每格約 18px（縮放上限 3.5 倍，可用 －/捏合調整）。
-      requestAnimationFrame(() => { if (state === st) ensureCellSize(); });
+      state = st; clearHint(); svg.innerHTML = ''; applyZoom(1, false); wrap.scrollLeft = 0; wrap.scrollTop = 0;
+      // 新局與重玩重新評估；手動縮放後不因視窗或側欄變動而覆寫玩家選擇。
+      requestAnimationFrame(() => { if (state === st) fitInitialView(); });
       svg.setAttribute('viewBox', `-12 -12 ${st.w * C + 24} ${st.h * C + 24}`);
       // 棋盤不畫底色、不畫外框，只剩箭頭本身
       const bodies = svg, heads = el('g', { class: 'heads', 'pointer-events': 'none' }, svg);
