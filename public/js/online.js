@@ -162,6 +162,12 @@ window.AmazeOnline = (function () {
   };
 
   /* ---------- 房間快照 ---------- */
+  function setBoardVisible(visible) {
+    $('#boardView').hidden = !visible; $('#roomScroll').hidden = visible;
+    $('#otimer').hidden = !visible;
+    $('#online').classList.toggle('showing-board', visible);
+  }
+
   function onRoom(m) {
     const first = !room || room.id !== m.id;
     room = m;
@@ -175,7 +181,7 @@ window.AmazeOnline = (function () {
     renderSummary();
     const playing = m.phase === 'playing';
     const showBoard = playing || (m.phase === 'ended' && resultShown);   // 結算畫面期間停留在棋盤，按「下一盤」才不會閃回房間
-    $('#boardView').hidden = !showBoard; $('#roomScroll').hidden = showBoard;
+    setBoardVisible(showBoard);
     if (!showBoard) renderRoomView();
     board.setEnabled(canTap());
   }
@@ -297,7 +303,7 @@ window.AmazeOnline = (function () {
     $('#oresult').hidden = true;
     startLocal = m.startAt + (Date.now() - m.serverNow);
     board.draw(st); board.setEnabled(false); $('#oprogFill').style.width = '0%';
-    $('#roomScroll').hidden = true; $('#boardView').hidden = false;
+    setBoardVisible(true);
     otStop(); $('#otimerText').textContent = App.fmtTime(0);
     runCountdown();
   }
@@ -330,7 +336,7 @@ window.AmazeOnline = (function () {
   }
   function onEnd(m) {
     resultShown = true; clearInterval(countT); otStop(true); $('#count').hidden = true;
-    $('#boardView').hidden = false; $('#roomScroll').hidden = true;
+    setBoardVisible(true);
     if (room) { room.phase = 'ended'; room.remaining = 0; room.matchDone = m.final; room.round = m.round; }
     const st = m.standings, mine = st.findIndex((r) => r.id === myId);
     const isPlayer = mine >= 0;
@@ -370,7 +376,7 @@ window.AmazeOnline = (function () {
     if (window.AmazeScroll) AmazeScroll.refresh();
   }
   $('#orAgain').onclick = () => { $('#oresult').hidden = true; send({ t: 'start' }); A.unlock(); };
-  $('#orRoom').onclick = () => { resultShown = false; $('#oresult').hidden = true; $('#boardView').hidden = true; $('#roomScroll').hidden = false; if (room) renderRoomView(); };
+  $('#orRoom').onclick = () => { resultShown = false; $('#oresult').hidden = true; setBoardVisible(false); if (room) renderRoomView(); };
   $('#orHome').onclick = () => leaveRoom(true);
   $('#leaveBtn').onclick = () => leaveRoom(false);
   function leaveRoom(home) {

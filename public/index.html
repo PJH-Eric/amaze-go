@@ -121,10 +121,16 @@
         </div>
       </aside>
       <div class="omain">
-        <header class="topbar"><button class="btn small" id="leaveBtn" type="button">← 離開</button><div class="title" id="roomTitle"></div><div class="chips2" id="miniScores" aria-hidden="true"></div></header>
+        <header class="topbar">
+          <button class="btn small" id="leaveBtn" type="button">← 離開</button>
+          <div class="title" id="roomTitle"></div>
+          <div id="versusStatus">
+            <div class="timer" id="otimer" role="timer" aria-label="已用時間" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="otimerText">0:00.00</span></div>
+          </div>
+          <div class="chips2" id="miniScores" aria-hidden="true"></div>
+        </header>
         <div class="roomScroll" id="roomScroll"><div id="roomView" class="roomView"></div></div>
         <div id="boardView" class="boardView" hidden>
-          <div class="otimerRow"><div class="timer" id="otimer" role="timer" aria-label="已用時間"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="otimerText">0:00.00</span></div></div>
           <div class="prog" aria-hidden="true"><i id="oprogFill"></i></div>
           <div class="boardWrap"><svg id="oboard" role="group" aria-label="棋盤"></svg></div>
           <div class="count" id="count" hidden aria-hidden="true"><span id="countText"></span></div>

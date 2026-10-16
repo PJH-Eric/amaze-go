@@ -25,6 +25,11 @@ async function checkCountdown(page, name, width, height) {
     await page.waitForFunction((n) => document.querySelector('#count').textContent === n, digit);
     await page.waitForTimeout(150);
     samples.push(await layout(page));
+    const timerInHeader = await page.locator('#otimer').evaluate((n) => {
+      const r = n.getBoundingClientRect(), h = n.closest('.topbar').getBoundingClientRect();
+      return !n.hidden && r.left >= h.left && r.right <= h.right && r.top >= h.top && r.bottom <= h.bottom;
+    });
+    assert.ok(timerInHeader, '對戰計時應整合在頂列內');
     assert.equal(await page.locator('#count').evaluate((n) => getComputedStyle(n).transform), 'none', '覆蓋層不可跟著數字縮放');
     if (digit !== '開始！') {
       assert.equal(await page.locator('#otimerText').textContent(), '0:00.00');
@@ -97,6 +102,7 @@ async function finishRound(page) {
           await page.locator('#cmGo').click();
           await page.locator('#roomView .seat.empty .seg button[data-v="easy"]').first().click();
         }
+        assert.equal(await page.locator('#otimer').isVisible(), false, '等待房間不應顯示對局計時');
         await page.locator('#roomView .row .btn.primary').click();
         await checkCountdown(page, mode, width, height);
         if (width === 393) {

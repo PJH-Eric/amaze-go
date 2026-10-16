@@ -33,6 +33,7 @@
   const anchorSelector = '.gear, #b-settings, #btn-gear, #btn-settings, #btn-settings-game, #btn-settings-global, .settings-fab, .gear-btn, .settings-trigger';
   // 頂端本來就有狀態列的遊戲：直接當成狀態列裡的一顆小標籤，不另外浮在畫面上
   const inlineHosts = {
+    'amaze-go': { host: '#versusStatus' },
     'chinese-checkers': { host: '#view-game .topbar-left' },
     'draw-guess': { host: '#s-game .statusbar' },
     'stair-kids': { host: '#screen-game #side', before: '#side-world' }
