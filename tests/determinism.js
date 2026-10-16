@@ -1,7 +1,12 @@
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const R = require('../public/js/rules.js');
-const expected = require('./fixtures/levels-v1.sha256.json');
+const extra = require('../public/js/levels-v1-extra.js');
+const expected = { ...require('./fixtures/levels-v1.sha256.json'), ...require('./fixtures/levels-v1-extra.sha256.json') };
+
+assert.equal(extra.startLevel, 101);
+assert.equal(extra.version, 'story-v1');
+for (const difficulty of Object.keys(R.DIFFICULTIES)) assert.equal(extra.boards[difficulty].length, 100);
 
 const hash = (state) => crypto.createHash('sha256').update(JSON.stringify(state)).digest('hex');
 function atClock(now, difficulty, level) {
@@ -31,11 +36,15 @@ try {
   Math.random = forbidden;
   Array.prototype.sort = forbidden;
   for (const difficulty of Object.keys(R.DIFFICULTIES)) {
+    const layouts = new Set();
     for (let level = 1; level <= R.LEVELS_PER_DIFFICULTY; level++) {
       const state = R.createState(difficulty, level);
       const key = difficulty + '/' + level;
       assert.equal(state.boardVersion, 'story-v1');
       assert.equal(boardHash(state), expected[key], key + ' 與固定盤面不符');
+      const layout = hash([state.w, state.h, state.mask, state.arrows]);
+      if (level > 100) assert.ok(!layouts.has(layout), key + ' 重複既有盤面');
+      layouts.add(layout);
       const before = hash(state);
       state.arrows[0].cells[0][0] = -1;
       state.arrows[0].removed = true;
@@ -50,8 +59,8 @@ try {
   Math.random = original.random;
   Array.prototype.sort = original.sort;
 }
-assert.equal(count, 500);
+assert.equal(count, 1000);
 assert.equal(Object.keys(expected).length, count);
-for (const level of [0, 101, 1.5, undefined]) assert.throws(() => R.createState('easy', level), RangeError);
+for (const level of [0, 201, 1.5, undefined]) assert.throws(() => R.createState('easy', level), RangeError);
 assert.throws(() => R.createState('unknown', 1), RangeError);
-console.log('✓ 全部 500 關符合固定雜湊，不依賴時間／隨機／排序，且各次開局互不影響');
+console.log('✓ 全部 1,000 關符合固定雜湊，不依賴時間／隨機／排序，且各次開局互不影響');

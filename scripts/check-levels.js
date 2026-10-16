@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { chromium } = require('playwright');
-const expected = require('../tests/fixtures/levels-v1.sha256.json');
+const expected = { ...require('../tests/fixtures/levels-v1.sha256.json'), ...require('../tests/fixtures/levels-v1-extra.sha256.json') };
 const { server } = require('../server.js');
 
 const profiles = [
@@ -58,18 +58,18 @@ const output = process.env.LEVEL_SCREENSHOTS || path.join(os.tmpdir(), 'amaze-le
         return hashes;
       }, profile);
       assert.deepEqual(hashes, expected, profile.nick + ' 的盤面與固定版本不同');
-      await page.evaluate(() => __amaze.start('myth', 6));
+      await page.evaluate(() => __amaze.start('myth', 200));
       const uiHash = await page.evaluate(async () => {
         const s = __amaze.state;
         const entry = [s.seed, s.w, s.h, s.shape, s.mask, s.arrows.map((a) => [a.dir, a.cells.flat()])];
         const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(entry)));
         return Array.from(new Uint8Array(digest), (n) => n.toString(16).padStart(2, '0')).join('');
       });
-      assert.equal(uiHash, expected['myth/6'], '實際闖關畫面與固定資料不同');
+      assert.equal(uiHash, expected['myth/200'], '實際闖關畫面與固定資料不同');
       await page.screenshot({ path: path.join(output, `story-${profile.width}x${profile.height}.png`) });
       assert.deepEqual(errors, []);
       await context.close();
-      console.log('✓', profile.nick, `${profile.width}x${profile.height}`, `CPU ${profile.cpu}x`, '全部 500 關雜湊與實際開局一致');
+      console.log('✓', profile.nick, `${profile.width}x${profile.height}`, `CPU ${profile.cpu}x`, '全部 1,000 關雜湊與實際開局一致');
     }
   } finally {
     if (browser) await browser.close();

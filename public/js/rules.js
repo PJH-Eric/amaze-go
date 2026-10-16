@@ -1,8 +1,8 @@
 /* 箭頭解密 規則核心：瀏覽器與伺服器（日後線上版）共用，純函式、無 DOM、可注入種子 */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'), require('./levels-v1.js'));
-  else root.AmazeRules = factory(root.AmazeShapes, root.AmazeLevels);
-})(typeof self !== 'undefined' ? self : this, function (Shapes, Levels) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./shapes.js'), require('./levels-v1.js'), require('./levels-v1-extra.js'));
+  else root.AmazeRules = factory(root.AmazeShapes, root.AmazeLevels, root.AmazeExtraLevels);
+})(typeof self !== 'undefined' ? self : this, function (Shapes, Levels, ExtraLevels) {
   const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
   const DIR_KEYS = Object.keys(DIRS);
 
@@ -14,7 +14,10 @@
     hard: { name: '困難', minDim: 26, maxDim: 34, minLen: 6, maxLen: 18, fill: 0.98, lives: 3, hints: 1 },
     myth: { name: '神話', minDim: 34, maxDim: 44, minLen: 8, maxLen: 26, fill: 0.99, lives: 2, hints: 0 },
   };
-  const LEVELS_PER_DIFFICULTY = 100;
+  const LEVELS_PER_DIFFICULTY = 200;
+  const STORY_BOARDS = Object.fromEntries(
+    Object.keys(DIFFICULTIES).map((d) => [d, Levels.boards[d].concat(ExtraLevels.boards[d])]),
+  );
 
   function mulberry32(a) {
     return function () {
@@ -164,8 +167,10 @@
     const pool = Shapes.SHAPES.map((_, i) => i);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
     const shape = Shapes.SHAPES[pool[(level - 1) % pool.length]];
-    const t = (level - 1) / (LEVELS_PER_DIFFICULTY - 1);
-    const dim = Math.round(cfg.minDim + (cfg.maxDim - cfg.minDim) * t);
+    // 保留前 100 關規格；擴充關卡延續後期尺寸，逐步增加最多 2 格。
+    const dim = level <= 100
+      ? Math.round(cfg.minDim + (cfg.maxDim - cfg.minDim) * (level - 1) / 99)
+      : cfg.maxDim + Math.round((level - 101) * 2 / 99);
     const seed = (di + 1) * 100003 + level * 131;
     const flip = mulberry32(seed)() < 0.5;
     return { shape, dim, flip, seed };
@@ -182,7 +187,7 @@
 
   // 闖關只讀取固定版本資料；裝置時間、效能與瀏覽器演算法不參與盤面生成。
   function createState(difficulty, level) {
-    const boards = Levels.boards[difficulty];
+    const boards = STORY_BOARDS[difficulty];
     const entry = Number.isInteger(level) && boards && boards[level - 1];
     if (!entry) throw new RangeError('無效的闖關難度或關卡');
     const cfg = DIFFICULTIES[difficulty];

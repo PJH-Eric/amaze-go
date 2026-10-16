@@ -83,7 +83,7 @@ async function checkBounds(page, selector) {
     }
     await page.locator('#againBtn').tap();
     assert.match(await page.locator('#gameTitle').textContent(), /第 3 關/);
-    await page.evaluate(() => __amaze.start('toddler', 100));
+    await page.evaluate(() => __amaze.start('toddler', 200));
     await clearLevel(page);
     assert.equal(await page.locator('#againBtn').textContent(), '重玩這關');
     assert.equal(await page.locator('#replayBtn').isVisible(), false);
@@ -91,7 +91,7 @@ async function checkBounds(page, selector) {
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'againBtn');
     await page.locator('#againBtn').tap();
-    assert.match(await page.locator('#gameTitle').textContent(), /第 100 關/);
+    assert.match(await page.locator('#gameTitle').textContent(), /第 200 關/);
     await page.evaluate(() => __amaze.start('normal', 1));
     const failure = await page.evaluate(() => ({ id: __amaze.state.arrows.find((a) => AmazeRules.blockersOf(__amaze.state, a.id).length).id, lives: __amaze.state.lives }));
     for (let i = 0; i < failure.lives; i++) await page.locator('#board .arrow[data-id="' + failure.id + '"]').press('Enter');

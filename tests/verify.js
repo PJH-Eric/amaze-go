@@ -24,7 +24,7 @@ const LV = R.LEVELS_PER_DIFFICULTY;
 const all = [];
 let tmax = 0;
 for (const d of Object.keys(R.DIFFICULTIES)) for (let l = 1; l <= LV; l++) { const t0 = Date.now(); all.push([d, l, R.createState(d, l)]); tmax = Math.max(tmax, Date.now() - t0); }
-t('五種難度各 100 關全部有解（共 ' + all.length + ' 關）', () => { for (const [d, l, s] of all) assert.ok(R.isSolvable(s), `${d}-${l} 無解`); });
+t('五種難度各 200 關全部有解（共 ' + all.length + ' 關）', () => { for (const [d, l, s] of all) assert.ok(R.isSolvable(s), `${d}-${l} 無解`); });
 t('單關生成最長 ' + tmax + ' ms（需 < 1500）', () => assert.ok(tmax < 1500));
 function nComp(rows) {
   const h = rows.length, w = rows[0].length, seen = new Set(); let c = 0;
@@ -69,7 +69,7 @@ t('每種難度用到至少 30 種輪廓，且大量非方形', () => {
     assert.ok(ids.size >= 30, d + ' 只有 ' + ids.size + ' 種'); assert.ok(nonSq.size >= 40, d + ' 非方形只有 ' + nonSq.size);
   }
 });
-t('難度有可觀察差異（100 關平均箭頭數遞增）', () => {
+t('難度有可觀察差異（200 關平均箭頭數遞增）', () => {
   const avg = Object.keys(R.DIFFICULTIES).map((d) => { const xs = all.filter((x) => x[0] === d).map((x) => x[2].arrows.length); return Math.round(xs.reduce((a, b) => a + b, 0) / xs.length); });
   console.log('    各難度平均箭頭數：', avg.join(' / '));
   for (let i = 1; i < avg.length; i++) assert.ok(avg[i] > avg[i - 1], avg.join());
@@ -78,6 +78,7 @@ t('同難度後期關卡比前期更大（關卡漸進）', () => {
   for (const d of Object.keys(R.DIFFICULTIES)) {
     const f = (r) => all.filter((x) => x[0] === d && x[1] >= r[0] && x[1] <= r[1]).reduce((n, x) => n + x[2].arrows.length, 0);
     assert.ok(f([91, 100]) > f([1, 10]), d);
+    assert.ok(f([191, 200]) > f([1, 10]), d + ' 擴充後期');
   }
 });
 t('點被擋住的箭頭：扣愛心、不移除', () => {
