@@ -56,6 +56,18 @@ window.AmazeBoard = (function () {
       // 以目前畫面中心為準縮放（不會跳到角落）
       wrap.scrollLeft = cx * wrap.scrollWidth - wrap.clientWidth / 2; wrap.scrollTop = cy * wrap.scrollHeight - wrap.clientHeight / 2;
     }
+    function ensureCellSize() {
+      if (!state || !svg.clientWidth || !wrap.clientHeight) return;
+      // SVG 可能由高度限制比例，橫向裝置不能只用寬度推算格子大小。
+      const matrix = svg.getScreenCTM();
+      const cellPx = matrix && C * Math.hypot(matrix.a, matrix.b);
+      if (cellPx > 0 && cellPx < 17.99) {
+        applyZoom(zoom * 18 / cellPx);
+        wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2;
+        wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2;
+      }
+    }
+    if (window.ResizeObserver) new ResizeObserver(ensureCellSize).observe(wrap);
     const zbtn = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'zbtn'; b.textContent = txt; b.setAttribute('aria-label', label); b.onclick = fn; return b; };
     const zin = zbtn('＋', '放大棋盤', () => applyZoom(zoom + 0.75));
     const zout = zbtn('－', '縮小棋盤', () => applyZoom(zoom - 0.75));
@@ -79,8 +91,8 @@ window.AmazeBoard = (function () {
     const headOf = (id) => svg.querySelector('.head[data-id="' + id + '"]');   // 箭頭尖端畫在最上層：永遠不會被任何線條蓋住
     function draw(st) {
       state = st; clearHint(); svg.innerHTML = ''; applyZoom(1); wrap.scrollLeft = 0; wrap.scrollTop = 0;
-      // 小螢幕上大盤面：格子太小不好點 → 自動放大到每格至少約 16px（可再用 －/捏合調整）
-      requestAnimationFrame(() => { if (state !== st || !svg.clientWidth) return; const cellPx = C * svg.clientWidth / (st.w * C + 24); if (cellPx < 16) { applyZoom(Math.min(2.5, 16 / cellPx)); wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2; wrap.scrollTop = (wrap.scrollHeight - wrap.clientHeight) / 2; } });
+      // 密集盤面自動放大至每格約 18px（縮放上限 3.5 倍，可用 －/捏合調整）。
+      requestAnimationFrame(() => { if (state === st) ensureCellSize(); });
       svg.setAttribute('viewBox', `-12 -12 ${st.w * C + 24} ${st.h * C + 24}`);
       // 棋盤不畫底色、不畫外框，只剩箭頭本身
       const bodies = svg, heads = el('g', { class: 'heads', 'pointer-events': 'none' }, svg);
@@ -171,7 +183,12 @@ window.AmazeBoard = (function () {
         hintTimer = setTimeout(clearHint, 4000);
       },
       late: (id) => flash(id, 'late', 500),
-      setEnabled: (v) => { enabled = v; },
+      setEnabled: (v) => {
+        enabled = v; svg.setAttribute('aria-disabled', String(!v));
+        // 倒數／觀戰時不可聚焦箭頭，以免鍵盤焦點把放大的棋盤捲走。
+        svg.querySelectorAll('.arrow').forEach((n) => { if (v) n.setAttribute('tabindex', '0'); else n.removeAttribute('tabindex'); });
+        if (!v && svg.contains(document.activeElement)) document.activeElement.blur();
+      },
       get state() { return state; },
     };
   }

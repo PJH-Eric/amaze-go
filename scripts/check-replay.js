@@ -120,6 +120,9 @@ async function checkBounds(page, selector) {
       await checkBounds(page, '#levels .topbar, #levelPanel, #levelGrid');
       await page.screenshot({ path: path.join(output, `levels-${width}x${height}.png`) });
       await page.evaluate(() => __amaze.start('easy', 1));
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const cellSize = await page.locator('#board').evaluate((n) => { const m = n.getScreenCTM(); return 28 * Math.hypot(m.a, m.b); });
+      assert.ok(cellSize >= 17.9, '直橫向開局的箭頭格子過小：' + cellSize);
       await checkBounds(page, '#game .topbar, #game .bottombar');
       await page.screenshot({ path: path.join(output, `game-${width}x${height}.png`) });
       await page.evaluate(() => AmazeApp.show('home'));
@@ -132,6 +135,11 @@ async function checkBounds(page, selector) {
       await checkBounds(page, '#lobby .topbar, #lobbyScroll');
       await page.screenshot({ path: path.join(output, `lobby-${width}x${height}.png`) });
     }
+    await page.evaluate(() => __amaze.start('easy', 1));
+    await page.setViewportSize({ width: 568, height: 320 });
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const rotatedCellSize = await page.locator('#board').evaluate((n) => { const m = n.getScreenCTM(); return 28 * Math.hypot(m.a, m.b); });
+    assert.ok(rotatedCellSize >= 17.9, '旋轉後的箭頭格子過小：' + rotatedCellSize);
     assert.deepEqual(errors, []);
     console.log('✓ 重玩重設、保留成績、再次通關、下一關、末關、失敗重試、焦點與畫面巡檢');
     console.log('截圖：' + output);

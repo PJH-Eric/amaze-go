@@ -29,7 +29,10 @@ async function checkCountdown(page, name, width, height) {
     if (digit !== '開始！') {
       assert.equal(await page.locator('#otimerText').textContent(), '0:00.00');
       const removed = await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length);
-      await page.locator('#oboard .arrow').first().press('Enter');
+      assert.equal(await page.locator('#oboard .arrow[tabindex="0"]').count(), 0, '倒數箭頭不可進入鍵盤焦點');
+      await page.keyboard.press('Enter');
+      const area = await page.locator('#oboard').locator('..').boundingBox();
+      await page.touchscreen.tap(area.x + area.width / 2, area.y + area.height / 2);
       assert.equal(await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length), removed, '倒數期間不可操作棋盤');
     }
     await page.screenshot({ path: path.join(output, `${name}-${width}x${height}-${digit === '開始！' ? 'start' : digit}.png`) });

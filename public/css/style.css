@@ -544,3 +544,33 @@ body:not([data-screen=home]) .lobbyLink{display:none}
 @media (max-width:759px){.levels{grid-template-columns:repeat(5,minmax(0,1fr))}.levelsPanel{padding-inline:8px}}
 @media (max-width:399px){.levels{grid-template-columns:repeat(4,minmax(0,1fr))}.lv .st{gap:0}}
 @media (max-width:480px){.result .stars svg{width:30px;height:30px}}
+
+/* 闖關操作區保持觸控大小，將其餘空間留給棋盤。 */
+body[data-screen=game] #app{padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+#game{max-width:1200px;gap:4px}
+#game .topbar{min-height:48px;padding:0 58px 0 4px;border-width:2px;gap:6px}
+#game .topbar .btn.small{min-height:44px;padding:4px 10px;font-size:14px}
+#game .topbar .title{font-size:15px}
+#game .tright{gap:6px}
+#game .timer{font-size:14px;padding:3px 7px;border-width:2px;box-shadow:none}
+#game .timer svg{width:15px;height:15px}
+#game .hearts svg{width:20px;height:20px}
+#game .prog{height:6px}
+#game .bottombar{gap:8px;padding:0 0 4px}
+#game .bottombar .btn{min-width:80px;min-height:44px;padding:6px 12px;font-size:15px}
+#game .zbar.inbar{gap:6px}
+#game .zbar.inbar .zbtn{width:44px;height:44px;font-size:26px;border-width:2px}
+@media (max-width:480px){
+  #game .topbar{gap:4px}
+  #game .topbar .title{font-size:13px}
+  #game .tright{gap:1px}
+  #game .timer{font-size:12.5px;padding:2px 5px}
+  #game .timer svg{width:13px;height:13px}
+  #game .hearts svg{width:16px;height:16px}
+  #game .bottombar{gap:6px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  #game:not([hidden]){column-gap:6px}
+  #game .bottombar{gap:6px;padding:0 2px 0 0}
+  #game .bottombar .btn{min-width:88px;padding-inline:8px}
+}
