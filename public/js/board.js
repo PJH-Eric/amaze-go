@@ -4,7 +4,8 @@ window.AmazeBoard = (function () {
   const C = 28, NS = 'http://www.w3.org/2000/svg';
   const COLORS = ['#d62839', '#2a6fdb', '#16294f', '#ef8a2e', '#1f9d8a', '#7a4fd6', '#e0568a'];
   const DARK = ['#d9577f', '#3fae96', '#e0993a', '#4f9be6', '#9a78e0', '#e0724d', '#6cb85a'];
-  const DIRNAME = { U: '上', D: '下', L: '左', R: '右' };
+  const T = (k, p) => window.I18N.t(k, p);
+  const arrowLabel = (id, dir) => T('board.arrow', { n: id + 1, d: T('board.dir.' + dir) });
   function el(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]);
@@ -68,9 +69,13 @@ window.AmazeBoard = (function () {
     }
     if (window.ResizeObserver) new ResizeObserver(fitInitialView).observe(wrap);
     const zbtn = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'zbtn'; b.textContent = txt; b.setAttribute('aria-label', label); b.onclick = fn; return b; };
-    const zin = zbtn('＋', '放大棋盤', () => applyZoom(zoom + 0.75));
-    const zout = zbtn('－', '縮小棋盤', () => applyZoom(zoom - 0.75));
+    const zin = zbtn('＋', T('board.zoomIn'), () => applyZoom(zoom + 0.75));
+    const zout = zbtn('－', T('board.zoomOut'), () => applyZoom(zoom - 0.75));
     const zbar = document.createElement('div'); zbar.className = 'zbar'; zbar.append(zin, zout);
+    window.I18N.onChange(() => {   // 切換語言：只換 aria-label，不重畫棋盤
+      zin.setAttribute('aria-label', T('board.zoomIn')); zout.setAttribute('aria-label', T('board.zoomOut'));
+      svg.querySelectorAll('.arrow[data-dir]').forEach((g) => g.setAttribute('aria-label', arrowLabel(+g.dataset.id, g.dataset.dir)));
+    });
     // 單機：放在底部列「重來」右邊；線上沒有底部列，維持浮在棋盤右下角
     const bar = host.querySelector('.bottombar'); if (bar) { zbar.classList.add('inbar'); bar.appendChild(zbar); } else host.appendChild(zbar);
     applyZoom(1, false);
@@ -99,7 +104,7 @@ window.AmazeBoard = (function () {
       // 線身外加白色細邊，相鄰線條與轉角清楚分開
       live.forEach((a) => {
         const color = COLORS[a.id % COLORS.length], s = shape(a);
-        const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'aria-label': '箭頭 ' + (a.id + 1) + '，朝' + DIRNAME[a.dir] });
+        const g = el('g', { class: 'arrow', tabindex: 0, role: 'button', 'data-id': a.id, 'data-dir': a.dir, 'aria-label': arrowLabel(a.id, a.dir) });
         bodies.insertBefore(g, heads);
         const hd = el('g', { class: 'head', 'data-id': a.id }, heads);
         hd.style.setProperty('--sx', s.dx * 4 + 'px'); hd.style.setProperty('--sy', s.dy * 4 + 'px');

@@ -12,7 +12,7 @@ const MAX_SPECTATORS = 20;
 const MAX_SEATS = 3;               // 每個房間固定最多 3 位玩家（真人＋電腦），不開放設定
 const ADJ = ['開心', '勇敢', '好奇', '貪睡', '閃亮', '軟綿綿', '圓滾滾', '機靈'];
 const ANI = ['小貓', '小狗', '兔兔', '企鵝', '小熊', '狐狸', '鴨鴨', '刺蝟'];
-const AI_NAMES = ['電腦·糰子', '電腦·年糕', '電腦·布丁'];
+// 電腦對手只送編號 n（顯示名稱由前端依語言翻譯）；伺服器訊息一律送代碼與參數，不送自然語言
 const AI_PARAMS = { // 反應延遲(ms)、失誤率、是否貪心挑長箭頭
   toddler: { delay: [3500, 6000], miss: 0.35, greedy: false },
   easy: { delay: [2000, 3500], miss: 0.2, greedy: false },
@@ -85,7 +85,7 @@ class Hub {
     const f = this['on_' + m.t];
     if (f) f.call(this, c, m);
   }
-  err(c, code, msg) { c.send({ t: 'error', code, msg }); }
+  err(c, code) { c.send({ t: 'error', code }); }
   on_hello(c, m) {
     if (m.resumeId) { const o = this.resume(c, String(m.resumeId)); if (o) { if (m.name) o.name = cleanName(m.name); return; } }
     if (m.name) c.name = cleanName(m.name);
@@ -119,11 +119,11 @@ class Hub {
     for (;;) { let s = ''; for (let i = 0; i < 4; i++) s += A[Math.floor(Math.random() * A.length)]; if (!this.rooms.has(s) && !this.closed.has(s)) return s; }
   }
   on_create(c, m) {
-    if (c.roomId) return this.err(c, 'IN_ROOM', '請先離開目前的房間');
+    if (c.roomId) return this.err(c, 'IN_ROOM');
     const diff = R.DIFFICULTIES[m.diff] ? m.diff : 'easy';
     const max = MAX_SEATS;
     const r = {
-      id: this.newCode(), name: cleanText(m.name).slice(0, 14) || (c.name + '的房間'), hostId: c.id, diff, max,
+      id: this.newCode(), name: cleanText(m.name).slice(0, 20) || c.name, hostId: c.id, diff, max,
       phase: 'lobby', round: 0, totalRounds: Math.min(5, Math.max(1, (m.rounds | 0) || 3)), matchDone: true, totals: new Map(),
       members: new Map(), ais: [], scores: new Map(), invites: new Map(),
       chat: [], state: null, startAt: 0, timers: new Set(), lastResult: null,
@@ -143,34 +143,34 @@ class Hub {
     if (role === 'player' && !r.scores.has(c.id)) r.scores.set(c.id, 0);
   }
   on_join(c, m) {
-    if (c.roomId) return this.err(c, 'IN_ROOM', '請先離開目前的房間');
+    if (c.roomId) return this.err(c, 'IN_ROOM');
     const code = String(m.room || '').toUpperCase();
     const r = this.rooms.get(code);
-    if (!r) return this.err(c, this.closed.has(code) ? 'ROOM_CLOSED' : 'NO_ROOM', this.closed.has(code) ? '這個房間已經結束了' : '找不到這個房間');
+    if (!r) return this.err(c, this.closed.has(code) ? 'ROOM_CLOSED' : 'NO_ROOM');
     if (m.name) { c.name = cleanName(m.name); }
     let role = m.want === 'spectator' ? 'spectator' : 'player';
     if (m.token) { // 邀請：以 token 決定最終角色，不受暱稱／want 影響
       const inv = r.invites.get(String(m.token));
-      if (!inv) return this.err(c, 'INVITE_INVALID', '邀請連結已失效或被房主撤銷');
-      if (inv.exp < this.now()) { r.invites.delete(m.token); return this.err(c, 'INVITE_EXPIRED', '邀請連結已過期'); }
+      if (!inv) return this.err(c, 'INVITE_INVALID');
+      if (inv.exp < this.now()) { r.invites.delete(m.token); return this.err(c, 'INVITE_EXPIRED'); }
       role = inv.role === 'watch' ? 'spectator' : 'player';
     }
-    let note = null;
+    let note = null;   // 代碼：NOTE_PLAYING／NOTE_FULL
     if (role === 'player' && (this.seats(r) >= r.max || r.phase === 'playing')) {
-      role = 'spectator'; note = r.phase === 'playing' ? '遊戲進行中，先以觀戰身分加入；下一局可入座' : '席位已滿，已轉為觀戰';
+      role = 'spectator'; note = r.phase === 'playing' ? 'NOTE_PLAYING' : 'NOTE_FULL';
     }
-    if (role === 'spectator' && this.spectatorCount(r) >= MAX_SPECTATORS) return this.err(c, 'SPECTATORS_FULL', '觀戰席已滿');
+    if (role === 'spectator' && this.spectatorCount(r) >= MAX_SPECTATORS) return this.err(c, 'SPECTATORS_FULL');
     this.addMember(r, c, role);
-    this.sys(r, c.name + (role === 'player' ? ' 加入了遊戲' : ' 來觀戰'));
+    this.sys(r, role === 'player' ? 'join' : 'watch', { name: c.name });
     this.snapshotAll(r); this.broadcastList();
-    if (note) c.send({ t: 'notice', msg: note });
+    if (note) c.send({ t: 'notice', code: note });
     if (r.phase === 'playing') this.sendGame(r, c);
   }
   on_sit(c) { // 觀戰者在非進行中入座
     const r = this.roomOf(c), mem = r && r.members.get(c.id);
     if (!mem || mem.role !== 'spectator') return;
-    if (r.phase === 'playing') return this.err(c, 'BUSY', '遊戲進行中，下一局才能入座');
-    if (this.seats(r) >= r.max) return this.err(c, 'FULL', '席位已滿');
+    if (r.phase === 'playing') return this.err(c, 'BUSY');
+    if (this.seats(r) >= r.max) return this.err(c, 'FULL');
     mem.role = 'player'; r.scores.set(c.id, 0); this.snapshotAll(r); this.broadcastList();
   }
   on_leave(c) { this.leave(c); }
@@ -179,13 +179,13 @@ class Hub {
     if (!r) return;
     const mem = r.members.get(c.id);
     r.members.delete(c.id); r.scores.delete(c.id); c.roomId = null;
-    if (mem) this.sys(r, mem.name + ' 離開了');
+    if (mem) this.sys(r, 'leave', { name: mem.name });
     this.afterMembershipChange(r, c.id);
     c.send({ t: 'left' }); c.send({ t: 'rooms', rooms: this.list() });
   }
   afterMembershipChange(r, goneId) {
     const hs = this.humans(r);
-    if (hs.length === 0) return this.closeRoom(r, '房內沒有真人玩家了');
+    if (hs.length === 0) return this.closeRoom(r, 'noHumans');
     if (r.hostId === goneId || !r.members.get(r.hostId) || r.members.get(r.hostId).role !== 'player') r.hostId = hs[0].id;
     if (r.phase === 'playing' && this.humans(r).length + r.ais.length < 2) this.finish(r, true);
     else if (r.phase !== 'playing' && !r.matchDone && this.seats(r) < 2) r.matchDone = true;   // 盤間人數不足：比賽中止，才不會卡在「設定鎖定」
@@ -219,18 +219,18 @@ class Hub {
   /* ---------- 設定／電腦席位 ---------- */
   on_config(c, m) {
     const r = this.roomOf(c); if (!r || r.hostId !== c.id || r.phase === 'playing') return;
-    if (!r.matchDone) return this.err(c, 'IN_MATCH', '比賽進行中，打完這一輪才能改設定');
+    if (!r.matchDone) return this.err(c, 'IN_MATCH');
     if (R.DIFFICULTIES[m.diff]) r.diff = m.diff;
     if (m.rounds) r.totalRounds = Math.min(5, Math.max(1, m.rounds | 0));
-    if (m.name != null) r.name = cleanText(m.name).slice(0, 14) || r.name;
+    if (m.name != null) r.name = cleanText(m.name).slice(0, 20) || r.name;
     if (m.addAI && this.seats(r) < r.max) {
       const d = R.DIFFICULTIES[m.addAI] ? m.addAI : 'normal';
-      const used = new Set(r.ais.map((a) => a.name));
-      const name = AI_NAMES.find((n) => !used.has(n)) || '電腦·' + (r.ais.length + 1);
-      const a = { id: 'ai-' + rid().slice(0, 6), name, diff: d }; r.ais.push(a); r.scores.set(a.id, 0); this.sys(r, '房主加入了 ' + a.name + '（' + R.DIFFICULTIES[d].name + '）');
+      const used = new Set(r.ais.map((a) => a.n));
+      let n = 1; while (used.has(n)) n++;
+      const a = { id: 'ai-' + rid().slice(0, 6), n, name: 'AI ' + n, diff: d }; r.ais.push(a); r.scores.set(a.id, 0); this.sys(r, 'aiAdd', { n, d });
     }
     if (m.aiDiff && R.DIFFICULTIES[m.aiDiff.diff]) { const a = r.ais.find((x) => x.id === m.aiDiff.id); if (a) a.diff = m.aiDiff.diff; }
-    if (m.removeAI) { const gone = r.ais.find((a) => a.id === m.removeAI); r.ais = r.ais.filter((a) => a.id !== m.removeAI); r.scores.delete(m.removeAI); if (gone) this.sys(r, '房主移除了 ' + gone.name); }
+    if (m.removeAI) { const gone = r.ais.find((a) => a.id === m.removeAI); r.ais = r.ais.filter((a) => a.id !== m.removeAI); r.scores.delete(m.removeAI); if (gone) this.sys(r, 'aiRemove', { n: gone.n }); }
     this.snapshotAll(r); this.broadcastList();
   }
 
@@ -238,7 +238,7 @@ class Hub {
   on_start(c) {
     const r = this.roomOf(c); if (!r || r.hostId !== c.id) return;
     if (r.phase === 'playing') return;
-    if (this.seats(r) < 2) return this.err(c, 'NEED_MORE', '至少要 2 位玩家（可以加電腦）');
+    if (this.seats(r) < 2) return this.err(c, 'NEED_MORE');
     if (r.matchDone) { r.round = 0; r.totals = new Map(); r.matchDone = false; }   // 新的一場比賽
     r.round++;
     for (const p of this.players(r)) { r.scores.set(p.id, 0); if (!r.totals.has(p.id)) r.totals.set(p.id, 0); }
@@ -246,7 +246,7 @@ class Hub {
     const st = R.createStateFromSpec(r.diff, spec);
     st.lives = Infinity; st.maxLives = Infinity;
     r.state = st; r.phase = 'playing'; r.startAt = this.now() + this.countdown; r.lastResult = null;
-    this.sys(r, '第 ' + r.round + '／' + r.totalRounds + ' 盤開始！');
+    this.sys(r, 'round', { r: r.round, t: r.totalRounds });
     for (const mem of r.members.values()) { const cl = this.clients.get(mem.id); cl && this.sendGame(r, cl); }
     this.snapshotAll(r); this.broadcastList();
     for (const a of r.ais) this.scheduleAI(r, a, this.countdown);
@@ -284,7 +284,7 @@ class Hub {
     for (const p of ps) r.totals.set(p.id, (r.totals.get(p.id) || 0) + (r.scores.get(p.id) || 0));
     const final = !!aborted || r.round >= r.totalRounds;
     r.matchDone = final;
-    const rank = ps.map((p) => ({ id: p.id, name: p.name, isAI: !!p.isAI, score: r.scores.get(p.id) || 0, total: r.totals.get(p.id) || 0 })).sort((a, b) => b.score - a.score);
+    const rank = ps.map((p) => ({ id: p.id, name: p.name, aiN: p.aiN, isAI: !!p.isAI, score: r.scores.get(p.id) || 0, total: r.totals.get(p.id) || 0 })).sort((a, b) => b.score - a.score);
     // 累計排名：總分高者勝；同分比最後一盤；仍同分則並列同名次
     const standings = rank.slice().sort((a, b) => b.total - a.total || b.score - a.score);
     standings.forEach((x, i) => { x.place = i > 0 && standings[i - 1].total === x.total && standings[i - 1].score === x.score ? standings[i - 1].place : i + 1; });
@@ -293,7 +293,7 @@ class Hub {
     this.snapshotAll(r); this.broadcastList();
   }
   players(r) {
-    return [...this.humans(r).map((m) => ({ id: m.id, name: m.name })), ...r.ais.map((a) => ({ id: a.id, name: a.name, isAI: true, diff: a.diff }))];
+    return [...this.humans(r).map((m) => ({ id: m.id, name: m.name })), ...r.ais.map((a) => ({ id: a.id, name: a.name, aiN: a.n, isAI: true, diff: a.diff }))];
   }
 
   /* ---------- 電腦 ---------- */
@@ -319,13 +319,14 @@ class Hub {
     const r = this.roomOf(c); const mem = r && r.members.get(c.id); if (!mem) return;
     const text = cleanText(m.text); if (!text) return;
     const t = this.now(); c.chatTimes = c.chatTimes.filter((x) => t - x < 5000);
-    if (c.chatTimes.length >= 5) return this.err(c, 'RATE', '說話太快了，休息一下');
+    if (c.chatTimes.length >= 5) return this.err(c, 'RATE');
     c.chatTimes.push(t);
     const msg = { t: 'chat', from: mem.name, role: mem.role, text, ts: t };
     r.chat.push(msg); if (r.chat.length > 60) r.chat.shift();
     this.broadcast(r, msg);
   }
-  sys(r, text) { const msg = { t: 'chat', sys: true, text, ts: this.now() }; r.chat.push(msg); if (r.chat.length > 60) r.chat.shift(); this.broadcast(r, msg); }
+  /** 系統訊息：只送代碼 k 與參數 p，前端依目前語言組句 */
+  sys(r, k, p) { const msg = { t: 'chat', sys: true, k, p: p || {}, ts: this.now() }; r.chat.push(msg); if (r.chat.length > 60) r.chat.shift(); this.broadcast(r, msg); }
 
   /* ---------- 廣播 ---------- */
   broadcast(r, obj) { for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(obj); } }

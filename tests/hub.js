@@ -67,6 +67,15 @@ const ends = () => log.filter((m) => m.t === 'end');
     assert.strictEqual([...l1].reverse().find((m) => m.t === 'room').diff, 'hard');
     h2.stop();
   });
+  await t('伺服器只送代碼與參數：錯誤無自然語言 msg、電腦帶編號 aiN、系統訊息帶 k／p', async () => {
+    const e = last('error'); assert.ok(e && e.code && e.msg === undefined);
+    const rm = last('room');
+    assert.ok(rm.players.filter((p) => p.isAI).every((p) => Number.isInteger(p.aiN)));
+    const sysMsgs = log.filter((m) => m.t === 'chat' && m.sys);
+    assert.ok(sysMsgs.length > 0 && sysMsgs.every((m) => typeof m.k === 'string' && m.text === undefined));
+    assert.ok(sysMsgs.some((m) => m.k === 'aiAdd' && Number.isInteger(m.p.n) && m.p.d));
+    assert.ok(sysMsgs.some((m) => m.k === 'round' && m.p.r >= 1 && m.p.t === 3));
+  });
   console.log(`\n${n} 項多盤累計測試通過`);
   hub.stop(); process.exit(0);
 })().catch((e) => { console.error('✗ 失敗：', e); process.exit(1); });

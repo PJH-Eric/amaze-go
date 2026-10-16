@@ -1,20 +1,20 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-i18n-title="meta.title">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ffe9f1">
 <title>箭頭解密 Amaze GO｜免費線上益智小遊戲</title>
-<meta name="description" content="點一點，讓箭頭飛出棋盤！免費、免下載，手機平板都能玩的可愛箭頭解謎遊戲。">
+<meta name="description" data-i18n-content="meta.desc" content="點一點，讓箭頭飛出棋盤！免費、免下載，手機平板都能玩的可愛箭頭解謎遊戲。">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/latency.css">
 </head>
 <body>
-<button class="gear" id="gearBtn" type="button" aria-label="設定" aria-haspopup="dialog">
+<button class="gear" id="gearBtn" type="button" aria-label="設定" data-i18n-attr="aria-label=common.settings" aria-haspopup="dialog">
   <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="#fff"><rect x="10.5" y="1.5" width="3" height="5" rx="1.5"/><rect x="10.5" y="17.5" width="3" height="5" rx="1.5"/><rect x="1.5" y="10.5" width="5" height="3" rx="1.5"/><rect x="17.5" y="10.5" width="5" height="3" rx="1.5"/><rect x="10.5" y="1.5" width="3" height="5" rx="1.5" transform="rotate(45 12 12)"/><rect x="10.5" y="17.5" width="3" height="5" rx="1.5" transform="rotate(45 12 12)"/><rect x="1.5" y="10.5" width="5" height="3" rx="1.5" transform="rotate(45 12 12)"/><rect x="17.5" y="10.5" width="5" height="3" rx="1.5" transform="rotate(45 12 12)"/><circle cx="12" cy="12" r="6.5"/></g><circle cx="12" cy="12" r="3" fill="#ff8fb1"/></svg>
 </button>
 
-<a class="btn lobbyLink" id="lobbyLink" href="https://pjh-eric.github.io/game-lobby/" aria-label="回遊戲大廳"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h12v-9.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span>遊戲小小島</span></a>
+<a class="btn lobbyLink" id="lobbyLink" href="https://pjh-eric.github.io/game-lobby/" aria-label="回遊戲大廳" data-i18n-attr="aria-label=common.lobbyAria"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h12v-9.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span data-i18n="common.lobby">遊戲小小島</span></a>
 
 <main id="app">
   <section id="home" class="screen" aria-labelledby="homeTitle">
@@ -22,38 +22,38 @@
       <div class="logo" aria-hidden="true">
         <svg viewBox="0 0 160 90"><g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"><path d="M20 70V40h46" stroke="#d62839"/><path d="M60 70h60V28" stroke="#2a6fdb"/><path d="M98 48h40" stroke="#ef8a2e"/></g><g><path d="M66 26l16 14-16 14z" fill="#d62839"/><path d="M108 28l12-16 12 16z" fill="#2a6fdb"/><path d="M136 34l16 14-16 14z" fill="#ef8a2e"/></g></svg>
       </div>
-      <h1 id="homeTitle">箭頭解密</h1>
-      <p class="sub">Amaze GO・點一點，讓箭頭飛出去</p>
+      <h1 id="homeTitle" data-i18n="home.title">箭頭解密</h1>
+      <p class="sub" data-i18n="home.sub">Amaze GO・點一點，讓箭頭飛出去</p>
       <div class="menu">
-        <button class="btn primary big" id="storyBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" fill="#fff" stroke="#fff" stroke-linejoin="round"/></svg></span><span class="tx"><b>闖關模式</b><small>單人・五種難度各 200 關・共 1,000 關</small></span></button>
-        <button class="btn big" id="vsAiBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="4" fill="#7fd6c2"/><circle cx="9.5" cy="13" r="1.6" fill="#fff"/><circle cx="14.5" cy="13" r="1.6" fill="#fff"/><path d="M12 8V4.5" stroke="#7fd6c2" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="3.8" r="1.5" fill="#7fd6c2"/></svg></span><span class="tx"><b>對戰模式・對電腦</b><small>1～3 位電腦・可選 1～5 盤・累計分數</small></span></button>
-        <button class="btn big" id="onlineBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#8fc7ff" stroke-width="2.4"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="#8fc7ff" stroke-width="2"/></svg></span><span class="tx"><b>對戰模式・線上</b><small>跟朋友搶同一個棋盤・觀戰・邀請連結</small></span></button>
-        <button class="btn ghost" id="howBtn" type="button">怎麼玩</button>
+        <button class="btn primary big" id="storyBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" fill="#fff" stroke="#fff" stroke-linejoin="round"/></svg></span><span class="tx"><b data-i18n="home.story.t">闖關模式</b><small data-i18n="home.story.d">單人・五種難度各 200 關・共 1,000 關</small></span></button>
+        <button class="btn big" id="vsAiBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="4" fill="#7fd6c2"/><circle cx="9.5" cy="13" r="1.6" fill="#fff"/><circle cx="14.5" cy="13" r="1.6" fill="#fff"/><path d="M12 8V4.5" stroke="#7fd6c2" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="3.8" r="1.5" fill="#7fd6c2"/></svg></span><span class="tx"><b data-i18n="home.vsai.t">對戰模式・對電腦</b><small data-i18n="home.vsai.d">1～3 位電腦・可選 1～5 盤・累計分數</small></span></button>
+        <button class="btn big" id="onlineBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#8fc7ff" stroke-width="2.4"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="#8fc7ff" stroke-width="2"/></svg></span><span class="tx"><b data-i18n="home.online.t">對戰模式・線上</b><small data-i18n="home.online.d">跟朋友搶同一個棋盤・觀戰・邀請連結</small></span></button>
+        <button class="btn ghost" id="howBtn" type="button" data-i18n="home.how">怎麼玩</button>
       </div>
     </div>
   </section>
 
-  <section id="levels" class="screen" hidden aria-label="闖關模式">
-    <header class="topbar"><button class="btn small" id="levelsBack" type="button">← 返回</button><div class="title">闖關模式</div><span></span></header>
+  <section id="levels" class="screen" hidden aria-label="闖關模式" data-i18n-attr="aria-label=levels.title">
+    <header class="topbar"><button class="btn small" id="levelsBack" type="button" data-i18n="common.back">← 返回</button><div class="title" data-i18n="levels.title">闖關模式</div><span></span></header>
     <div class="panel levelsPanel">
-      <div class="chips" id="diffChips" role="radiogroup" aria-label="難度"></div>
+      <div class="chips" id="diffChips" role="radiogroup" aria-label="難度" data-i18n-attr="aria-label=common.difficulty"></div>
       <p class="note" id="progressText"></p>
       <div class="levelScroll" id="levelScroll"><div class="levels" id="levelGrid"></div></div>
     </div>
   </section>
 
-  <section id="game" class="screen" hidden aria-label="遊戲">
+  <section id="game" class="screen" hidden aria-label="遊戲" data-i18n-attr="aria-label=game.aria">
     <header class="topbar">
-      <button class="btn small" id="backBtn" type="button">← 返回</button>
+      <button class="btn small" id="backBtn" type="button" data-i18n="common.back">← 返回</button>
       <div class="title" id="gameTitle"></div>
-      <div class="tright"><div class="timer" id="timer" role="timer" aria-label="已用時間"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="timerText">0:00.00</span></div><div class="hearts" id="hearts" role="img"></div></div>
+      <div class="tright"><div class="timer" id="timer" role="timer" aria-label="已用時間" data-i18n-attr="aria-label=game.timer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="timerText">0:00.00</span></div><div class="hearts" id="hearts" role="img"></div></div>
     </header>
     <div class="prog" aria-hidden="true"><i id="progFill"></i></div>
-    <div class="boardWrap"><svg id="board" role="group" aria-label="棋盤"></svg></div>
+    <div class="boardWrap"><svg id="board" role="group" aria-label="棋盤" data-i18n-attr="aria-label=game.board"></svg></div>
     <div class="live" id="live" aria-live="polite"></div>
     <footer class="bottombar">
-      <button class="btn" id="hintBtn" type="button">提示 <span id="hintCount"></span></button>
-      <button class="btn" id="restartBtn" type="button">重來</button>
+      <button class="btn" id="hintBtn" type="button"><span data-i18n="game.hint">提示</span> <span id="hintCount"></span></button>
+      <button class="btn" id="restartBtn" type="button" data-i18n="game.restart">重來</button>
     </footer>
     <div class="result" id="result" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
       <div class="card">
@@ -63,50 +63,50 @@
         <div class="stars" id="resultStars" role="img"></div>
         <p id="resultText"></p>
         <dl class="result-stats">
-          <div class="result-stat"><dt>本次耗時</dt><dd id="resultTime"></dd></div>
-          <div class="result-stat" id="resultTargetStat"><dt>目標時間 <span class="result-badge" id="resultTargetStatus"></span></dt><dd id="resultTarget"></dd></div>
-          <div class="result-stat"><dt>失誤次數</dt><dd><span id="resultMistakes"></span><small> 次</small></dd></div>
-          <div class="result-stat"><dt>使用提示</dt><dd><span id="resultHints"></span><small> 次</small></dd></div>
+          <div class="result-stat"><dt data-i18n="result.time">本次耗時</dt><dd id="resultTime"></dd></div>
+          <div class="result-stat" id="resultTargetStat"><dt><span data-i18n="result.target">目標時間</span> <span class="result-badge" id="resultTargetStatus"></span></dt><dd id="resultTarget"></dd></div>
+          <div class="result-stat"><dt data-i18n="result.mistakes">失誤次數</dt><dd><span id="resultMistakes"></span><small data-i18n="unit.times"> 次</small></dd></div>
+          <div class="result-stat"><dt data-i18n="result.hints">使用提示</dt><dd><span id="resultHints"></span><small data-i18n="unit.times"> 次</small></dd></div>
         </dl>
         <p class="result-best" id="resultBest"></p>
         <div class="stack">
-          <button class="btn primary" id="againBtn" type="button">再來一局</button>
-          <button class="btn" id="replayBtn" type="button" hidden>重玩這關</button>
-          <button class="btn" id="roomBtn" type="button">回到選關</button>
-          <button class="btn ghost" id="homeBtn" type="button">回到首頁</button>
+          <button class="btn primary" id="againBtn" type="button" data-i18n="result.again">再來一局</button>
+          <button class="btn" id="replayBtn" type="button" hidden data-i18n="result.replay">重玩這關</button>
+          <button class="btn" id="roomBtn" type="button" data-i18n="result.toLevels">回到選關</button>
+          <button class="btn ghost" id="homeBtn" type="button" data-i18n="result.home">回到首頁</button>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="lobby" class="screen" hidden aria-label="線上大廳">
-    <header class="topbar"><button class="btn small" id="lobbyBack" type="button">← 返回</button><div class="title">線上對戰</div><span></span></header>
+  <section id="lobby" class="screen" hidden aria-label="線上大廳" data-i18n-attr="aria-label=lobby.aria">
+    <header class="topbar"><button class="btn small" id="lobbyBack" type="button" data-i18n="common.back">← 返回</button><div class="title" data-i18n="lobby.title">線上對戰</div><span></span></header>
     <div class="lobbyScroll" id="lobbyScroll">
       <div class="lobbyBody">
         <div class="status" id="netStatus" role="status"></div>
         <div class="panel inviteBox" id="inviteBox" hidden>
-          <h2 id="inviteTitle">受邀加入房間</h2>
+          <h2 id="inviteTitle"></h2>
           <p class="note" id="inviteRole"></p>
-          <label class="field"><span>你的暱稱</span><input id="inviteNick" maxlength="12" autocomplete="off"></label>
-          <button class="btn primary" id="inviteGo" type="button">確認加入</button>
+          <label class="field"><span data-i18n="invite.nick">你的暱稱</span><input id="inviteNick" maxlength="12" autocomplete="off"></label>
+          <button class="btn primary" id="inviteGo" type="button" data-i18n="invite.go">確認加入</button>
           <p class="err" id="inviteErr" role="alert"></p>
         </div>
         <div class="panel">
-          <label class="field"><span>暱稱</span><input id="nickInput" maxlength="12" placeholder="留空會取個可愛名字" autocomplete="off"></label>
+          <label class="field"><span data-i18n="lobby.nick">暱稱</span><input id="nickInput" maxlength="12" placeholder="留空會取個可愛名字" data-i18n-attr="placeholder=lobby.nickPh" autocomplete="off"></label>
           <div class="row">
-            <button class="btn primary" id="quickBtn" type="button">快速加入</button>
-            <button class="btn" id="createBtn" type="button">建立房間</button>
+            <button class="btn primary" id="quickBtn" type="button" data-i18n="lobby.quick">快速加入</button>
+            <button class="btn" id="createBtn" type="button" data-i18n="lobby.create">建立房間</button>
           </div>
         </div>
-        <h2 class="lh">公開房間</h2>
+        <h2 class="lh" data-i18n="lobby.rooms">公開房間</h2>
         <ul class="rooms" id="roomList" aria-live="polite"></ul>
       </div>
     </div>
   </section>
 
-  <section id="online" class="screen" hidden aria-label="房間">
+  <section id="online" class="screen" hidden aria-label="房間" data-i18n-attr="aria-label=room.aria">
     <div class="olayout" id="olayout" data-panel="open">
-      <aside class="panel2" id="panel2" aria-label="資訊與聊天">
+      <aside class="panel2" id="panel2" aria-label="資訊與聊天" data-i18n-attr="aria-label=room.panel">
         <button class="ptoggle" id="panelToggle" type="button" aria-expanded="true" aria-controls="panelBody">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14v9H10l-4 3v-3H5z" fill="#fff"/></svg>
           <span class="badge" id="unread" hidden>0</span>
@@ -116,23 +116,23 @@
           <div class="chat" id="chatBox">
             <div class="clog" id="chatLog" role="log" aria-live="polite"></div>
             <div class="quick" id="quick"></div>
-            <form class="cform" id="chatForm"><input id="chatInput" maxlength="80" placeholder="說點什麼…" autocomplete="off"><button class="btn small primary" type="submit">送出</button></form>
+            <form class="cform" id="chatForm"><input id="chatInput" maxlength="80" placeholder="說點什麼…" data-i18n-attr="placeholder=chat.ph" autocomplete="off"><button class="btn small primary" type="submit" data-i18n="chat.send">送出</button></form>
           </div>
         </div>
       </aside>
       <div class="omain">
         <header class="topbar">
-          <button class="btn small" id="leaveBtn" type="button">← 離開</button>
+          <button class="btn small" id="leaveBtn" type="button" data-i18n="room.leave">← 離開</button>
           <div class="title" id="roomTitle"></div>
           <div id="versusStatus">
-            <div class="timer" id="otimer" role="timer" aria-label="已用時間" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="otimerText">0:00.00</span></div>
+            <div class="timer" id="otimer" role="timer" aria-label="已用時間" data-i18n-attr="aria-label=game.timer" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span id="otimerText">0:00.00</span></div>
           </div>
           <div class="chips2" id="miniScores" aria-hidden="true"></div>
         </header>
         <div class="roomScroll" id="roomScroll"><div id="roomView" class="roomView"></div></div>
         <div id="boardView" class="boardView" hidden>
           <div class="prog" aria-hidden="true"><i id="oprogFill"></i></div>
-          <div class="boardWrap"><svg id="oboard" role="group" aria-label="棋盤"></svg></div>
+          <div class="boardWrap"><svg id="oboard" role="group" aria-label="棋盤" data-i18n-attr="aria-label=game.board"></svg></div>
           <div class="count" id="count" hidden aria-hidden="true"><span id="countText"></span></div>
           <div class="live" id="olive" aria-live="polite"></div>
         </div>
@@ -143,9 +143,9 @@
             <p class="note" id="orSub"></p>
             <ol class="rank" id="orRank"></ol>
             <div class="stack">
-              <button class="btn primary" id="orAgain" type="button">再來一局</button>
-              <button class="btn" id="orRoom" type="button">回到房間</button>
-              <button class="btn ghost" id="orHome" type="button">回到首頁</button>
+              <button class="btn primary" id="orAgain" type="button" data-i18n="result.again">再來一局</button>
+              <button class="btn" id="orRoom" type="button" data-i18n="room.toRoom">回到房間</button>
+              <button class="btn ghost" id="orHome" type="button" data-i18n="result.home">回到首頁</button>
             </div>
             <p class="note" id="orNote"></p>
           </div>
@@ -157,49 +157,51 @@
 
 <div class="modal" id="createModal" hidden role="dialog" aria-modal="true" aria-labelledby="cmTitle">
   <div class="card">
-    <h2 id="cmTitle">建立房間</h2>
-    <label class="field"><span>房名</span><input id="cmName" maxlength="14" placeholder="例如：週末對戰" autocomplete="off"></label>
-    <h3>棋盤難度</h3><div class="chips" id="cmDiff" role="radiogroup" aria-label="難度"></div>
-    <h3>比賽盤數</h3><div class="chips" id="cmRounds" role="radiogroup" aria-label="比賽盤數"></div>
-    <div class="row"><button class="btn ghost" data-close type="button">取消</button><button class="btn primary" id="cmGo" type="button">建立</button></div>
+    <h2 id="cmTitle" data-i18n="modal.create">建立房間</h2>
+    <label class="field"><span data-i18n="modal.name">房名</span><input id="cmName" maxlength="20" placeholder="例如：週末對戰" data-i18n-attr="placeholder=modal.namePh" autocomplete="off"></label>
+    <h3 data-i18n="modal.diff">棋盤難度</h3><div class="chips" id="cmDiff" role="radiogroup" aria-label="難度" data-i18n-attr="aria-label=common.difficulty"></div>
+    <h3 data-i18n="modal.rounds">比賽盤數</h3><div class="chips" id="cmRounds" role="radiogroup" aria-label="比賽盤數" data-i18n-attr="aria-label=modal.rounds"></div>
+    <div class="row"><button class="btn ghost" data-close type="button" data-i18n="common.cancel">取消</button><button class="btn primary" id="cmGo" type="button" data-i18n="modal.createGo">建立</button></div>
   </div>
 </div>
 
 <div class="modal" id="copyModal" hidden role="dialog" aria-modal="true" aria-labelledby="cpTitle">
   <div class="card">
-    <h2 id="cpTitle">複製邀請連結</h2>
-    <p class="note">瀏覽器不允許自動複製，請長按下方連結全選後複製。</p>
-    <label class="field"><span>連結</span><input id="copyText" readonly></label>
-    <div class="row"><button class="btn primary" data-close type="button">完成</button></div>
+    <h2 id="cpTitle" data-i18n="copy.title">複製邀請連結</h2>
+    <p class="note" data-i18n="copy.note">瀏覽器不允許自動複製，請長按下方連結全選後複製。</p>
+    <label class="field"><span data-i18n="copy.link">連結</span><input id="copyText" readonly></label>
+    <div class="row"><button class="btn primary" data-close type="button" data-i18n="common.done">完成</button></div>
   </div>
 </div>
 
 <div class="modal" id="how" hidden role="dialog" aria-modal="true" aria-labelledby="howTitle">
   <div class="card">
-    <h2 id="howTitle">怎麼玩</h2>
+    <h2 id="howTitle" data-i18n="how.title">怎麼玩</h2>
     <ol class="steps">
-      <li><b>闖關模式：</b>五種難度各 200 關，共 1,000 關，依序解鎖。同一難度與關卡的盤面固定。每種難度最高 1,000 星，全部共 5,000 星；舊有進度與最佳時間會保留。</li>
-      <li>點一支箭頭，它會朝<b>尖端的方向</b>直直飛出去。</li>
-      <li>前面有別的箭頭擋住就飛不出去，會撞回來；闖關模式扣一顆愛心（幼幼班愛心無限）。</li>
-      <li>先飛出沒被擋的，慢慢清出路，把所有箭頭都送出棋盤就過關！每關最高 5 星：過關 1 星，失誤少最多再加 2 星，提示用量在難度允許內加 1 星，耗時在目標內加 1 星，各門檻依難度而異。</li>
-      <li>卡住時按「提示」，會閃出一支現在可以飛的箭頭。開局優先顯示全盤，太密時會適度放大；可用＋－或雙指調整，鍵盤按 0 可查看全盤。</li>
-      <li><b>對戰模式：</b>大家搶同一個棋盤，誰先點中誰得分（箭頭越長分越高），點到被擋住的扣 1 分。可選 1～5 盤，累計總分最高者獲勝。</li>
+      <li data-i18n-html="how.1"><b>闖關模式：</b>五種難度各 200 關，共 1,000 關，依序解鎖。同一難度與關卡的盤面固定。每種難度最高 1,000 星，全部共 5,000 星；舊有進度與最佳時間會保留。</li>
+      <li data-i18n-html="how.2">點一支箭頭，它會朝<b>尖端的方向</b>直直飛出去。</li>
+      <li data-i18n-html="how.3">前面有別的箭頭擋住就飛不出去，會撞回來；闖關模式扣一顆愛心（幼幼班愛心無限）。</li>
+      <li data-i18n-html="how.4">先飛出沒被擋的，慢慢清出路，把所有箭頭都送出棋盤就過關！每關最高 5 星：過關 1 星，失誤少最多再加 2 星，提示用量在難度允許內加 1 星，耗時在目標內加 1 星，各門檻依難度而異。</li>
+      <li data-i18n-html="how.5">卡住時按「提示」，會閃出一支現在可以飛的箭頭。開局優先顯示全盤，太密時會適度放大；可用＋－或雙指調整，鍵盤按 0 可查看全盤。</li>
+      <li data-i18n-html="how.6"><b>對戰模式：</b>大家搶同一個棋盤，誰先點中誰得分（箭頭越長分越高），點到被擋住的扣 1 分。可選 1～5 盤，累計總分最高者獲勝。</li>
     </ol>
-    <button class="btn primary" data-close type="button">知道了</button>
+    <button class="btn primary" data-close type="button" data-i18n="how.ok">知道了</button>
   </div>
 </div>
 
 <div class="modal" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
   <div class="card">
-    <h2 id="setTitle">設定</h2>
+    <h2 id="setTitle" data-i18n="set.title">設定</h2>
     <div class="set" id="setList"></div>
     <div class="row">
-      <button class="btn ghost" id="resetSet" type="button">恢復預設</button>
-      <button class="btn primary" data-close type="button">完成</button>
+      <button class="btn ghost" id="resetSet" type="button" data-i18n="set.reset">恢復預設</button>
+      <button class="btn primary" data-close type="button" data-i18n="common.done">完成</button>
     </div>
   </div>
 </div>
 
+<script src="js/i18n.js"></script>
+<script src="js/locales.js"></script>
 <script src="js/config.js"></script>
 <script src="js/shapes.js"></script>
 <script src="js/levels-v1.js"></script>

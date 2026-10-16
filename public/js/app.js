@@ -1,6 +1,8 @@
 (function () {
   const R = window.AmazeRules, A = window.AmazeAudio;
   const $ = (s) => document.querySelector(s);
+  const T = (k, p) => window.I18N.t(k, p);
+  const dname = (d) => T('diff.' + d);
   const board = window.AmazeBoard.create($('#board'), { onTap: (id) => onTap(id) });
   const DEFAULTS = { bgm: true, sfx: true, reduce: false, faces: false };
   let settings = Object.assign({}, DEFAULTS), stars = null, nick = '';
@@ -57,11 +59,11 @@
       container.appendChild(b);
     });
   }
-  const DIFF_ITEMS = Object.keys(R.DIFFICULTIES).map((d) => [d, R.DIFFICULTIES[d].name]);
+  const diffItems = () => Object.keys(R.DIFFICULTIES).map((d) => [d, dname(d)]);
   const starSvg = (on) => '<svg viewBox="0 0 24 24" class="' + (on ? 'on' : 'off') + '"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" stroke-linejoin="round"/></svg>';
   const starRow = (n) => starSvg(n >= 1) + starSvg(n >= 2) + starSvg(n >= 3) + starSvg(n >= 4) + starSvg(n >= 5);
-  function renderLevels() {
-    chipGroup($('#diffChips'), DIFF_ITEMS, diff, (d) => { diff = d; try { localStorage.setItem('amaze.diff', d); } catch (e) {} renderLevels(); $('#levelScroll').scrollTop = 0; });
+  function renderLevels(keep) {
+    chipGroup($('#diffChips'), diffItems(), diff, (d) => { diff = d; try { localStorage.setItem('amaze.diff', d); } catch (e) {} renderLevels(); $('#levelScroll').scrollTop = 0; });
     const g = $('#levelGrid'); g.innerHTML = '';
     let cleared = 0, total = 0, firstOpen = 0;
     for (let l = 1; l <= R.LEVELS_PER_DIFFICULTY; l++) {
@@ -70,13 +72,13 @@
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'lv' + (st ? ' done' : '') + (l === firstOpen ? ' next' : '');
       b.innerHTML = '<b>' + l + '</b>' + (open ? '<span class="st" aria-hidden="true">' + starRow(st) + '</span>' + (bestOf(diff, l) ? '<small class="tm" aria-hidden="true">' + fmtTime(bestOf(diff, l)) + '</small>' : '') : '<span class="lock" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke-width="2.4"/></svg></span>');
-      b.setAttribute('aria-label', '第 ' + l + ' 關' + (open ? (st ? '，' + st + ' 顆星' + (bestOf(diff, l) ? '，最佳 ' + fmtTime(bestOf(diff, l)) : '') : '，尚未通關') : '，尚未解鎖'));
+      b.setAttribute('aria-label', T('lv.aria', { l }) + (open ? (st ? T('lv.stars', { n: st }) + (bestOf(diff, l) ? T('lv.best', { t: fmtTime(bestOf(diff, l)) }) : '') : T('lv.notCleared')) : T('lv.locked')));
       if (!open) { b.disabled = true; } else b.onclick = () => startLevel(l);
       g.appendChild(b);
     }
-    $('#progressText').textContent = '已通 ' + cleared + '／' + R.LEVELS_PER_DIFFICULTY + ' 關・星星 ' + total + '／' + R.LEVELS_PER_DIFFICULTY * 5;
+    $('#progressText').textContent = T('levels.progress', { c: cleared, n: R.LEVELS_PER_DIFFICULTY, s: total, m: R.LEVELS_PER_DIFFICULTY * 5 });
     const target = g.children[(firstOpen || R.LEVELS_PER_DIFFICULTY) - 1];
-    requestAnimationFrame(() => { const sc = $('#levelScroll'); if (target && !sc.dataset.placed) { sc.scrollTop = Math.max(0, target.offsetTop - sc.clientHeight / 3); } sc.dataset.placed = ''; });
+    requestAnimationFrame(() => { const sc = $('#levelScroll'); if (keep != null) { sc.scrollTop = keep; return; } if (target && !sc.dataset.placed) { sc.scrollTop = Math.max(0, target.offsetTop - sc.clientHeight / 3); } sc.dataset.placed = ''; });
   }
 
   /* ---------- 單機遊戲 ---------- */
@@ -85,13 +87,13 @@
   }
   function renderHud() {
     const h = $('#hearts');
-    if (state.maxLives === Infinity) { h.innerHTML = heartSvg(true) + '<span style="font-size:16px;font-weight:800;line-height:26px">∞</span>'; h.setAttribute('aria-label', '愛心無限'); }
-    else { h.innerHTML = Array.from({ length: state.maxLives }, (_, i) => heartSvg(i < state.lives)).join(''); h.setAttribute('aria-label', '愛心 ' + state.lives + '／' + state.maxLives); }
+    if (state.maxLives === Infinity) { h.innerHTML = heartSvg(true) + '<span style="font-size:16px;font-weight:800;line-height:26px">∞</span>'; h.setAttribute('aria-label', T('hud.heartsInf')); }
+    else { h.innerHTML = Array.from({ length: state.maxLives }, (_, i) => heartSvg(i < state.lives)).join(''); h.setAttribute('aria-label', T('hud.hearts', { a: state.lives, b: state.maxLives })); }
     $('#progFill').style.width = (100 * (1 - R.remaining(state) / state.arrows.length)) + '%';
     $('#hintCount').textContent = state.hints === Infinity ? '∞' : '×' + state.hints;
     $('#hintBtn').disabled = state.hints <= 0 || state.status !== 'playing';
-    $('#gameTitle').textContent = R.DIFFICULTIES[diff].name + '・第 ' + level + ' 關';
-    $('#gameTitle').title = state.shape.name + '・剩 ' + R.remaining(state) + ' 支';
+    $('#gameTitle').textContent = T('hud.title', { d: dname(diff), l: level });
+    $('#gameTitle').title = T('hud.titleTip', { shape: T('shape.' + state.shape.id, null, state.shape.name), n: R.remaining(state) });
   }
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l, replay = false) {
@@ -107,8 +109,8 @@
     if (!state || state.status !== 'playing' || busy) return;
     A.unlock();
     const res = R.tap(state, id);
-    if (res.ok) { board.fly(id); A.sfx.pop(); say('飛出去了，還剩 ' + R.remaining(state) + ' 支'); }
-    else if (res.reason === 'blocked') { board.shake(id, res.blockers); const hh = $('#hearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit'); A.sfx.bonk(); say('被擋住了' + (state.maxLives === Infinity ? '' : '，剩 ' + state.lives + ' 顆愛心')); }
+    if (res.ok) { board.fly(id); A.sfx.pop(); say(T('say.fly', { n: R.remaining(state) })); }
+    else if (res.reason === 'blocked') { board.shake(id, res.blockers); const hh = $('#hearts'); hh.classList.remove('hit'); void hh.offsetWidth; hh.classList.add('hit'); A.sfx.bonk(); say(T('say.blocked') + (state.maxLives === Infinity ? '' : T('say.lives', { n: state.lives }))); }
     renderHud();
     if (state.status !== 'playing') { busy = true; stopTimer(); const cur = state; setTimeout(() => { if (state === cur && !$('#game').hidden) showResult(); }, state.status === 'won' ? 650 : 450); }
   }
@@ -135,6 +137,32 @@
     const r = RULE[diff], m = state.mistakes, fast = elapsed <= parMs();
     return { stars: 1 + (m === 0 ? 2 : m <= r.miss ? 1 : 0) + (hintsUsed <= r.hint ? 1 : 0) + (fast ? 1 : 0), fast };
   }
+  let resInfo = null;
+  function paintResult() {
+    const { win, rt, got, prev, prevBest, newBest } = resInfo, df = resInfo.df, lv = resInfo.lv;
+    $('#resultIcon').innerHTML = medal(win);
+    $('#resultLevel').textContent = T('result.level', { d: dname(df), l: lv });
+    $('#resultTitle').textContent = win ? T('result.win') : T('result.lose');
+    $('#resultStars').innerHTML = win ? starRow(got) : '';
+    $('#resultStars').hidden = !win;
+    $('#resultStars').setAttribute('aria-label', T('result.starsAria', { n: got }));
+    $('#resultText').textContent = win
+      ? (got === 5 ? T('result.t.perfect') : got > prev && prev ? T('result.t.up') : T('result.t.ok'))
+      : T('result.t.lose');
+    $('#resultTime').textContent = fmtTime(resInfo.time);
+    $('#resultMistakes').textContent = resInfo.mistakes;
+    $('#resultHints').textContent = resInfo.hints;
+    $('#resultTarget').textContent = fmtTime(resInfo.par);
+    $('#resultTargetStatus').textContent = win ? (rt.fast ? T('result.hit') : T('result.slow')) : T('result.fail');
+    $('#resultTargetStatus').classList.toggle('achieved', win && rt.fast);
+    const best = bestOf(df, lv);
+    $('#resultBest').hidden = !best;
+    $('#resultBest').textContent = (newBest && prevBest ? T('result.bestNew') : T('result.best')) + fmtTime(best);
+    const next = win && lv < R.LEVELS_PER_DIFFICULTY;
+    $('#againBtn').textContent = next ? T('result.next') : win ? T('result.replay') : T('result.retry');
+    $('#againBtn').onclick = () => startLevel(next ? level + 1 : level, !next);
+    $('#replayBtn').hidden = !next;
+  }
   function showResult() {
     const win = state.status === 'won';
     const rt = win ? rate() : null, got = win ? rt.stars : 0;
@@ -143,28 +171,8 @@
     if (newBest) (times[diff] = times[diff] || {})[level] = Math.floor(elapsed);
     if (win) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
     win ? A.sfx.win() : A.sfx.lose();
-    $('#resultIcon').innerHTML = medal(win);
-    $('#resultLevel').textContent = R.DIFFICULTIES[diff].name + ' · 第 ' + level + ' 關';
-    $('#resultTitle').textContent = win ? '過關囉！' : '再挑戰一次吧！';
-    $('#resultStars').innerHTML = win ? starRow(got) : '';
-    $('#resultStars').hidden = !win;
-    $('#resultStars').setAttribute('aria-label', '本次獲得 ' + got + ' 顆星，滿分 5 顆星');
-    $('#resultText').textContent = win
-      ? (got === 5 ? '完美五星，漂亮過關！' : got > prev && prev ? '星星升級了，再接再厲！' : '成功解開箭頭，繼續前進吧！')
-      : '愛心用完了，先找出能飛走的箭頭。';
-    $('#resultTime').textContent = fmtTime(elapsed);
-    $('#resultMistakes').textContent = state.mistakes;
-    $('#resultHints').textContent = hintsUsed;
-    $('#resultTarget').textContent = fmtTime(parMs());
-    $('#resultTargetStatus').textContent = win ? (rt.fast ? '已達標' : '再加油') : '未完成';
-    $('#resultTargetStatus').classList.toggle('achieved', win && rt.fast);
-    const best = bestOf(diff, level);
-    $('#resultBest').hidden = !best;
-    $('#resultBest').textContent = (newBest && prevBest ? '刷新最佳紀錄！ · ' : '本關最佳 · ') + fmtTime(best);
-    const next = win && level < R.LEVELS_PER_DIFFICULTY;
-    $('#againBtn').textContent = next ? '下一關' : win ? '重玩這關' : '再試一次';
-    $('#againBtn').onclick = () => startLevel(next ? level + 1 : level, !next);
-    $('#replayBtn').hidden = !next;
+    resInfo = { win, rt, got, prev, prevBest, newBest, mistakes: state.mistakes, hints: hintsUsed, time: elapsed, par: parMs(), lv: level, df: diff };
+    paintResult();
     $('#result').hidden = false; $('#againBtn').focus(); if (win) confetti($('#result'));
   }
 
@@ -188,7 +196,7 @@
   document.querySelectorAll('.modal').forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) close(); }));
 
   function renderSettings() {
-    const rows = [['bgm', '背景音樂'], ['sfx', '音效'], ['reduce', '減少動態'], ['faces', '箭頭表情']];
+    const rows = [['bgm', T('set.bgm')], ['sfx', T('set.sfx')], ['reduce', T('set.reduce')], ['faces', T('set.faces')]];
     const list = $('#setList'); list.innerHTML = '';
     rows.forEach(([k, label]) => {
       const row = document.createElement('div'); row.className = 'setrow';
@@ -213,12 +221,12 @@
   $('#roomBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
   $('#hintBtn').onclick = () => {
     const id = R.hint(state); if (id === null) return; hintsUsed++;
-    board.hint(id); say('提示：箭頭 ' + (id + 1) + ' 現在可以飛'); renderHud();
+    board.hint(id); say(T('say.hint', { n: id + 1 })); renderHud();
   };
   document.addEventListener('pointerdown', () => A.unlock(), { once: true });
 
   window.AmazeApp = {
-    fmtTime, $, show, open, close, say, A, DIFF_ITEMS, chipGroup, confetti,
+    fmtTime, $, show, open, close, say, A, get DIFF_ITEMS() { return diffItems(); }, chipGroup, confetti, T, dname,
     get nick() { return nick; }, set nick(v) { nick = v; try { localStorage.setItem('amaze.nick', v); } catch (e) {} },
   };
   // 自繪捲軸：所有可能超出裝置的區塊
@@ -227,15 +235,27 @@
   document.querySelectorAll('.boardWrap').forEach((w) => AmazeScroll.attach(w));
   // 瀏覽器／手機「上一頁」：依畫面回到上一層，不會直接離開遊戲
   const lobbyUrl = (window.AMAZE_CONFIG || {}).lobbyUrl || 'https://pjh-eric.github.io/game-lobby/';
-  $('#lobbyLink').href = lobbyUrl;
+  const syncLobbyLink = () => { $('#lobbyLink').href = window.I18N.withLang(lobbyUrl); };   // 帶上 ?lang=，大廳與遊戲語言同步
+  syncLobbyLink();
   const BACK = { levels: '#levelsBack', game: '#backBtn', lobby: '#lobbyBack', online: '#leaveBtn' };
   try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
   window.addEventListener('popstate', () => {
     const cur = document.body.dataset.screen;
-    if (cur === 'home' && !openModal) { location.href = lobbyUrl; return; }   // 首頁按上一頁 → 回遊戲大廳
+    if (cur === 'home' && !openModal) { location.href = window.I18N.withLang(lobbyUrl); return; }   // 首頁按上一頁 → 回遊戲大廳
     try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
     if (openModal) { close(); return; }
     const b = BACK[cur]; b && $(b).click();
+  });
+  // 語言切換：只重繪文字，不重置遊戲狀態
+  const gear = $('#gearBtn');
+  window.I18N.mountToggle({ after: gear });
+  window.I18N.onChange(() => {
+    syncLobbyLink();
+    const cur = document.body.dataset.screen;
+    if (cur === 'levels') { const sc = $('#levelScroll'); renderLevels(sc.scrollTop); }
+    if (cur === 'game' && state) { renderHud(); if (resInfo && !$('#result').hidden) paintResult(); }
+    if (openModal && openModal.id === 'settings') renderSettings();
+    if (window.AmazeScroll) AmazeScroll.refresh();
   });
   applySettings(); show('home');
   window.__amaze = { get state() { return state; }, startLevel, start(d, l) { diff = d; startLevel(l); }, stars };

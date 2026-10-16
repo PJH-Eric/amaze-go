@@ -158,7 +158,13 @@
     const anchor = findAnchor();
     // 設定鈕位置與視窗大小沒變時：已經在最好的位置（左邊）就不動，提示泡泡之類一閃而過的東西不會讓徽章跳走；
     // 若當初因為被擋住而退到次要位置，則持續檢查，空出來就搬回左邊
-    const r = anchor && anchor.rect;
+    let r = anchor && anchor.rect;
+    // 設定鈕左側若有語言切換鈕（.lang-toggle），徽章改排在切換鈕左邊，兩者並排不重疊
+    const lt = r && document.querySelector('.lang-toggle');
+    if (lt && isShown(lt)) {
+      const lr = lt.getBoundingClientRect();
+      if (lr.left < r.left && Math.abs(lr.top - r.top) < r.height) r = { left: lr.left, right: r.right, top: Math.min(lr.top, r.top), bottom: Math.max(lr.bottom, r.bottom), width: r.right - lr.left, height: Math.max(lr.height, r.height) };
+    }
     const layout = r ? [r.left, r.top, r.width, r.height, window.innerWidth, window.innerHeight].map(Math.round).join(',') : 'none';
     if (force !== true && layout === lastLayout && (!anchor || meter.dataset.spot === 'left')) return;
     lastLayout = layout;
@@ -217,8 +223,10 @@
     const quality = ms === null ? 'unknown' : ms <= 30 ? 'good' : ms < 100 ? 'warn' : 'bad';
     el.classList.add('is-' + quality);
     el.querySelector('.latency-meter__value').textContent = ms === null ? '--' : String(ms);
-    el.setAttribute('aria-label', ms === null ? '連線延遲，等待回應' : '連線延遲 ' + ms + ' 毫秒');
-    el.title = ms === null ? '連線延遲：等待回應' : '連線延遲：' + ms + ' ms';
+    // 文字走 I18N（沒有載入多語系的專案退回原中文）
+    const tr = function (k, p, fb) { return root.I18N ? root.I18N.t(k, p) : fb; };
+    el.setAttribute('aria-label', ms === null ? tr('latency.wait', null, '連線延遲，等待回應') : tr('latency.aria', { ms: ms }, '連線延遲 ' + ms + ' 毫秒'));
+    el.title = ms === null ? tr('latency.titleWait', null, '連線延遲：等待回應') : tr('latency.title', { ms: ms }, '連線延遲：' + ms + ' ms');
     dock();
   }
 
@@ -278,6 +286,7 @@
   }
 
   root.addEventListener('resize', function () { dock(true); });
+  if (root.I18N) root.I18N.onChange(function () { if (meter) render(); });
 
   root.NetworkLatency = { setActive, setProbe, report, bindSocketIo };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureMeter, { once: true });
