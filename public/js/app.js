@@ -101,6 +101,7 @@
     // 重玩還原獨立開局快照，不修改固定關卡資料與其他局的狀態。
     state = replay && levelStart ? structuredClone(levelStart) : R.createState(diff, l);
     levelStart = structuredClone(state);
+    GameAnalytics.start({ mode: 'solo', difficulty: diff, players: 1 });
     hintsUsed = 0; startTimer();
     $('#result').hidden = true; show('game'); board.draw(state); board.setEnabled(true); renderHud(); A.unlock();
     $('#restartBtn').focus();
@@ -165,6 +166,7 @@
   }
   function showResult() {
     const win = state.status === 'won';
+    GameAnalytics.end({ result: win ? 'win' : 'lose' });
     const rt = win ? rate() : null, got = win ? rt.stars : 0;
     const prev = starsOf(diff, level);
     const prevBest = bestOf(diff, level), newBest = win && (!prevBest || elapsed < prevBest);

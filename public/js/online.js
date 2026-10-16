@@ -61,7 +61,7 @@ window.AmazeOnline = (function () {
   }
   function send(o) {
     if (local) { if (hub && lc) hub.handle(lc, JSON.parse(JSON.stringify(o))); return; }
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify(o));
+    if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o)); GameAnalytics.roomRequest(o); }
   }
   function disconnect() { if (window.NetworkLatency) window.NetworkLatency.setActive(false); wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
 
@@ -97,6 +97,7 @@ window.AmazeOnline = (function () {
 
   /* ---------- 收訊息 ---------- */
   function onMsg(m) {
+    if (!local) GameAnalytics.roomResponse(m.t, m.t === 'room');
     switch (m.t) {
       case 'pong': if (!local && window.NetworkLatency) window.NetworkLatency.report(Date.now() - m.ts); break;
       case 'welcome':
@@ -322,6 +323,7 @@ window.AmazeOnline = (function () {
 
   /* ---------- 對戰 ---------- */
   function onGame(m) {
+    if (room && room.role === 'player') GameAnalytics.start({ mode: local ? 'ai' : 'online', difficulty: room.diff, players: room.players.length }, room.id + '|' + m.startAt);
     const st = m.state; st.arrows.forEach((a) => { a.removed = !!a.removed; });
     gameState = st; resultShown = false;
     $('#oresult').hidden = true;
@@ -359,6 +361,7 @@ window.AmazeOnline = (function () {
     if (room) renderSummary();
   }
   function onEnd(m) {
+    if (room && room.role === 'player') GameAnalytics.end({ result: 'complete' });
     resultShown = true; clearInterval(countT); otStop(true); $('#count').hidden = true;
     setBoardVisible(true);
     if (room) { room.phase = 'ended'; room.remaining = 0; room.matchDone = m.final; room.round = m.round; }

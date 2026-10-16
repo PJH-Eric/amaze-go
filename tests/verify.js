@@ -1,3 +1,4 @@
+require('./seo.js');
 const assert = require('assert');
 const R = require('../public/js/rules.js');
 const Shapes = require('../public/js/shapes.js');
