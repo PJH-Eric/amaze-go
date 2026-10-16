@@ -5,7 +5,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { chromium } = require('playwright');
 const { server } = require('../server.js');
-const sizes = [[320, 568], [360, 640], [393, 786], [568, 320], [844, 390], [768, 1024], [1024, 768], [1440, 900]];
+const sizes = [[320, 568], [360, 640], [393, 786], [399, 786], [400, 786], [568, 320], [759, 900], [760, 900], [844, 390], [768, 1024], [1024, 768], [1440, 900]];
 const output = process.env.LEVEL_SCREENSHOTS || path.join(os.tmpdir(), 'amaze-levels');
 
 async function clearLevel(page) {
@@ -70,8 +70,15 @@ async function clearLevel(page) {
     for (const [width, height] of sizes) {
       await page.setViewportSize({ width, height });
       await page.evaluate(() => AmazeApp.show('levels'));
+      const columns = width >= 760 ? 10 : width >= 400 ? 5 : 4;
+      assert.equal(await page.locator('#levelGrid').evaluate((n) => getComputedStyle(n).gridTemplateColumns.split(' ').length), columns);
+      const cells = page.locator('#levelGrid .lv');
+      const first = await cells.nth(0).boundingBox();
+      const nextRow = await cells.nth(columns).boundingBox();
+      assert.ok(nextRow.y > first.y && Math.abs(nextRow.x - first.x) < 1, '每列關卡數不符');
+      assert.ok(first.width >= 48 && first.height >= 48, '觸控按鈕過小');
       await page.locator('#levelGrid .lv').last().scrollIntoViewIfNeeded();
-      const bad = await page.locator('#levels .topbar, #levelPanel, #levelGrid, #progressText, #levelGrid .lv').evaluateAll((nodes) => nodes.filter((n) => {
+      const bad = await page.locator('#levels .topbar, .levelsPanel, #levelGrid, #progressText, #levelGrid .lv').evaluateAll((nodes) => nodes.filter((n) => {
         const r = n.getBoundingClientRect();
         return r.left < -1 || r.right > innerWidth + 1 || n.scrollWidth > n.clientWidth + 1;
       }).map((n) => n.id || n.className));

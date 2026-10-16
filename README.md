@@ -5,7 +5,7 @@
 ## 啟動
 - `npm install`，再 `npm start`（或雙擊 `啟動遊戲.bat`）→ http://localhost:3080（同一個 port 同時提供網頁與 WebSocket）
 - `npm test`：規則測試（有解保證、緊密排列、1,000 關、隨機開局）
-- `node scripts/check-expansion.js`：驗證五種難度的舊成績、100→101／199→200 關、解鎖、末關重玩，以及 8 種尺寸的 200 關選單與統計（需 Playwright 與 Chromium）。
+- `node scripts/check-expansion.js`：驗證五種難度的舊成績、100→101／199→200 關、解鎖、末關重玩，以及 12 種尺寸（含斷點兩側）的 200 關選單與統計。每排在 760px 以上為 10 關、400～759px 為 5 關、399px 以下為 4 關，觸控按鈕至少 48px（需 Playwright 與 Chromium）。
 - `npm run verify`：規則測試 + 線上整合測試（真 WebSocket：房間、邀請、觀戰、搶飛、電腦、重連、零真人關房）
 - `node scripts/check-replay.js`：闖關重玩、末關、失敗重試、鍵盤焦點與 8 種視窗尺寸巡檢（需環境提供 Playwright 與 Chromium；截圖預設存於系統暫存目錄，可用 `REPLAY_SCREENSHOTS` 指定）。
 - `node scripts/check-countdown.js`：對電腦／線上模式的 8 種尺寸倒數回歸，涵蓋下一盤、開始提示、背景布局穩定與倒數期間禁止操作（需 Playwright 與 Chromium；可用 `COUNTDOWN_SCREENSHOTS` 指定截圖目錄）。
