@@ -74,10 +74,11 @@ async function bounds(page, selector) {
       assert.equal(await page.locator('#resultTargetStatus').textContent(), 'On target');
       assert.equal(await page.locator('#resultTitle').textContent(), 'Puzzle cleared!');
       assert.equal(await page.locator('#againBtn').textContent(), 'New Puzzle');
-      assert.equal(await page.locator('#roomBtn').isVisible(), false);
-      assert.equal(await page.locator('#result .stack .btn:visible').count(), 3);
+      assert.equal(await page.locator('#roomBtn').textContent(), 'Change Difficulty');
+      assert.equal(await page.locator('#result .stack .btn:visible').count(), 4);
       await page.evaluate(() => I18N.setLang('zh-Hant'));
       assert.equal(await page.locator('#againBtn').textContent(), '再來一局（新盤面）');
+      assert.equal(await page.locator('#roomBtn').textContent(), '重選難度');
       assert.equal(await page.locator('#replayBtn').textContent(), '重玩這盤');
       assert.doesNotMatch(await page.locator('#resultLevel').textContent(), /第\s*\d+\s*關/);
       await page.locator('#replayBtn').tap();
@@ -153,16 +154,17 @@ async function bounds(page, selector) {
       assert.deepEqual(covered, [], '工具列不可遮住結算資訊與操作');
       const card = await page.locator('#result .card').boundingBox();
       assert.ok(card.y >= 0 && card.y + card.height <= height + 1);
-      assert.equal(await page.locator('#result .stack .btn:visible').count(), 3);
-      for (const id of ['againBtn', 'replayBtn', 'homeBtn']) {
+      assert.equal(await page.locator('#result .stack .btn:visible').count(), 4);
+      for (const id of ['againBtn', 'replayBtn', 'roomBtn', 'homeBtn']) {
         await page.locator('#' + id).scrollIntoViewIfNeeded();
         const r = await page.locator('#' + id).boundingBox();
         assert.ok(r.height >= 48 && r.y >= 0 && r.y + r.height <= height + 1, id + ' 無法觸及');
       }
       await page.locator('#result .card').evaluate((n) => { n.scrollTop = 0; n._cs.update(); });
       await page.screenshot({ path: path.join(output, `result-${lang}-${width}x${height}.png`) });
-      await page.locator('#homeBtn').tap();
-      assert.equal(await page.locator('#home').isVisible(), true);
+      await page.locator('#roomBtn').tap();
+      assert.equal(await page.locator('#random').isVisible(), true);
+      assert.equal(await page.locator('#randomChips [aria-checked="true"]').getAttribute('data-v'), 'toddler');
       assert.deepEqual(await records(), saved);
       console.log('✓ 隨機 RWD', lang, width, height);
     }
