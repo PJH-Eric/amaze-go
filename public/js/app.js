@@ -69,8 +69,22 @@
       renderRandom();
       $('#randomChips [data-v="' + d + '"]').focus();
     });
+    [...$('#randomChips').children].forEach((button, index) => {
+      const label = document.createElement('span'), detail = document.createElement('span');
+      label.className = 'randomDiffName'; label.textContent = button.textContent;
+      detail.className = 'randomDiffDetail'; detail.textContent = T('random.diff.' + button.dataset.v);
+      const meter = document.createElement('span'), selected = document.createElement('span');
+      meter.className = 'randomDiffMeter'; meter.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < 5; i++) {
+        const mark = document.createElement('i'); mark.className = i <= index ? 'filled' : '';
+        meter.appendChild(mark);
+      }
+      selected.className = 'randomDiffCheck'; selected.textContent = '✓'; selected.setAttribute('aria-hidden', 'true');
+      button.replaceChildren(label, detail, meter, selected);
+    });
     const cfg = R.DIFFICULTIES[randomDiff];
     const count = (n) => n === Infinity ? T('random.unlimited') : n;
+    $('#randomSelection').textContent = T('random.selected', { d: dname(randomDiff) });
     $('#randomRules').textContent = T('random.rules', { lives: count(cfg.lives), hints: count(cfg.hints) });
   }
 

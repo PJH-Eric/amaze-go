@@ -49,12 +49,20 @@
     <div class="randomScroll" id="randomScroll">
       <div class="randomBody">
         <div class="panel randomPanel">
-          <h2 data-i18n="random.choose">選擇難度</h2>
-          <p class="note" data-i18n="random.description">每次產生全新盤面，沒有關卡與解鎖限制，自由挑戰喜歡的難度。</p>
+          <div class="randomIntro">
+            <div class="randomHeading">
+              <p class="randomEyebrow" data-i18n="random.tagline">每次新盤・隨心遊玩</p>
+              <h2 data-i18n="random.choose">選擇難度</h2>
+              <p class="note" data-i18n="random.description">每次都是新盤面，選好難度就能開始。</p>
+            </div>
+            <div class="randomEmblem" aria-hidden="true"><svg viewBox="0 0 64 64"><rect x="10" y="10" width="44" height="44" rx="13" fill="#fff"/><g fill="#a581ce"><circle cx="23" cy="23" r="3.5"/><circle cx="41" cy="23" r="3.5"/><circle cx="32" cy="32" r="3.5"/><circle cx="23" cy="41" r="3.5"/><circle cx="41" cy="41" r="3.5"/></g></svg></div>
+          </div>
           <div class="chips" id="randomChips" role="radiogroup" aria-label="難度" data-i18n-attr="aria-label=common.difficulty"></div>
-          <p class="note" id="randomRules"></p>
-          <button class="btn primary" id="randomStart" type="button" data-i18n="random.start">開始隨機挑戰</button>
-          <p class="note" data-i18n="random.records">不影響闖關進度、星數與最佳時間。</p>
+          <div class="randomFooter">
+            <div class="randomLoadout" role="status" aria-live="polite"><p class="randomSelection" id="randomSelection"></p><p class="note" id="randomRules"></p></div>
+            <button class="btn primary" id="randomStart" type="button" data-i18n="random.start">開始遊戲</button>
+          </div>
+          <p class="note randomRecordNote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12l3 3 5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="random.records">不影響闖關進度、星數與最佳時間。</span></p>
         </div>
       </div>
     </div>

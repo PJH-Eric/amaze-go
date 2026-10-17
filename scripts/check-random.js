@@ -51,6 +51,12 @@ async function bounds(page, selector) {
     await page.locator('#randomBtn').tap();
     for (const difficulty of ['toddler', 'easy', 'normal', 'hard', 'myth']) {
       await page.locator('#randomChips [data-v="' + difficulty + '"]').tap();
+      const expectedRules = await page.evaluate((d) => {
+        const cfg = AmazeRules.DIFFICULTIES[d], count = (n) => n === Infinity ? I18N.t('random.unlimited') : n;
+        return I18N.t('random.rules', { lives: count(cfg.lives), hints: count(cfg.hints) });
+      }, difficulty);
+      assert.equal(await page.locator('#randomRules').textContent(), expectedRules, '難度摘要應符合實際愛心與提示設定');
+      assert.equal(await page.locator('.randomDiffCheck:visible').count(), 1, '只標示目前選擇的難度');
       await page.locator('#randomStart').tap();
       assert.ok(await page.evaluate((d) => {
         const s = __amaze.state, cfg = AmazeRules.DIFFICULTIES[d];
@@ -130,7 +136,7 @@ async function bounds(page, selector) {
       await page.locator('#randomBtn').scrollIntoViewIfNeeded();
       await page.screenshot({ path: path.join(output, `home-${lang}-${width}x${height}.png`) });
       await page.locator('#randomBtn').tap();
-      await bounds(page, '#random .topbar, .randomPanel, #randomChips .chip');
+      await bounds(page, '#random .topbar, .randomPanel, #randomChips .chip, .randomDiffName, .randomDiffDetail, .randomLoadout, #randomStart');
       await page.locator('#randomStart').scrollIntoViewIfNeeded();
       await page.screenshot({ path: path.join(output, `setup-${lang}-${width}x${height}.png`) });
       await page.locator('#randomChips [data-v="toddler"]').tap();

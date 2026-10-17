@@ -632,17 +632,73 @@ html.latency-on #lobby .topbar{padding-right:186px}
 .modal .row .btn{flex:1 1 auto}
 .how .steps li,.steps li{overflow-wrap:anywhere}
 
-/* 單機隨機：沿用自訂模式入口、難度晶片與捲動區。 */
+/* 單機隨機：彩色難度卡片、選取摘要與自訂捲動區。 */
 .menu .randomMode{background:linear-gradient(135deg,#f3ecff,#e9faf4);border-color:#d9c9ee}
 .randomScroll{flex:1;min-height:0;width:100%;overflow:auto;display:flex;flex-direction:column;align-items:center}
-.randomBody{flex:none;width:100%;max-width:600px;padding:16px 4px 24px}
-.randomPanel{max-width:none;display:flex;flex-direction:column;gap:14px;padding:20px}
-.randomPanel h2{margin:0}
+.randomBody{flex:none;width:100%;max-width:880px;margin-block:auto;padding:24px 4px 32px}
+.randomPanel{max-width:none;display:flex;flex-direction:column;gap:24px;padding:32px;background:radial-gradient(ellipse at top right,#f4edfc,transparent 65%),var(--card);border-color:#ead6e6}
+.randomIntro{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.randomHeading{min-width:0}
+.randomEyebrow{margin:0 0 8px;color:#9676b1;font-size:12px;font-weight:800;letter-spacing:.08em;line-height:1.5}
+.randomPanel h2{margin:0 0 8px;font-size:clamp(23px,4vw,30px);line-height:1.3}
 .randomPanel .note{margin:0;line-height:1.7}
+.randomEmblem{flex:none;width:84px;height:84px;border:2px solid #deccf2;border-radius:26px;background:linear-gradient(145deg,#dbc8f3,#c2a6e7);box-shadow:0 5px 0 #e8dbf0;transform:rotate(6deg)}
+.randomEmblem svg{display:block;width:100%;height:100%}
 #random .topbar .title{white-space:normal;overflow:visible;overflow-wrap:anywhere;font-size:14px}
-#randomChips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
-#randomChips .chip{min-width:0;min-height:48px;white-space:normal;padding:10px 2px}
-#randomStart{min-height:48px;white-space:normal}
-@media (max-width:480px){#randomChips{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:380px){.randomPanel{padding:16px 12px}.randomPanel .note{font-size:13px}}
+#randomChips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+#randomChips .chip{--diff-color:#65a895;--diff-bg:#eff9f4;position:relative;min-width:0;min-height:124px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:20px 12px 16px;text-align:left;white-space:normal;border:2px solid #e9dfe6;border-radius:20px;background:#fff;color:var(--ink);box-shadow:0 4px 0 #f0e6ed;transition:border-color .15s,background .15s,transform .15s}
+#randomChips [data-v="easy"]{--diff-color:#b68a35;--diff-bg:#fff8e9}
+#randomChips [data-v="normal"]{--diff-color:#7397c4;--diff-bg:#eff5fc}
+#randomChips [data-v="hard"]{--diff-color:#a083bf;--diff-bg:#f6f0fc}
+#randomChips [data-v="myth"]{--diff-color:#cf7998;--diff-bg:#fff0f6}
+#randomChips .chip[aria-checked="true"]{border-color:var(--diff-color);background:var(--diff-bg);box-shadow:0 4px 0 color-mix(in srgb,var(--diff-color) 28%,white)}
+.randomDiffName{font-size:17px;font-weight:800;line-height:1.3;padding-right:12px}
+.randomDiffDetail{font-size:12px;font-weight:500;line-height:1.5;opacity:.78}
+.randomDiffMeter{display:flex;gap:4px;margin-top:auto;padding-top:8px}
+.randomDiffMeter i{display:block;width:11px;height:5px;border-radius:3px;background:#eae4e9}
+.randomDiffMeter .filled{background:var(--diff-color)}
+.randomDiffCheck{position:absolute;top:9px;right:9px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;font-size:12px;background:var(--diff-color);color:#fff;visibility:hidden}
+[aria-checked="true"] .randomDiffCheck{visibility:visible}
+.randomFooter{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,230px);gap:20px;align-items:center;padding-top:20px;border-top:1px solid #eadce6}
+.randomLoadout{min-width:0}
+.randomSelection{margin:0 0 4px;font-weight:800;font-size:16px;overflow-wrap:anywhere}
+#randomRules{font-size:13px;color:#806777;opacity:1}
+#randomStart{min-height:54px;white-space:normal;font-size:17px;padding:10px 18px}
+.randomRecordNote{display:flex;align-items:flex-start;justify-content:center;gap:6px;font-size:12px;text-align:center}
+.randomRecordNote svg{flex:none;width:18px;height:18px;margin-top:1px;color:#8aa99e}
+@media (hover:hover){#randomChips .chip:hover{border-color:var(--diff-color);transform:translateY(-2px)}}
+@media (max-width:740px){
+  .randomBody{padding:18px 4px 24px}
+  .randomPanel{padding:22px 18px;gap:18px}
+  .randomIntro{gap:12px}
+  .randomEmblem{width:62px;height:62px;border-radius:20px}
+  #randomChips{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #randomChips .chip{min-height:100px;padding:14px 12px 12px}
+  #randomChips .chip:last-child{grid-column:1/-1;min-height:76px;display:grid;grid-template-columns:minmax(0,1fr) auto;row-gap:4px;column-gap:10px}
+  #randomChips .chip:last-child .randomDiffName{grid-column:1;grid-row:1}
+  #randomChips .chip:last-child .randomDiffDetail{grid-column:1;grid-row:2}
+  #randomChips .chip:last-child .randomDiffMeter{grid-column:2;grid-row:1/3;align-self:center;margin:0 24px 0 0;padding:0}
+  .randomFooter{grid-template-columns:1fr;gap:14px;padding-top:16px}
+  #randomStart{width:100%}
+}
+@media (max-width:380px){
+  .randomPanel{padding:18px 14px;gap:16px}
+  .randomPanel .note{font-size:12px}
+  .randomEmblem{width:48px;height:48px;border-radius:16px}
+  .randomEyebrow{font-size:11px;letter-spacing:0}
+  .randomDiffName{font-size:16px}
+}
+@media (max-height:520px) and (orientation:landscape) and (min-width:520px){
+  .randomBody{padding-top:14px}
+  .randomPanel{padding:20px;gap:16px}
+  .randomEmblem{width:56px;height:56px;border-radius:18px}
+  #randomChips{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  #randomChips .chip,#randomChips .chip:last-child{display:flex;grid-column:auto;min-height:112px;padding:20px 8px 10px}
+  .randomDiffName{font-size:14px;padding-right:0}
+  .randomDiffDetail{font-size:11px}
+  #randomChips .chip:last-child .randomDiffMeter{margin-top:auto;margin-right:0;padding-top:8px}
+  .randomDiffMeter{gap:3px}
+  .randomDiffMeter i{width:9px}
+  .randomFooter{grid-template-columns:minmax(0,1fr) minmax(150px,190px);gap:12px}
+}
 @media (max-height:520px) and (orientation:landscape){#result{padding-top:max(68px,calc(env(safe-area-inset-top) + 60px))}}
