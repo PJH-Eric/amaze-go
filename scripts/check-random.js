@@ -77,7 +77,7 @@ async function bounds(page, selector) {
       assert.equal(await page.locator('#roomBtn').textContent(), 'Change Difficulty');
       assert.equal(await page.locator('#result .stack .btn:visible').count(), 4);
       await page.evaluate(() => I18N.setLang('zh-Hant'));
-      assert.equal(await page.locator('#againBtn').textContent(), '再來一局（新盤面）');
+      assert.equal(await page.locator('#againBtn').textContent(), '再開新局');
       assert.equal(await page.locator('#roomBtn').textContent(), '重選難度');
       assert.equal(await page.locator('#replayBtn').textContent(), '重玩這盤');
       assert.doesNotMatch(await page.locator('#resultLevel').textContent(), /第\s*\d+\s*關/);
