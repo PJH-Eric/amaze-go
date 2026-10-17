@@ -15,10 +15,6 @@ function cors(req, res) {
 const server = http.createServer((req, res) => {
   cors(req, res);
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/api/presence') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    return res.end(JSON.stringify({ gameId: 'amaze-go', ...hub.presence(), updatedAt: new Date().toISOString() }));
-  }
   if (url === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"ok":true}'); }
   const file = path.normalize(path.join(ROOT, url === '/' ? 'index.html' : url));
   if (!file.startsWith(ROOT)) { res.writeHead(403); return res.end(); }

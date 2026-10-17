@@ -101,13 +101,6 @@ class Hub {
     }));
   }
   broadcastList() { for (const c of this.clients.values()) if (c.connected && !c.roomId) c.send({ t: 'rooms', rooms: this.list() }); }
-  /** 大廳「在線人數」用：連線中的人（不含斷線寬限期內的）、真人玩家、觀戰者、房外等候者、房間數 */
-  presence() {
-    let online = 0, lobby = 0, players = 0, spectators = 0;
-    for (const c of this.clients.values()) { if (!c.connected) continue; online++; if (!c.roomId) lobby++; }
-    for (const r of this.rooms.values()) { players += this.humans(r).length; spectators += this.spectatorCount(r); }
-    return { online, players, spectators, lobby, rooms: this.rooms.size };
-  }
   roomOf(c) { return c.roomId ? this.rooms.get(c.roomId) : null; }
   humans(r) { return [...r.members.values()].filter((m) => m.role === 'player'); }
   seats(r) { return this.humans(r).length + r.ais.length; }
