@@ -64,6 +64,20 @@ async function finishRound(page) {
   await page.locator('#oresult').waitFor({ state: 'visible' });
 }
 
+async function checkWaitingRoom(page, name, width, height) {
+  assert.equal(await page.locator('#miniScores').isVisible(), false, '等待房間不應把比分疊在房名上');
+  const readable = await page.locator('#roomTitle').evaluate((n) => {
+    const title = n.getBoundingClientRect();
+    const obstacles = ['#leaveBtn', '#versusStatus', '.gear', '.lang-toggle'].map((s) => document.querySelector(s));
+    return title.width >= 64 && obstacles.every((other) => {
+      const r = other.getBoundingClientRect();
+      return !r.width || !r.height || title.right <= r.left || title.left >= r.right || title.bottom <= r.top || title.top >= r.bottom;
+    });
+  });
+  assert.ok(readable, '等待房名應保留可讀寬度，且不被延遲或工具列遮住');
+  await page.screenshot({ path: path.join(output, `${name}-${width}x${height}-waiting.png`) });
+}
+
 (async () => {
   let browser;
   try {
@@ -102,6 +116,11 @@ async function finishRound(page) {
           await page.locator('#cmGo').click();
           await page.locator('#roomView .seat.empty .seg button[data-v="easy"]').first().click();
         }
+        for (const lang of ['zh-Hant', 'en']) {
+          await page.evaluate((l) => I18N.setLang(l), lang);
+          await checkWaitingRoom(page, mode + '-' + lang, width, height);
+        }
+        await page.evaluate(() => I18N.setLang('zh-Hant'));
         assert.equal(await page.locator('#otimer').isVisible(), false, '等待房間不應顯示對局計時');
         await page.locator('#roomView .row .btn.primary').click();
         await checkCountdown(page, mode, width, height);
