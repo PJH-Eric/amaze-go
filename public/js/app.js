@@ -16,8 +16,9 @@
   try { times = JSON.parse(localStorage.getItem('amaze.times') || '{}') || {}; } catch (e) {}
   try { nick = localStorage.getItem('amaze.nick') || ''; } catch (e) {}
   const save = () => { try { localStorage.setItem('amaze.settings', JSON.stringify(settings)); localStorage.setItem('amaze.stars', JSON.stringify(stars)); localStorage.setItem('amaze.times', JSON.stringify(times)); } catch (e) {} };
-  let diff = 'easy', level = 1, state = null, levelStart = null, busy = false;
+  let diff = 'easy', level = 1, state = null, levelStart = null, busy = false, playMode = 'story', randomDiff = 'easy';
   try { const d = localStorage.getItem('amaze.diff'); if (R.DIFFICULTIES[d]) diff = d; } catch (e) {}
+  try { const d = localStorage.getItem('amaze.randomDiff'); if (R.DIFFICULTIES[d]) randomDiff = d; } catch (e) {}
 
   function applySettings() {
     document.body.classList.toggle('reduce', settings.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -26,11 +27,12 @@
   }
 
   /* ---------- 畫面切換 ---------- */
-  const SCREENS = ['home', 'levels', 'game', 'lobby', 'online'];
+  const SCREENS = ['home', 'levels', 'random', 'game', 'lobby', 'online'];
   function show(id) {
     SCREENS.forEach((s) => { $('#' + s).hidden = s !== id; });
     document.body.dataset.screen = id;
     if (id === 'levels') renderLevels();
+    if (id === 'random') renderRandom();
     if (window.AmazeScroll) AmazeScroll.refresh();
   }
 
@@ -60,6 +62,18 @@
     });
   }
   const diffItems = () => Object.keys(R.DIFFICULTIES).map((d) => [d, dname(d)]);
+  function renderRandom() {
+    chipGroup($('#randomChips'), diffItems(), randomDiff, (d) => {
+      randomDiff = d;
+      try { localStorage.setItem('amaze.randomDiff', d); } catch (e) {}
+      renderRandom();
+      $('#randomChips [data-v="' + d + '"]').focus();
+    });
+    const cfg = R.DIFFICULTIES[randomDiff];
+    const count = (n) => n === Infinity ? T('random.unlimited') : n;
+    $('#randomRules').textContent = T('random.rules', { lives: count(cfg.lives), hints: count(cfg.hints) });
+  }
+
   const starSvg = (on) => '<svg viewBox="0 0 24 24" class="' + (on ? 'on' : 'off') + '"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" stroke-linejoin="round"/></svg>';
   const starRow = (n) => starSvg(n >= 1) + starSvg(n >= 2) + starSvg(n >= 3) + starSvg(n >= 4) + starSvg(n >= 5);
   function renderLevels(keep) {
@@ -92,16 +106,32 @@
     $('#progFill').style.width = (100 * (1 - R.remaining(state) / state.arrows.length)) + '%';
     $('#hintCount').textContent = state.hints === Infinity ? '∞' : '×' + state.hints;
     $('#hintBtn').disabled = state.hints <= 0 || state.status !== 'playing';
-    $('#gameTitle').textContent = T('hud.title', { d: dname(diff), l: level });
+    $('#gameTitle').textContent = playMode === 'random' ? T('random.hud', { d: dname(state.difficulty) }) : T('hud.title', { d: dname(diff), l: level });
     $('#gameTitle').title = T('hud.titleTip', { shape: T('shape.' + state.shape.id, null, state.shape.name), n: R.remaining(state) });
   }
   const say = (t) => { $('#live').textContent = t; };
   function startLevel(l, replay = false) {
-    level = l; busy = false;
+    playMode = 'story'; level = l;
     // 重玩還原獨立開局快照，不修改固定關卡資料與其他局的狀態。
-    state = replay && levelStart ? structuredClone(levelStart) : R.createState(diff, l);
+    beginSolo(replay && levelStart ? structuredClone(levelStart) : R.createState(diff, l));
+  }
+
+  function startRandom(replay = false) {
+    let next;
+    if (replay && playMode === 'random' && levelStart) next = structuredClone(levelStart);
+    else {
+      const spec = R.randomSpec(randomDiff);
+      if (playMode === 'random' && state && spec.seed === state.seed) spec.seed = (spec.seed + 1) % 2147483647;
+      next = R.createStateFromSpec(randomDiff, spec);
+    }
+    playMode = 'random';
+    beginSolo(next);
+  }
+
+  function beginSolo(next) {
+    state = next; busy = false; resInfo = null;
     levelStart = structuredClone(state);
-    GameAnalytics.start({ mode: 'solo', difficulty: diff, players: 1 });
+    GameAnalytics.start({ mode: playMode === 'random' ? 'solo_random' : 'solo', difficulty: state.difficulty, players: 1 });
     hintsUsed = 0; startTimer();
     $('#result').hidden = true; show('game'); board.draw(state); board.setEnabled(true); renderHud(); A.unlock();
     $('#restartBtn').focus();
@@ -133,29 +163,43 @@
     toddler: { miss: 4, hint: 2, sec: 1.0 }, easy: { miss: 2, hint: 1, sec: 1.2 }, normal: { miss: 1, hint: 1, sec: 1.5 },
     hard: { miss: 1, hint: 0, sec: 1.7 }, myth: { miss: 1, hint: 0, sec: 2.0 },   // 越難允許的失誤／提示越少，但每支箭給的思考時間越多
   };
-  const parMs = () => (5 + state.arrows.length * RULE[diff].sec) * 1000;
+  const parMs = () => Math.round((5 + state.arrows.length * RULE[state.difficulty].sec) * 1000);
   function rate() {
-    const r = RULE[diff], m = state.mistakes, fast = elapsed <= parMs();
+    const r = RULE[state.difficulty], m = state.mistakes, fast = elapsed <= parMs();
     return { stars: 1 + (m === 0 ? 2 : m <= r.miss ? 1 : 0) + (hintsUsed <= r.hint ? 1 : 0) + (fast ? 1 : 0), fast };
   }
   let resInfo = null;
   function paintResult() {
     const { win, rt, got, prev, prevBest, newBest } = resInfo, df = resInfo.df, lv = resInfo.lv;
+    const random = resInfo.mode === 'random';
+    $('#result').dataset.mode = resInfo.mode;
     $('#resultIcon').innerHTML = medal(win);
-    $('#resultLevel').textContent = T('result.level', { d: dname(df), l: lv });
-    $('#resultTitle').textContent = win ? T('result.win') : T('result.lose');
+    $('#resultLevel').textContent = random ? T('random.playing', { d: dname(df) }) : T('result.level', { d: dname(df), l: lv });
+    $('#resultTitle').textContent = win ? (random ? T('random.win') : T('result.win')) : T('result.lose');
+    $('#resultTime').textContent = fmtTime(resInfo.time);
+    $('#resultMistakes').textContent = resInfo.mistakes;
+    $('#resultHints').textContent = resInfo.hints;
+    $('#resultTargetStat').hidden = false;
+    $('#resultTarget').textContent = fmtTime(resInfo.par);
+    $('#resultTargetStatus').textContent = win ? (rt.fast ? T('result.hit') : T('result.slow')) : T('result.fail');
+    $('#resultTargetStatus').classList.toggle('achieved', win && rt.fast);
+    $('#roomBtn').textContent = random ? T('random.choose') : T('result.toLevels');
+    $('#replayBtn').textContent = random ? T('random.replay') : T('result.replay');
+    if (random) {
+      $('#resultStars').hidden = true; $('#resultStars').innerHTML = '';
+      $('#resultBest').hidden = true; $('#resultBest').textContent = '';
+      $('#resultText').textContent = win ? T('random.complete') : T('result.t.lose');
+      $('#againBtn').textContent = T('random.new');
+      $('#againBtn').onclick = () => startRandom();
+      $('#replayBtn').hidden = false;
+      return;
+    }
     $('#resultStars').innerHTML = win ? starRow(got) : '';
     $('#resultStars').hidden = !win;
     $('#resultStars').setAttribute('aria-label', T('result.starsAria', { n: got }));
     $('#resultText').textContent = win
       ? (got === 5 ? T('result.t.perfect') : got > prev && prev ? T('result.t.up') : T('result.t.ok'))
       : T('result.t.lose');
-    $('#resultTime').textContent = fmtTime(resInfo.time);
-    $('#resultMistakes').textContent = resInfo.mistakes;
-    $('#resultHints').textContent = resInfo.hints;
-    $('#resultTarget').textContent = fmtTime(resInfo.par);
-    $('#resultTargetStatus').textContent = win ? (rt.fast ? T('result.hit') : T('result.slow')) : T('result.fail');
-    $('#resultTargetStatus').classList.toggle('achieved', win && rt.fast);
     const best = bestOf(df, lv);
     $('#resultBest').hidden = !best;
     $('#resultBest').textContent = (newBest && prevBest ? T('result.bestNew') : T('result.best')) + fmtTime(best);
@@ -166,16 +210,20 @@
   }
   function showResult() {
     const win = state.status === 'won';
+    const random = playMode === 'random';
     GameAnalytics.end({ result: win ? 'win' : 'lose' });
-    const rt = win ? rate() : null, got = win ? rt.stars : 0;
-    const prev = starsOf(diff, level);
-    const prevBest = bestOf(diff, level), newBest = win && (!prevBest || elapsed < prevBest);
+    const rt = win ? (random ? { fast: elapsed <= parMs() } : rate()) : null, got = win && !random ? rt.stars : 0;
+    const prev = random ? 0 : starsOf(diff, level);
+    const prevBest = random ? 0 : bestOf(diff, level), newBest = !random && win && (!prevBest || elapsed < prevBest);
     if (newBest) (times[diff] = times[diff] || {})[level] = Math.floor(elapsed);
-    if (win) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
+    if (win && !random) { (stars[diff] = stars[diff] || {})[level] = Math.max(prev, got); save(); }
     win ? A.sfx.win() : A.sfx.lose();
-    resInfo = { win, rt, got, prev, prevBest, newBest, mistakes: state.mistakes, hints: hintsUsed, time: elapsed, par: parMs(), lv: level, df: diff };
+    resInfo = { mode: playMode, win, rt, got, prev, prevBest, newBest, mistakes: state.mistakes, hints: hintsUsed, time: elapsed, par: parMs(), lv: random ? null : level, df: state.difficulty };
     paintResult();
-    $('#result').hidden = false; $('#againBtn').focus(); if (win) confetti($('#result'));
+    $('#result').hidden = false; $('#againBtn').focus({ preventScroll: true });
+    const card = $('#result .card'); card.scrollTop = 0;
+    if (card._cs) card._cs.update();
+    if (win) confetti($('#result'));
   }
 
   /* ---------- 彈窗（焦點鎖定、Esc、返回原焦點） ---------- */
@@ -213,14 +261,22 @@
   $('#resetSet').onclick = () => { settings = Object.assign({}, DEFAULTS); applySettings(); renderSettings(); };
   $('#howBtn').onclick = () => open($('#how'));
   $('#storyBtn').onclick = () => show('levels');
+  $('#randomBtn').onclick = () => show('random');
+  $('#randomBack').onclick = () => show('home');
+  $('#randomStart').onclick = () => startRandom();
   $('#vsAiBtn').onclick = () => window.AmazeOnline.enterLocal();
   $('#onlineBtn').onclick = () => window.AmazeOnline.enter();
   $('#levelsBack').onclick = () => show('home');
-  $('#backBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
-  $('#homeBtn').onclick = () => { $('#result').hidden = true; show('home'); };
-  $('#restartBtn').onclick = () => startLevel(level, true);
-  $('#replayBtn').onclick = () => startLevel(level, true);
-  $('#roomBtn').onclick = () => { $('#result').hidden = true; show('levels'); };
+  function leaveSolo(target) {
+    clearInterval(tickT); GameAnalytics.reset();
+    $('#result').hidden = true; show(target);
+  }
+  const replaySolo = () => playMode === 'random' ? startRandom(true) : startLevel(level, true);
+  $('#backBtn').onclick = () => leaveSolo(playMode === 'random' ? 'random' : 'levels');
+  $('#homeBtn').onclick = () => leaveSolo('home');
+  $('#restartBtn').onclick = replaySolo;
+  $('#replayBtn').onclick = replaySolo;
+  $('#roomBtn').onclick = () => leaveSolo(playMode === 'random' ? 'random' : 'levels');
   $('#hintBtn').onclick = () => {
     const id = R.hint(state); if (id === null) return; hintsUsed++;
     board.hint(id); say(T('say.hint', { n: id + 1 })); renderHud();
@@ -232,14 +288,14 @@
     get nick() { return nick; }, set nick(v) { nick = v; try { localStorage.setItem('amaze.nick', v); } catch (e) {} },
   };
   // 自繪捲軸：所有可能超出裝置的區塊
-  ['#home', '#levelScroll', '#lobbyScroll', '#roomScroll', '#chatLog', '#sum'].forEach((q) => AmazeScroll.attach($(q)));
+  ['#home', '#levelScroll', '#randomScroll', '#lobbyScroll', '#roomScroll', '#chatLog', '#sum'].forEach((q) => AmazeScroll.attach($(q)));
   document.querySelectorAll('.card').forEach((c) => AmazeScroll.attach(c));
   document.querySelectorAll('.boardWrap').forEach((w) => AmazeScroll.attach(w));
   // 瀏覽器／手機「上一頁」：依畫面回到上一層，不會直接離開遊戲
   const lobbyUrl = (window.AMAZE_CONFIG || {}).lobbyUrl || 'https://pjh-eric.github.io/game-lobby/';
   const syncLobbyLink = () => { $('#lobbyLink').href = window.I18N.withLang(lobbyUrl); };   // 帶上 ?lang=，大廳與遊戲語言同步
   syncLobbyLink();
-  const BACK = { levels: '#levelsBack', game: '#backBtn', lobby: '#lobbyBack', online: '#leaveBtn' };
+  const BACK = { levels: '#levelsBack', random: '#randomBack', game: '#backBtn', lobby: '#lobbyBack', online: '#leaveBtn' };
   try { history.pushState({ amaze: 1 }, ''); } catch (e) {}
   window.addEventListener('popstate', () => {
     const cur = document.body.dataset.screen;
@@ -255,10 +311,11 @@
     syncLobbyLink();
     const cur = document.body.dataset.screen;
     if (cur === 'levels') { const sc = $('#levelScroll'); renderLevels(sc.scrollTop); }
+    if (cur === 'random') renderRandom();
     if (cur === 'game' && state) { renderHud(); if (resInfo && !$('#result').hidden) paintResult(); }
     if (openModal && openModal.id === 'settings') renderSettings();
     if (window.AmazeScroll) AmazeScroll.refresh();
   });
   applySettings(); show('home');
-  window.__amaze = { get state() { return state; }, startLevel, start(d, l) { diff = d; startLevel(l); }, stars };
+  window.__amaze = { get state() { return state; }, get mode() { return playMode; }, startLevel, start(d, l) { diff = d; startLevel(l); }, stars };
 })();

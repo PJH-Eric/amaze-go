@@ -623,3 +623,18 @@ html.latency-on #lobby .topbar{padding-right:186px}
 .result .stack .btn,.modal .btn{white-space:normal;overflow-wrap:anywhere;line-height:1.2}
 .modal .row .btn{flex:1 1 auto}
 .how .steps li,.steps li{overflow-wrap:anywhere}
+
+/* 單機隨機：沿用自訂模式入口、難度晶片與捲動區。 */
+.menu .randomMode{background:linear-gradient(135deg,#f3ecff,#e9faf4);border-color:#d9c9ee}
+.randomScroll{flex:1;min-height:0;width:100%;overflow:auto;display:flex;flex-direction:column;align-items:center}
+.randomBody{flex:none;width:100%;max-width:600px;padding:16px 4px 24px}
+.randomPanel{max-width:none;display:flex;flex-direction:column;gap:14px;padding:20px}
+.randomPanel h2{margin:0}
+.randomPanel .note{margin:0;line-height:1.7}
+#random .topbar .title{white-space:normal;overflow:visible;overflow-wrap:anywhere;font-size:14px}
+#randomChips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+#randomChips .chip{min-width:0;min-height:48px;white-space:normal;padding:10px 2px}
+#randomStart{min-height:48px;white-space:normal}
+@media (max-width:480px){#randomChips{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:380px){.randomPanel{padding:16px 12px}.randomPanel .note{font-size:13px}}
+@media (max-height:520px) and (orientation:landscape){#result{padding-top:max(68px,calc(env(safe-area-inset-top) + 60px))}}
