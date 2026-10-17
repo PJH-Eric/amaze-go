@@ -74,7 +74,10 @@ async function bounds(page, selector) {
       assert.equal(await page.locator('#resultTargetStatus').textContent(), 'On target');
       assert.equal(await page.locator('#resultTitle').textContent(), 'Puzzle cleared!');
       assert.equal(await page.locator('#againBtn').textContent(), 'New Puzzle');
+      assert.equal(await page.locator('#roomBtn').isVisible(), false);
+      assert.equal(await page.locator('#result .stack .btn:visible').count(), 3);
       await page.evaluate(() => I18N.setLang('zh-Hant'));
+      assert.equal(await page.locator('#againBtn').textContent(), '再來一局（新盤面）');
       assert.equal(await page.locator('#replayBtn').textContent(), '重玩這盤');
       assert.doesNotMatch(await page.locator('#resultLevel').textContent(), /第\s*\d+\s*關/);
       await page.locator('#replayBtn').tap();
@@ -112,7 +115,9 @@ async function bounds(page, selector) {
     await clear(page);
     assert.equal(await page.locator('#resultTargetStatus').textContent(), await page.evaluate(() => I18N.t('result.slow')));
     await page.evaluate(() => { performance.now = __originalNow; });
-    await page.locator('#roomBtn').tap();
+    await page.locator('#homeBtn').tap();
+    assert.equal(await page.locator('#home').isVisible(), true);
+    await page.locator('#randomBtn').tap();
     assert.deepEqual(await records(), saved);
     assert.deepEqual(sockets, [], '單機隨機模式不應建立網路房間');
     assert.ok(await page.evaluate(() => __events.some((e) => e.event === 'game_start' && e.params.mode === 'solo_random')));
@@ -148,15 +153,16 @@ async function bounds(page, selector) {
       assert.deepEqual(covered, [], '工具列不可遮住結算資訊與操作');
       const card = await page.locator('#result .card').boundingBox();
       assert.ok(card.y >= 0 && card.y + card.height <= height + 1);
-      for (const id of ['againBtn', 'replayBtn', 'roomBtn', 'homeBtn']) {
+      assert.equal(await page.locator('#result .stack .btn:visible').count(), 3);
+      for (const id of ['againBtn', 'replayBtn', 'homeBtn']) {
         await page.locator('#' + id).scrollIntoViewIfNeeded();
         const r = await page.locator('#' + id).boundingBox();
         assert.ok(r.height >= 48 && r.y >= 0 && r.y + r.height <= height + 1, id + ' 無法觸及');
       }
       await page.locator('#result .card').evaluate((n) => { n.scrollTop = 0; n._cs.update(); });
       await page.screenshot({ path: path.join(output, `result-${lang}-${width}x${height}.png`) });
-      await page.locator('#roomBtn').tap();
-      assert.equal(await page.locator('#random').isVisible(), true);
+      await page.locator('#homeBtn').tap();
+      assert.equal(await page.locator('#home').isVisible(), true);
       assert.deepEqual(await records(), saved);
       console.log('✓ 隨機 RWD', lang, width, height);
     }
@@ -165,6 +171,7 @@ async function bounds(page, selector) {
     await clear(page);
     assert.equal(await page.locator('#resultStars').isVisible(), true);
     assert.equal(await page.locator('#resultTargetStat').isVisible(), true);
+    assert.equal(await page.locator('#roomBtn').isVisible(), true, '返回闖關時應恢復選關按鈕');
     assert.deepEqual(errors, []);
     console.log('✓ 單機隨機完整流程、失敗重試、離線、模式切換；截圖：' + output);
   } finally {

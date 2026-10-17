@@ -631,6 +631,11 @@ html.latency-on #lobby .topbar{padding-right:186px}
 .randomPanel{max-width:none;display:flex;flex-direction:column;gap:14px;padding:20px}
 .randomPanel h2{margin:0}
 .randomPanel .note{margin:0;line-height:1.7}
+#result[data-mode="random"] #againBtn{grid-column:1/-1}
+@media (max-height:520px) and (orientation:landscape){
+  #result[data-mode="random"] .stack{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #result[data-mode="random"] #againBtn{grid-column:auto}
+}
 #random .topbar .title{white-space:normal;overflow:visible;overflow-wrap:anywhere;font-size:14px}
 #randomChips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 #randomChips .chip{min-width:0;min-height:48px;white-space:normal;padding:10px 2px}

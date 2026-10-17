@@ -183,7 +183,8 @@
     $('#resultTarget').textContent = fmtTime(resInfo.par);
     $('#resultTargetStatus').textContent = win ? (rt.fast ? T('result.hit') : T('result.slow')) : T('result.fail');
     $('#resultTargetStatus').classList.toggle('achieved', win && rt.fast);
-    $('#roomBtn').textContent = random ? T('random.choose') : T('result.toLevels');
+    $('#roomBtn').hidden = random;
+    $('#roomBtn').textContent = T('result.toLevels');
     $('#replayBtn').textContent = random ? T('random.replay') : T('result.replay');
     if (random) {
       $('#resultStars').hidden = true; $('#resultStars').innerHTML = '';

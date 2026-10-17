@@ -41,7 +41,7 @@
     'random.hud': '隨機・{d}',
     'random.win': '完成囉！',
     'random.complete': '盤面已清空！再挑戰一個新盤面吧。',
-    'random.new': '再來一局',
+    'random.new': '再來一局（新盤面）',
     'random.replay': '重玩這盤',
     'random.help': '<b>單機隨機模式：</b>選擇難度後產生新盤面，沒有關卡或解鎖限制。愛心與提示依難度設定，過關可換新盤或重玩這盤，不影響闖關紀錄。',
 
