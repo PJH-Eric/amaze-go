@@ -5,9 +5,10 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/localization.js && node tests/i18n.js && node tests/determinism.js && node tests/verify.js",
+    "test": "node tests/analytics.js && node tests/localization.js && node tests/i18n.js && node tests/determinism.js && node tests/verify.js",
     "verify": "node tests/i18n.js && node tests/determinism.js && node tests/verify.js && node tests/hub.js && node scripts/online-check.js",
-    "test:localization": "node tests/localization.js"
+    "test:localization": "node tests/localization.js",
+    "test:analytics": "node tests/analytics.js"
   },
   "engines": {
     "node": ">=18"
