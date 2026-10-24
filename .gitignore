@@ -2,3 +2,20 @@ node_modules/
 .env
 *.log
 .DS_Store
+
+# 可重新產生的測試截圖、暫存與快取
+/screenshots/
+/shots/
+/.shots/
+/test-results/
+/playwright-report/
+/coverage/
+/.cache/
+/.pytest_cache/
+**/__pycache__/
+*.pyc
+*.tmp
+*.bak
+*.tsbuildinfo
+/tmp/
+/temp/
