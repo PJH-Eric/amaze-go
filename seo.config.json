@@ -8,6 +8,6 @@
   "genre": "益智",
   "players": "1-4",
   "iconUrl": "https://pjh-eric.github.io/amaze-go/favicon-96.png",
-  "ogImage": "https://pjh-eric.github.io/amaze-go/og-image.png",
-  "ogImageAlt": "箭頭解密遊戲圖示"
+  "ogImage": "https://pjh-eric.github.io/amaze-go/assets/images/cover.webp",
+  "ogImageAlt": "箭頭解密 遊戲封面"
 }
