@@ -29,6 +29,7 @@
   /* ---------- 畫面切換 ---------- */
   const SCREENS = ['home', 'levels', 'random', 'game', 'lobby', 'online'];
   function show(id) {
+    if (window.ServerOutage) window.ServerOutage.setScreen(id);
     SCREENS.forEach((s) => { $('#' + s).hidden = s !== id; });
     document.body.dataset.screen = id;
     if (id === 'levels') renderLevels();

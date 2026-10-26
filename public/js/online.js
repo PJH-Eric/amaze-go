@@ -194,6 +194,7 @@ window.AmazeOnline = (function () {
 
   /* ---------- 房間快照 ---------- */
   function setBoardVisible(visible) {
+    if (window.ServerOutage) window.ServerOutage.setScreen(visible || local ? 'game' : 'room');
     $('#boardView').hidden = !visible; $('#roomScroll').hidden = visible;
     $('#otimer').hidden = !visible;
     $('#online').classList.toggle('showing-board', visible);
