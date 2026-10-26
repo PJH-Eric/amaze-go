@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/analytics.js && node tests/localization.js && node tests/i18n.js && node tests/determinism.js && node tests/verify.js && node tests/i18n-hans.js",
+    "test": "node tests/server-outage.cjs && node tests/analytics.js && node tests/localization.js && node tests/i18n.js && node tests/determinism.js && node tests/verify.js && node tests/i18n-hans.js",
     "verify": "node tests/i18n.js && node tests/determinism.js && node tests/verify.js && node tests/hub.js && node scripts/online-check.js",
     "test:localization": "node tests/localization.js",
     "test:analytics": "node tests/analytics.js"

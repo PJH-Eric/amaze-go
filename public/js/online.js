@@ -39,10 +39,12 @@ window.AmazeOnline = (function () {
     if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
     if (location.protocol === 'file:') return setStatus(stKey('net.file'), true);
     let url; try { url = wsUrl(); } catch (e) { return setStatus(() => T('net.badUrl', { msg: e.i18n ? T(e.i18n) : e.message }), true); }
+    if (window.ServerOutage) window.ServerOutage.state('connecting');
     setStatus(stKey('net.connecting'));
     clearTimeout(coldT); coldT = setTimeout(() => { if (!ws || ws.readyState !== 1) setStatus(stKey('net.waking')); }, 3000);
     ws = new WebSocket(url);
     ws.onopen = () => {
+      if (window.ServerOutage) window.ServerOutage.state('open');
       tries = 0; clearTimeout(coldT); setStatus(null);
       const NL = window.NetworkLatency;
       if (NL) { NL.setProbe(() => send({ t: 'ping', ts: Date.now() })); NL.setActive(true); }
@@ -63,7 +65,7 @@ window.AmazeOnline = (function () {
     if (local) { if (hub && lc) hub.handle(lc, JSON.parse(JSON.stringify(o))); return; }
     if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o)); GameAnalytics.roomRequest(o); }
   }
-  function disconnect() { if (window.NetworkLatency) window.NetworkLatency.setActive(false); wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
+  function disconnect() { if (window.ServerOutage) window.ServerOutage.state('idle'); if (window.NetworkLatency) window.NetworkLatency.setActive(false); wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
 
   /* ---------- 進出 ---------- */
   // 對電腦對戰：在瀏覽器內跑同一個 Hub（計分、電腦、多盤規則與線上完全相同），不需要連線
