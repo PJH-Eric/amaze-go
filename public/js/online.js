@@ -65,7 +65,13 @@ window.AmazeOnline = (function () {
     if (local) { if (hub && lc) hub.handle(lc, JSON.parse(JSON.stringify(o))); return; }
     if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o)); GameAnalytics.roomRequest(o); }
   }
-  function disconnect() { if (window.ServerOutage) window.ServerOutage.state('idle'); if (window.NetworkLatency) window.NetworkLatency.setActive(false); wantOpen = false; clearTimeout(retryT); if (ws) { ws.close(); ws = null; } }
+  function disconnect() {
+    if (window.ServerOutage) window.ServerOutage.state('idle');
+    if (window.NetworkLatency) window.NetworkLatency.setActive(false);
+    wantOpen = false;
+    clearTimeout(retryT);
+    if (ws) { ws.close(); ws = null; }
+  }
 
   /* ---------- 進出 ---------- */
   // 對電腦對戰：在瀏覽器內跑同一個 Hub（計分、電腦、多盤規則與線上完全相同），不需要連線
