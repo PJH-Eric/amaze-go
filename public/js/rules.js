@@ -5,6 +5,7 @@
 })(typeof self !== 'undefined' ? self : this, function (Shapes, Levels, ExtraLevels) {
   const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
   const DIR_KEYS = Object.keys(DIRS);
+  const SEED_STRIDE = 104729;
 
   // dim：長邊格數，隨關卡 1→100 由 minDim 線性增加到 maxDim
   const DIFFICULTIES = {
@@ -68,7 +69,16 @@
     const { w, h, seed, minLen, maxLen, fill, mask } = opts;
     const inM = (x, y) => mask[y][x] === '1';
     const rnd = mulberry32(seed >>> 0);
+    // Keep ordering randomness independent from path selection and sort implementation.
+    const shuffleRnd = mulberry32(((seed >>> 0) + SEED_STRIDE) >>> 0);
     const ints = (n) => Math.floor(rnd() * n);
+    const shuffle = (items) => {
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(shuffleRnd() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    };
     const occupied = new Set();
     const arrows = [];
     let total = 0;
@@ -88,7 +98,7 @@
       return cells;
     }
     function tryPlace(cells) {
-      const order = DIR_KEYS.slice().sort(() => rnd() - 0.5);
+      const order = shuffle(DIR_KEYS.slice());
       if (cells.length > 1) {
         const dx = cells[0][0] - cells[1][0], dy = cells[0][1] - cells[1][1];
         const nat = DIR_KEYS.find((d) => DIRS[d][0] === dx && DIRS[d][1] === dy);
@@ -137,8 +147,9 @@
     for (let guard = 0; merged && guard < 12; guard++) {
       merged = false;
       // 先合併短箭頭，避免有限的合併次數先用在長箭頭，留下過多孤立單格。
-      const order = arrows.map((_, i) => i).sort(() => rnd() - 0.5)
-        .sort((i, j) => arrows[i].cells.length - arrows[j].cells.length);
+      const order = shuffle(arrows.map((_, i) => i));
+      const tieOrder = new Map(order.map((index, rank) => [index, rank]));
+      order.sort((i, j) => arrows[i].cells.length - arrows[j].cells.length || tieOrder.get(i) - tieOrder.get(j));
       for (const i of order) {
         const A = arrows[i]; if (!A || A.cells.length >= maxLen) continue;
         const tail = A.cells[A.cells.length - 1];
@@ -212,7 +223,7 @@
     // 盡量不要有「只有箭頭尖端」的 1 格箭頭：換幾個內部種子，挑 1 格箭頭最少的排法
     let arrows = null, bestOnes = Infinity; const tStart = Date.now();
     for (let k = 0; k < 40 && bestOnes > 0; k++) {
-      const cand = generate({ ...cfg, w: m.w, h: m.h, mask: m.rows, seed: spec.seed + k * 104729 });
+      const cand = generate({ ...cfg, w: m.w, h: m.h, mask: m.rows, seed: spec.seed + k * SEED_STRIDE });
       const ones = cand.filter((a) => a.cells.length === 1).length;
       if (ones < bestOnes) { bestOnes = ones; arrows = cand; }
       if (bestOnes <= cand.length * 0.02 || (arrows && Date.now() - tStart > 350)) break;   // 夠緊密或超過時間預算就收手   // 已夠緊密就收手，避免大盤面生成太久

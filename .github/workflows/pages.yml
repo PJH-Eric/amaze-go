@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "26.12.1"
       - name: 注入 server URL（repo variable GAME_SERVER_URL，值為 Render 後端 HTTPS URL）
         run: |
           sed -i "s#__GAME_SERVER_URL__#${GAME_SERVER_URL}#" public/js/config.js
