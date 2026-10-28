@@ -177,7 +177,7 @@ class Hub {
     r.members.delete(c.id); r.scores.delete(c.id); c.roomId = null;
     if (mem) this.sys(r, 'leave', { name: mem.name });
     this.afterMembershipChange(r, c.id);
-    c.send({ t: 'left' }); c.send({ t: 'rooms', rooms: this.list() });
+    c.send({ t: 'left' }); c.send({ t: 'rooms', rooms: this.list(), online: this.onlineCount() });
   }
   afterMembershipChange(r, goneId) {
     const hs = this.humans(r);
