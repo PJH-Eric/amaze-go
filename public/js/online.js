@@ -18,7 +18,7 @@ window.AmazeOnline = (function () {
   const PCOLORS = ['#ff8fb1', '#7fd6c2', '#ffc26b', '#8fc7ff'];
 
   let ws = null, myId = null, room = null, gameState = null, startLocal = 0, wantOpen = false, tries = 0, retryT = null, coldT = null, countT = null;
-  let local = false, hub = null, lc = null, invite = null, unread = 0, chatInit = false, lastRooms = [], resultShown = false, joined = false;
+  let local = false, hub = null, lc = null, invite = null, unread = 0, chatInit = false, lastRooms = [], onlineCount = null, resultShown = false, joined = false;
   let statusFn = null, statusBad = false, inviteErrCode = '', chatMsgs = [], lastEnd = null;
   const wide = matchMedia('(min-width: 900px) and (min-aspect-ratio: 1/1)');
 
@@ -71,6 +71,8 @@ window.AmazeOnline = (function () {
     wantOpen = false;
     clearTimeout(retryT);
     if (ws) { ws.close(); ws = null; }
+    onlineCount = null;
+    renderRooms();
   }
 
   /* ---------- 進出 ---------- */
@@ -112,7 +114,7 @@ window.AmazeOnline = (function () {
         myId = m.id; if (!local) try { sessionStorage.setItem('amaze.cid', m.id); } catch (e) {}
         if (!m.resumed && room) toLobby(T('toast.reset'));
         break;
-      case 'rooms': if (!local) { lastRooms = m.rooms; renderRooms(); } break;
+      case 'rooms': if (!local) { lastRooms = m.rooms; onlineCount = Number.isInteger(m.online) && m.online >= 0 ? m.online : null; renderRooms(); } break;
       case 'room': onRoom(m); break;
       case 'game': onGame(m); break;
       case 'move': onMove(m); break;
@@ -135,6 +137,9 @@ window.AmazeOnline = (function () {
 
   /* ---------- 大廳 ---------- */
   function renderRooms() {
+    const count = $('#onlineCount');
+    count.hidden = !Number.isInteger(onlineCount);
+    count.textContent = Number.isInteger(onlineCount) ? T('lobby.onlineCount', { n: onlineCount }) : '';
     const ul = $('#roomList'); ul.innerHTML = '';
     if (!lastRooms.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = T('rooms.empty'); ul.appendChild(li); return; }
     lastRooms.forEach((r) => {

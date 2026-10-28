@@ -12,6 +12,7 @@ const ends = () => log.filter((m) => m.t === 'end');
 
 (async () => {
   hub.handle(c, { t: 'hello', name: '測試' });
+  assert.strictEqual(last('rooms').online, 1, '大廳快照包含目前在線人數');
   hub.handle(c, { t: 'create', name: '單機', diff: 'easy', rounds: 3 });
   const room = await until(() => last('room'));
   await t('可設 1～5 盤，超出範圍會被夾住', async () => {

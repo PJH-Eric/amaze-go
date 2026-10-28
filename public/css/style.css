@@ -139,6 +139,7 @@ h3{margin:10px 0 4px;font-size:14px;text-align:left}
 .status{background:#fff3cd;border:3px solid #ffe08a;border-radius:16px;padding:8px 12px;font-size:14px;text-align:center}
 .status.bad{background:#ffe1e1;border-color:#ffb3b3}
 .status[hidden]{display:none}
+.online-count{align-self:center;margin:0;padding:5px 12px;border:2px solid #a9ded0;border-radius:999px;background:#eafff7;color:#28725f;font-size:14px;font-weight:700;text-align:center}
 .inviteBox{border-color:var(--sky)}
 .err{color:#d6335f;font-weight:700;min-height:1em;margin:6px 0 0}
 .lh{margin:6px 4px 0}

@@ -72,8 +72,9 @@ class Hub {
     if (c.alias) c = c.alias;
     c.connected = false; c.send = () => {};
     const room = c.roomId && this.rooms.get(c.roomId);
-    if (!room) { this.clients.delete(c.id); return; }
+    if (!room) { this.clients.delete(c.id); this.broadcastList(); return; }
     this.snapshotAll(room);
+    this.broadcastList();
     c.leaveTimer = setTimeout(() => { this.leave(c); this.clients.delete(c.id); }, this.grace);
     c.leaveTimer.unref && c.leaveTimer.unref();
   }
@@ -87,11 +88,13 @@ class Hub {
   }
   err(c, code) { c.send({ t: 'error', code }); }
   on_hello(c, m) {
-    if (m.resumeId) { const o = this.resume(c, String(m.resumeId)); if (o) { if (m.name) o.name = cleanName(m.name); return; } }
+    if (m.resumeId) { const o = this.resume(c, String(m.resumeId)); if (o) { if (m.name) o.name = cleanName(m.name); this.broadcastList(); return; } }
     if (m.name) c.name = cleanName(m.name);
-    c.send({ t: 'rooms', rooms: this.list() });
+    c.send({ t: 'rooms', rooms: this.list(), online: this.onlineCount() });
+    this.broadcastList();
   }
-  on_rooms(c) { c.send({ t: 'rooms', rooms: this.list() }); }
+  on_rooms(c) { c.send({ t: 'rooms', rooms: this.list(), online: this.onlineCount() }); }
+  onlineCount() { return [...this.clients.values()].filter((client) => client.connected).length; }
   on_rename(c, m) { c.name = cleanName(m.name); const r = this.roomOf(c); if (r) { const mem = r.members.get(c.id); mem.name = c.name; this.snapshotAll(r); } }
 
   list() {
@@ -100,7 +103,7 @@ class Hub {
       players: this.seats(r), ais: r.ais.length, spectators: this.spectatorCount(r),
     }));
   }
-  broadcastList() { for (const c of this.clients.values()) if (c.connected && !c.roomId) c.send({ t: 'rooms', rooms: this.list() }); }
+  broadcastList() { const msg = { t: 'rooms', rooms: this.list(), online: this.onlineCount() }; for (const c of this.clients.values()) if (c.connected && !c.roomId) c.send(msg); }
   roomOf(c) { return c.roomId ? this.rooms.get(c.roomId) : null; }
   humans(r) { return [...r.members.values()].filter((m) => m.role === 'player'); }
   seats(r) { return this.humans(r).length + r.ais.length; }
