@@ -22,7 +22,7 @@ const output = process.env.LEVEL_SCREENSHOTS || path.join(os.tmpdir(), 'amaze-le
     fs.mkdirSync(output, { recursive: true });
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     browser = await chromium.launch({ headless: true });
-    for (const profile of profiles) {
+    await Promise.all(profiles.map(async (profile) => {
       const context = await browser.newContext({ viewport: { width: profile.width, height: profile.height }, hasTouch: true });
       await context.addInitScript((p) => {
         localStorage.setItem('amaze.nick', p.nick);
@@ -70,7 +70,7 @@ const output = process.env.LEVEL_SCREENSHOTS || path.join(os.tmpdir(), 'amaze-le
       assert.deepEqual(errors, []);
       await context.close();
       console.log('✓', profile.nick, `${profile.width}x${profile.height}`, `CPU ${profile.cpu}x`, '全部 1,000 關雜湊與實際開局一致');
-    }
+    }));
   } finally {
     if (browser) await browser.close();
     server.close();

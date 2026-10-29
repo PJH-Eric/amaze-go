@@ -14,6 +14,7 @@ async function layout(page) {
     const bounds = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map((n) => Math.round(n)); };
     return {
       board: bounds('#oboard'), area: bounds('#boardView'), header: bounds('#online .topbar'),
+      count: document.querySelector('#count').textContent, timerText: document.querySelector('#otimerText').textContent,
       viewport: [innerWidth, innerHeight], document: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
     };
   });
@@ -24,7 +25,10 @@ async function checkCountdown(page, name, width, height) {
   for (const digit of ['3', '2', '1', '開始！']) {
     await page.waitForFunction((n) => document.querySelector('#count').textContent === n, digit);
     await page.waitForTimeout(150);
-    samples.push(await layout(page));
+    const sample = await layout(page);
+    samples.push(sample);
+    // 與畫面同一時刻取樣，避免負載高時倒數走完才讀到計時。
+    if (/^\d$/.test(sample.count)) assert.equal(sample.timerText, '0:00.00');
     const timerInHeader = await page.locator('#otimer').evaluate((n) => {
       const r = n.getBoundingClientRect(), h = n.closest('.topbar').getBoundingClientRect();
       return !n.hidden && r.left >= h.left && r.right <= h.right && r.top >= h.top && r.bottom <= h.bottom;
@@ -32,7 +36,6 @@ async function checkCountdown(page, name, width, height) {
     assert.ok(timerInHeader, '對戰計時應整合在頂列內');
     assert.equal(await page.locator('#count').evaluate((n) => getComputedStyle(n).transform), 'none', '覆蓋層不可跟著數字縮放');
     if (digit !== '開始！') {
-      assert.equal(await page.locator('#otimerText').textContent(), '0:00.00');
       const removed = await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length);
       assert.equal(await page.locator('#oboard .arrow[tabindex="0"]').count(), 0, '倒數箭頭不可進入鍵盤焦點');
       await page.keyboard.press('Enter');
@@ -84,11 +87,9 @@ async function checkWaitingRoom(page, name, width, height) {
     fs.mkdirSync(output, { recursive: true });
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage({ hasTouch: true });
     const errors = [];
-    page.on('pageerror', (e) => errors.push(e.message));
     // 僅在測試中觀察真實繪圖狀態，仍由按鈕／鍵盤觸發全部遊戲操作。
-    await page.addInitScript(() => {
+    const observeBoard = () => {
       let api;
       Object.defineProperty(window, 'AmazeBoard', {
         get: () => api,
@@ -102,10 +103,17 @@ async function checkWaitingRoom(page, name, width, height) {
           };
         },
       });
-    });
-    for (const mode of ['local', 'online']) {
-      for (const [width, height] of sizes) {
-        await page.setViewportSize({ width, height });
+    };
+    const cases = ['local', 'online'].flatMap((mode) => sizes.map(([width, height]) => ({ mode, width, height })));
+    let next = 0;
+    await Promise.all(Array.from({ length: 8 }, async () => {
+      // 每個情境各用獨立 context，彼此的房間與 localStorage 互不影響。
+      while (next < cases.length) {
+        const { mode, width, height } = cases[next++];
+        const context = await browser.newContext({ viewport: { width, height }, hasTouch: true });
+        await context.addInitScript(observeBoard);
+        const page = await context.newPage();
+        page.on('pageerror', (e) => errors.push(e.message));
         await page.goto('http://127.0.0.1:' + server.address().port);
         if (mode === 'local') await page.locator('#vsAiBtn').click();
         else {
@@ -130,8 +138,9 @@ async function checkWaitingRoom(page, name, width, height) {
           await checkCountdown(page, mode + '-next', width, height);
         }
         await page.locator('#leaveBtn').click();
+        await context.close();
       }
-    }
+    }));
     assert.deepEqual(errors, []);
     console.log('截圖：' + output);
   } finally {

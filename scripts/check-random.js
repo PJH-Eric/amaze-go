@@ -31,8 +31,19 @@ async function bounds(page, selector) {
     fs.mkdirSync(output, { recursive: true });
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ hasTouch: true, reducedMotion: 'reduce', viewport: { width: 393, height: 786 } });
-    await context.addInitScript(() => {
+    const errors = [], sockets = [];
+    // 各情境用獨立 context（localStorage 與語言互不干擾）平行執行。
+    const openPage = async (viewport = { width: 393, height: 786 }) => {
+      const context = await browser.newContext({ hasTouch: true, reducedMotion: 'reduce', viewport });
+      await context.addInitScript(seedStorage);
+      const page = await context.newPage();
+      page.on('pageerror', (e) => errors.push(e.message));
+      page.on('websocket', (s) => sockets.push(s.url()));
+      await page.goto('http://127.0.0.1:' + server.address().port);
+      await context.setOffline(true);
+      return { context, page };
+    };
+    const seedStorage = () => {
       localStorage.setItem('game-island-lang', 'zh-Hant');
       localStorage.setItem('amaze.stars', JSON.stringify({ normal: { 1: 4, 2: 5 } }));
       localStorage.setItem('amaze.times', JSON.stringify({ normal: { 1: 12345 } }));
@@ -40,16 +51,13 @@ async function bounds(page, selector) {
       localStorage.setItem('amaze.settings', JSON.stringify({ bgm: false, sfx: false, reduce: true }));
       window.__events = [];
       window.gtag = (name, event, params) => __events.push({ name, event, params });
-    });
-    const page = await context.newPage(), errors = [], sockets = [];
-    page.on('pageerror', (e) => errors.push(e.message));
-    page.on('websocket', (s) => sockets.push(s.url()));
-    await page.goto('http://127.0.0.1:' + server.address().port);
-    await context.setOffline(true);
-    const records = () => page.evaluate(() => ['amaze.stars', 'amaze.times', 'amaze.diff'].map((k) => localStorage.getItem(k)));
-    const saved = await records();
-    await page.locator('#randomBtn').tap();
-    for (const difficulty of ['toddler', 'easy', 'normal', 'hard', 'myth']) {
+    };
+    const recordsOf = (page) => page.evaluate(() => ['amaze.stars', 'amaze.times', 'amaze.diff'].map((k) => localStorage.getItem(k)));
+    const saved = await (async () => { const { context, page } = await openPage(); const r = await recordsOf(page); await context.close(); return r; })();
+    await Promise.all(['toddler', 'easy', 'normal', 'hard', 'myth'].map(async (difficulty) => {
+      const { context, page } = await openPage();
+      const records = () => recordsOf(page);
+      await page.locator('#randomBtn').tap();
       await page.locator('#randomChips [data-v="' + difficulty + '"]').tap();
       const expectedRules = await page.evaluate((d) => {
         const cfg = AmazeRules.DIFFICULTIES[d], count = (n) => n === Infinity ? I18N.t('random.unlimited') : n;
@@ -99,8 +107,12 @@ async function bounds(page, selector) {
       assert.equal(await page.locator('#timerText').textContent(), stopped, '離開後計時應停止');
       assert.deepEqual(await records(), saved, '隨機模式不可修改闖關紀錄');
       console.log('✓ 隨機', difficulty, '有解／資源／重來／過關／重玩／新盤／雙語／紀錄隔離');
-    }
+      await context.close();
+    }));
     // 有限愛心耗盡後，仍可重試原盤或直接換新盤。
+    const { page } = await openPage();
+    const records = () => recordsOf(page);
+    await page.locator('#randomBtn').tap();
     await page.locator('#randomChips [data-v="myth"]').tap();
     await page.locator('#randomStart').tap();
     const failedStart = await page.evaluate(() => JSON.stringify(__amaze.state));
@@ -127,10 +139,11 @@ async function bounds(page, selector) {
     await page.locator('#randomBtn').tap();
     assert.deepEqual(await records(), saved);
     assert.deepEqual(sockets, [], '單機隨機模式不應建立網路房間');
-    assert.ok(await page.evaluate(() => __events.some((e) => e.event === 'game_start' && e.params.mode === 'solo_random')));
-    assert.ok(await page.evaluate(() => __events.some((e) => e.event === 'game_end' && e.params.mode === 'solo_random')));
-    for (const lang of ['zh-Hant', 'en']) for (const [width, height] of sizes) {
-      await page.setViewportSize({ width, height });
+    assert.ok(await page.evaluate(() => __events.some((e) => e.event === 'game_start' && e.params.mode === 'solo' && e.params.variant === 'solo_random')));
+    assert.ok(await page.evaluate(() => __events.some((e) => e.event === 'game_end' && e.params.mode === 'solo' && e.params.variant === 'solo_random')));
+    await Promise.all(['zh-Hant', 'en'].flatMap((lang) => sizes.map(async ([width, height]) => {
+      const { context, page } = await openPage({ width, height });
+      const records = () => recordsOf(page);
       await page.evaluate((l) => { I18N.setLang(l); AmazeApp.show('home'); }, lang);
       await bounds(page, '#home .menu, #home .btn');
       await page.locator('#randomBtn').scrollIntoViewIfNeeded();
@@ -173,7 +186,8 @@ async function bounds(page, selector) {
       assert.equal(await page.locator('#randomChips [aria-checked="true"]').getAttribute('data-v'), 'toddler');
       assert.deepEqual(await records(), saved);
       console.log('✓ 隨機 RWD', lang, width, height);
-    }
+      await context.close();
+    })));
     await page.evaluate(() => __amaze.start('normal', 1));
     assert.equal(await page.evaluate(() => __amaze.mode), 'story');
     await clear(page);

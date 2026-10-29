@@ -31,11 +31,16 @@ async function checkBounds(page, selector) {
   try {
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ hasTouch: true, reducedMotion: 'reduce' });
-    const page = await context.newPage();
-    page.on('pageerror', (e) => errors.push(e.message));
     const url = 'http://127.0.0.1:' + server.address().port;
-    await page.goto(url);
+    // 各尺寸巡檢用獨立 context 平行執行。
+    const openPage = async (viewport) => {
+      const context = await browser.newContext({ viewport, hasTouch: true, reducedMotion: 'reduce' });
+      const page = await context.newPage();
+      page.on('pageerror', (e) => errors.push(e.message));
+      await page.goto(url);
+      return { context, page };
+    };
+    const { page } = await openPage(undefined);
     const formats = [[-1, '0:00.00'], [0, '0:00.00'], [9.99, '0:00.00'], [10, '0:00.01'], [99, '0:00.09'], [1234, '0:01.23'], [59999.99, '0:59.99'], [60000, '1:00.00'], [3599999, '59:59.99'], [3600000, '60:00.00']];
     for (const [ms, expected] of formats) assert.equal(await page.evaluate((value) => AmazeApp.fmtTime(value), ms), expected);
     await page.evaluate(() => __amaze.start('normal', 2));
@@ -67,9 +72,11 @@ async function checkBounds(page, selector) {
     assert.equal(await page.locator('#resultTargetStatus').textContent(), '已達標');
     assert.match(await page.locator('#resultLevel').textContent(), /第 2 關/);
     fs.mkdirSync(output, { recursive: true });
-    for (const [width, height] of sizes) {
-      await page.setViewportSize({ width, height });
-      await checkBounds(page, '#result .card, #result .btn, #resultText, .result-stat, .result-stat dd, #resultBest');
+    await Promise.all(sizes.map(async ([width, height]) => {
+      const { context, page } = await openPage({ width, height });
+      await page.evaluate(() => __amaze.start('normal', 2));
+      await clearLevel(page);
+      await checkBounds(page, '#result .card,#result .btn, #resultText, .result-stat, .result-stat dd, #resultBest');
       const card = await page.locator('#result .card').boundingBox();
       assert.ok(card.y >= 0 && card.y + card.height <= height + 1);
       for (const id of ['againBtn', 'replayBtn', 'roomBtn', 'homeBtn']) {
@@ -80,7 +87,9 @@ async function checkBounds(page, selector) {
       await page.locator('#result .card').evaluate((n) => { n.scrollTop = 0; n._cs.update(); });
       await page.screenshot({ path: path.join(output, `result-${width}x${height}.png`) });
       console.log('✓ 過關視窗、四個操作與捲動', width, height);
-    }
+      await context.close();
+    }));
+    await page.locator('#result').waitFor({ state: 'visible' });
     await page.locator('#againBtn').tap();
     assert.match(await page.locator('#gameTitle').textContent(), /第 3 關/);
     await page.evaluate(() => __amaze.start('toddler', 200));
@@ -105,8 +114,8 @@ async function checkBounds(page, selector) {
     await clearLevel(page);
     await page.locator('#roomBtn').tap();
     assert.equal(await page.locator('#levels').isVisible(), true);
-    for (const [width, height] of sizes) {
-      await page.setViewportSize({ width, height });
+    await Promise.all(sizes.map(async ([width, height]) => {
+      const { context, page } = await openPage({ width, height });
       await page.evaluate(() => AmazeApp.show('home'));
       await checkBounds(page, '#home .menu, #home .btn');
       await page.screenshot({ path: path.join(output, `home-${width}x${height}.png`) });
@@ -135,7 +144,8 @@ async function checkBounds(page, selector) {
       await page.locator('#createBtn').waitFor({ state: 'visible' });
       await checkBounds(page, '#lobby .topbar, #lobbyScroll');
       await page.screenshot({ path: path.join(output, `lobby-${width}x${height}.png`) });
-    }
+      await context.close();
+    }));
     await page.evaluate(() => __amaze.start('easy', 1));
     await page.setViewportSize({ width: 568, height: 320 });
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
