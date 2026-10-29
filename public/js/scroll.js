@@ -27,12 +27,17 @@ window.AmazeScroll = (function () {
         b.track.style.display = need ? '' : 'none';
         if (!need) return;
         const other = bars.find((x) => x !== b), otherNeed = !y ? el.scrollHeight > el.clientHeight + 1 : el.scrollWidth > el.clientWidth + 1;
-        const len = size - (otherNeed ? 12 : 0) - 8;
+        // 以實際畫面位置換算到父層座標，避免 el 的 offsetParent 不是父層時軌道飄離容器（如首頁 #home）
+        const hr = host.getBoundingClientRect(), er = el.getBoundingClientRect();
+        const ox = er.left - hr.left - host.clientLeft + host.scrollLeft + el.clientLeft;
+        const oy = er.top - hr.top - host.clientTop + host.scrollTop + el.clientTop;
+        const topGap = y ? (parseInt(el.dataset.csTop, 10) || 0) : 0; // 讓軌道避開右上角設定鈕等浮動元件
+        const len = size - (otherNeed ? 12 : 0) - 8 - topGap;
         const tl = Math.max(32, Math.round(len * size / total)), travel = len - tl;
         const off = travel * (pos / (total - size || 1));
         b.track.style.cssText = y
-          ? `display:;left:${el.offsetLeft + el.clientWidth - 10}px;top:${el.offsetTop + 4}px;height:${len}px;width:8px`
-          : `display:;left:${el.offsetLeft + 4}px;top:${el.offsetTop + el.clientHeight - 10}px;width:${len}px;height:8px`;
+          ? `display:;left:${ox + el.clientWidth - 10}px;top:${oy + 4 + topGap}px;height:${len}px;width:8px`
+          : `display:;left:${ox + 4}px;top:${oy + el.clientHeight - 10}px;width:${len}px;height:8px`;
         b.thumb.style[y ? 'height' : 'width'] = tl + 'px';
         b.thumb.style.transform = y ? `translateY(${off}px)` : `translateX(${off}px)`;
         b.travel = travel; b.tl = tl;
