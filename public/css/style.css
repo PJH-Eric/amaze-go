@@ -703,3 +703,14 @@ html.latency-on #lobby .topbar{padding-right:186px}
   .randomFooter{grid-template-columns:minmax(0,1fr) minmax(150px,190px);gap:12px}
 }
 @media (max-height:520px) and (orientation:landscape){#result{padding-top:max(68px,calc(env(safe-area-inset-top) + 60px))}}
+
+/* 桌機首頁：模式入口分成兩欄，讓完整選單留在視窗內。 */
+@media (min-width:900px) and (min-height:521px){
+  #home{padding-top:48px;padding-bottom:12px}
+  #home .homeIn{max-width:760px;gap:6px}
+  #home .logo svg{width:150px}
+  #home h1{font-size:42px}
+  #home .menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+  #home .menu .btn.big{padding:12px;min-height:88px}
+  #home .menu .btn.ghost{grid-column:1/-1;justify-self:center}
+}
