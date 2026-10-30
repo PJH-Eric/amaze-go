@@ -108,7 +108,7 @@
       <button class="btn" id="restartBtn" type="button" data-i18n="game.restart">重來</button>
     </footer>
     <div class="result" id="result" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
-      <div class="card">
+      <div class="card" data-result-share>
         <div class="medal" id="resultIcon" aria-hidden="true"></div>
         <p class="result-level" id="resultLevel"></p>
         <h2 id="resultTitle"></h2>
@@ -190,7 +190,7 @@
           <div class="live" id="olive" aria-live="polite"></div>
         </div>
         <div class="result" id="oresult" hidden role="dialog" aria-modal="true" aria-labelledby="orTitle">
-          <div class="card">
+          <div class="card" data-result-share>
             <div class="medal" id="orIcon" aria-hidden="true"></div>
             <h2 id="orTitle"></h2>
             <p class="note" id="orSub"></p>
@@ -289,5 +289,7 @@
 <p><strong>How to play: </strong>Tap an arrow to fly it off the board, and watch out for arrows in the way</p>
 </section></div></noscript>
 <!--SEO:GAMEPLAY:END-->
+  <script defer src="js/locales/result-share.js"></script>
+  <script defer src="js/result-share.js"></script>
 </body>
 </html>
