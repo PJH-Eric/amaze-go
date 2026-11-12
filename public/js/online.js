@@ -55,6 +55,7 @@ window.AmazeOnline = (function () {
     ws.onclose = () => {
       clearTimeout(coldT);
       if (window.NetworkLatency) window.NetworkLatency.report(null);
+      if (lobbyChat) lobbyChat.setConnected(false);
       if (!wantOpen) return;
       setStatus(stKey('net.lost'), true);
       clearTimeout(retryT); retryT = setTimeout(connect, Math.min(1000 * 2 ** tries++, 8000));
@@ -71,8 +72,29 @@ window.AmazeOnline = (function () {
     wantOpen = false;
     clearTimeout(retryT);
     if (ws) { ws.close(); ws = null; }
+    if (lobbyChat) lobbyChat.setConnected(false);
     onlineCount = null;
     renderRooms();
+  }
+
+  /* ---------- 大廳聊天室（左下氣泡）：跟房間聊天分開，只在真的連線的大廳出現 ---------- */
+  const rawSend = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
+  const lobbyChat = window.LobbyChatUI = window.LobbyChat ? window.LobbyChat.create({
+    game: 'amaze-go',
+    watch: '#lobby',
+    getName: () => ($('#nickInput').value.trim() || myNick()),
+    setName: (n) => { $('#nickInput').value = n.slice(0, 12); syncNick(); rawSend({ t: 'rename', name: n.slice(0, 12) }); },
+    join: (name) => rawSend({ t: 'lobbychat', op: 'join', name }),
+    leave: () => rawSend({ t: 'lobbychat', op: 'leave' }),
+    send: (text, name) => rawSend({ t: 'lobbychat', op: 'send', text, name }),
+    joinRoom: (code) => joinRoom(code, 'player')
+  }) : null;
+  function onLobbyChat(m) {
+    if (!lobbyChat) return;
+    if (m.op === 'history') lobbyChat.history(m.history, m.online);
+    else if (m.op === 'msg') lobbyChat.add(m.msg);
+    else if (m.op === 'online') lobbyChat.online(m.online);
+    else if (m.op === 'error') lobbyChat.error(m.code);
   }
 
   /* ---------- 進出 ---------- */
@@ -110,7 +132,9 @@ window.AmazeOnline = (function () {
     if (!local) GameAnalytics.roomResponse(m.t, m.t === 'room');
     switch (m.t) {
       case 'pong': if (!local && window.NetworkLatency) window.NetworkLatency.report(Date.now() - m.ts); break;
+      case 'lobbychat': if (!local) onLobbyChat(m); break;
       case 'welcome':
+        if (!local && lobbyChat) lobbyChat.setConnected(true);
         myId = m.id; if (!local) try { sessionStorage.setItem('amaze.cid', m.id); } catch (e) {}
         if (!m.resumed && room) toLobby(T('toast.reset'));
         break;

@@ -272,9 +272,19 @@
       sw.onclick = () => { settings[k] = !settings[k]; sw.setAttribute('aria-checked', String(settings[k])); applySettings(); if (k === 'sfx' && settings.sfx) { A.unlock(); A.sfx.tick(); } if (k === 'bgm' && settings.bgm) A.unlock(); };
       row.append(sp, sw); list.appendChild(row);
     });
+    /* 大廳聊天室開關（狀態存在聊天元件自己的 localStorage） */
+    const LC = window.LobbyChatUI;
+    if (LC) {
+      const row = document.createElement('div'); row.className = 'setrow';
+      const sp = document.createElement('span'); sp.textContent = LC.text('set'); sp.id = 'lb-lobbychat';
+      const sw = document.createElement('button'); sw.type = 'button'; sw.className = 'sw'; sw.setAttribute('role', 'switch');
+      sw.setAttribute('aria-labelledby', 'lb-lobbychat'); sw.setAttribute('aria-checked', String(LC.isEnabled()));
+      sw.onclick = () => { LC.setEnabled(!LC.isEnabled()); sw.setAttribute('aria-checked', String(LC.isEnabled())); };
+      row.append(sp, sw); list.appendChild(row);
+    }
   }
   $('#gearBtn').onclick = () => { renderSettings(); open($('#settings')); };
-  $('#resetSet').onclick = () => { settings = Object.assign({}, DEFAULTS); applySettings(); renderSettings(); };
+  $('#resetSet').onclick = () => { if (window.LobbyChatUI) window.LobbyChatUI.setEnabled(true); settings = Object.assign({}, DEFAULTS); applySettings(); renderSettings(); };
   $('#howBtn').onclick = () => open($('#how'));
   $('#storyBtn').onclick = () => show('levels');
   $('#randomBtn').onclick = () => show('random');

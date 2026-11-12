@@ -25,6 +25,10 @@ const server = http.createServer((req, res) => {
 });
 
 const hub = new Hub();
+
+/* 大廳聊天室（與房間聊天分開；最近 50 則只存在記憶體）。hub.js 前端也會載入，所以接在伺服器這層 */
+const chatSends = new Map();   // 連線 id → send
+const lobbyChat = require('./lib/lobby-chat.js').createHub({ send: (id, msg) => { const f = chatSends.get(id); if (f) f(msg); }, key: 't' });
 const wss = new WebSocketServer({
   server, path: '/ws', maxPayload: 4096,
   verifyClient: ({ origin }) => !ALLOWED.length || !origin || ALLOWED.includes(origin),
@@ -32,8 +36,18 @@ const wss = new WebSocketServer({
 wss.on('connection', (ws) => {
   const c = hub.connect((obj) => { if (ws.readyState === 1) ws.send(JSON.stringify(obj)); });
   ws.isAlive = true; ws.on('pong', () => { ws.isAlive = true; });
-  ws.on('message', (data) => { let m; try { m = JSON.parse(data); } catch (e) { return; } if (m && m.t === 'ping') { if (ws.readyState === 1) ws.send(JSON.stringify({ t: 'pong', ts: m.ts })); return; } hub.handle(c, m); });
-  ws.on('close', () => hub.disconnect(c));
+  const chatId = c.id;
+  chatSends.set(chatId, (obj) => { if (ws.readyState === 1) ws.send(JSON.stringify(obj)); });
+  ws.on('message', (data) => {
+    let m; try { m = JSON.parse(data); } catch (e) { return; }
+    if (m && m.t === 'ping') { if (ws.readyState === 1) ws.send(JSON.stringify({ t: 'pong', ts: m.ts })); return; }
+    if (m && m.t === 'lobbychat') { lobbyChat.handle(chatId, m); return; }
+    const me = c.alias || c, before = me.roomId;
+    hub.handle(c, m);
+    const now = c.alias || c, r = now.roomId && now.roomId !== before ? hub.rooms.get(now.roomId) : null;
+    if (m && m.t === 'create' && r && r.hostId === now.id) lobbyChat.roomOpened({ code: r.id, roomName: r.name, host: now.name });
+  });
+  ws.on('close', () => { lobbyChat.drop(chatId); chatSends.delete(chatId); hub.disconnect(c); });
   ws.on('error', () => {});
 });
 setInterval(() => wss.clients.forEach((ws) => { if (!ws.isAlive) return ws.terminate(); ws.isAlive = false; ws.ping(); }), 25000).unref();

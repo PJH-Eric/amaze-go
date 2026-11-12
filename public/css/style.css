@@ -714,3 +714,6 @@ html.latency-on #lobby .topbar{padding-right:186px}
   #home .menu .btn.big{padding:12px;min-height:88px}
   #home .menu .btn.ghost{grid-column:1/-1;justify-self:center}
 }
+
+/* ---------- 大廳聊天室：套用箭頭解密配色 ---------- */
+body .lc-root{--lc-accent:#e9709a;--lc-accent-ink:#fff;--lc-panel-bg:var(--card);--lc-panel-solid:var(--card);--lc-ink:var(--ink);--lc-muted:var(--ink2);--lc-line:var(--line);--lc-field-bg:#fff;--lc-sys-bg:var(--bg1);--lc-name:#c25483;--lc-radius:var(--r-md);--lc-z:25}
