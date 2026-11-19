@@ -42,7 +42,7 @@ window.AmazeOnline = (function () {
     if (window.ServerOutage) window.ServerOutage.state('connecting');
     setStatus(stKey('net.connecting'));
     clearTimeout(coldT); coldT = setTimeout(() => { if (!ws || ws.readyState !== 1) setStatus(stKey('net.waking')); }, 3000);
-    ws = new WebSocket(url);
+    ws = window.GameBackend?.createSocket(url) ?? new WebSocket(url);
     ws.onopen = () => {
       if (window.ServerOutage) window.ServerOutage.state('open');
       tries = 0; clearTimeout(coldT); setStatus(null);
@@ -330,7 +330,12 @@ window.AmazeOnline = (function () {
     if (host && !local) {
       const inv = document.createElement('div'); inv.className = 'invites';
       const l4 = document.createElement('h3'); l4.textContent = T('room.invites'); inv.appendChild(l4);
-      const urlOf = (role) => { const it = (room.invites || []).find((x) => x.role === role); return it ? location.origin + location.pathname + '?room=' + room.id + '&invite=' + it.token + '&as=' + role : ''; };
+      const urlOf = (role) => {
+        const it = (room.invites || []).find((x) => x.role === role);
+        if (!it) return '';
+        const address = location.origin + location.pathname + '?room=' + room.id + '&invite=' + it.token + '&as=' + role;
+        return window.GameBackend?.pinInvite(address) ?? address;
+      };
       [['play', T('room.invPlay')], ['watch', T('room.invWatch')]].forEach(([role, label]) => {
         const url = urlOf(role); if (!url) return;
         const li = document.createElement('div'); li.className = 'inv';
