@@ -45,9 +45,12 @@ class Hub {
     this.countdown = opts.countdownMs == null ? COUNTDOWN_MS : opts.countdownMs;
     this.grace = opts.graceMs == null ? GRACE_MS : opts.graceMs;
     this.aiScale = opts.aiScale == null ? 1 : opts.aiScale; // 測試用：加速電腦
-    this.sweep = setInterval(() => this.cleanup(), 60000); this.sweep.unref && this.sweep.unref();
+    const scheduleSweep = opts.sweep || setInterval;
+    this.clearSweep = opts.clearSweep || clearInterval;
+    this.sweep = scheduleSweep(() => this.cleanup(), 60000);
+    this.sweep.unref && this.sweep.unref();
   }
-  stop() { clearInterval(this.sweep); for (const r of [...this.rooms.values()]) this.closeRoom(r, 'shutdown'); }
+  stop() { this.clearSweep(this.sweep); for (const r of [...this.rooms.values()]) this.closeRoom(r, 'shutdown'); }
   cleanup() { const t = this.now(); for (const [k, v] of this.closed) if (t - v > 3600e3) this.closed.delete(k); }
 
   /* ---------- 連線 ---------- */
