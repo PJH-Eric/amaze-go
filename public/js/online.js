@@ -48,8 +48,9 @@ window.AmazeOnline = (function () {
       tries = 0; clearTimeout(coldT); setStatus(null);
       const NL = window.NetworkLatency;
       if (NL) { NL.setProbe(() => send({ t: 'ping', ts: Date.now() })); NL.setActive(true); }
-      let rid = null; try { rid = sessionStorage.getItem('amaze.cid'); } catch (e) {}
-      send({ t: 'hello', name: myNick(), resumeId: rid });
+      let rid = null, resumeKey = null;
+      try { rid = sessionStorage.getItem('amaze.cid'); resumeKey = sessionStorage.getItem('amaze.resume'); } catch (e) {}
+      send({ t: 'hello', name: myNick(), resumeId: rid, resumeKey });
     };
     ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } onMsg(m); };
     ws.onclose = () => {
@@ -119,6 +120,8 @@ window.AmazeOnline = (function () {
   }
   function toLobby(msg) {   // msg 為已翻譯的文字
     room = null; gameState = null; joined = false; chatInit = false; resultShown = false; lastEnd = null; chatMsgs = [];
+    try { sessionStorage.removeItem('amaze.room'); } catch (e) {}
+    window.GameBackend?.forgetRoom?.();
     $('#oresult').hidden = true; App.show('lobby'); renderRooms(); if (msg) toast(msg);
     send({ t: 'rooms' });
   }
@@ -134,8 +137,14 @@ window.AmazeOnline = (function () {
       case 'pong': if (!local && window.NetworkLatency) window.NetworkLatency.report(Date.now() - m.ts); break;
       case 'lobbychat': if (!local) onLobbyChat(m); break;
       case 'welcome':
+        if (m.provisional) break;
         if (!local && lobbyChat) lobbyChat.setConnected(true);
-        myId = m.id; if (!local) try { sessionStorage.setItem('amaze.cid', m.id); } catch (e) {}
+        myId = m.id;
+        if (!local) try {
+          sessionStorage.setItem('amaze.cid', m.id);
+          if (m.resumeKey) sessionStorage.setItem('amaze.resume', m.resumeKey);
+          if (!m.resumed) sessionStorage.removeItem('amaze.room');
+        } catch (e) {}
         if (!m.resumed && room) toLobby(T('toast.reset'));
         break;
       case 'rooms': if (!local) { lastRooms = m.rooms; onlineCount = Number.isInteger(m.online) && m.online >= 0 ? m.online : null; renderRooms(); } break;
@@ -230,6 +239,10 @@ window.AmazeOnline = (function () {
   }
 
   function onRoom(m) {
+    if (!local) {
+      try { sessionStorage.setItem('amaze.room', m.id); } catch (e) {}
+      window.GameBackend?.rememberRoom?.();
+    }
     const first = !room || room.id !== m.id;
     room = m;
     if (first) {
@@ -249,7 +262,7 @@ window.AmazeOnline = (function () {
   function renderTitle() { if (room) $('#roomTitle').textContent = local ? T('room.local') : room.name + T('common.sep') + room.id; }
   const me = () => room && room.players.find((p) => p.id === myId);
   const isHost = () => room && room.hostId === myId;
-  const canTap = () => room && room.role === 'player' && room.phase === 'playing' && Date.now() >= startLocal;
+  const canTap = () => room && !room.recovering && room.role === 'player' && room.phase === 'playing' && Date.now() >= startLocal;
 
   const multi = () => room && room.totalRounds > 1;
   const cumOf = (p) => (room.phase === 'playing' ? p.total + p.score : p.total);
@@ -518,6 +531,7 @@ window.AmazeOnline = (function () {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#olayout').closest('[hidden]') && !document.querySelector('.modal:not([hidden])') && $('#oresult').hidden && matchMedia('(max-width:899px), (max-aspect-ratio:1/1)').matches) setPanel('closed'); });
 
   parseInvite();
+  try { if (!invite && sessionStorage.getItem('amaze.room')) setTimeout(enter, 0); } catch (e) {}
   window.__online = { get room() { return room; }, get ws() { return ws; } };
   return { enter, enterLocal };
 })();

@@ -44,31 +44,86 @@ class Hub {
     this.now = opts.now || Date.now;
     this.countdown = opts.countdownMs == null ? COUNTDOWN_MS : opts.countdownMs;
     this.grace = opts.graceMs == null ? GRACE_MS : opts.graceMs;
+    this.checkpoints = opts.checkpoints;
     this.aiScale = opts.aiScale == null ? 1 : opts.aiScale; // 測試用：加速電腦
     const scheduleSweep = opts.sweep || setInterval;
     this.clearSweep = opts.clearSweep || clearInterval;
     this.sweep = scheduleSweep(() => this.cleanup(), 60000);
     this.sweep.unref && this.sweep.unref();
+    if (this.checkpoints) this.loadCheckpoints();
   }
   stop() { this.clearSweep(this.sweep); for (const r of [...this.rooms.values()]) this.closeRoom(r, 'shutdown'); }
   cleanup() { const t = this.now(); for (const [k, v] of this.closed) if (t - v > 3600e3) this.closed.delete(k); }
 
+  loadCheckpoints() {
+    const readyAt = this.now();
+    for (const { room, clients, savedAt } of this.checkpoints.load()) {
+      room.timers = new Set();
+      room.recovery ??= { savedAt, until: readyAt + 120000 };
+      this.rooms.set(room.id, room);
+      for (const client of clients) {
+        this.clients.set(client.id, { ...client, roomId: room.id, send() {}, connected: false, leaveTimer: null, chatTimes: [] });
+      }
+      const timer = setTimeout(() => this.finishRecovery(room), Math.max(0, room.recovery.until - readyAt));
+      timer.unref?.();
+      room.timers.add(timer);
+      this.saveRoom(room);
+    }
+  }
+
+  saveRoom(room) {
+    if (!this.checkpoints) return;
+    const { timers, ...state } = room;
+    const clients = [];
+    for (const { id } of room.members.values()) {
+      const client = this.clients.get(id);
+      if (client) clients.push({ id, name: client.name, resumeKey: client.resumeKey });
+    }
+    this.checkpoints.save(room.id, { room: state, clients, savedAt: this.now() });
+  }
+
+  finishRecovery(room) {
+    if (!room.recovery || !this.rooms.has(room.id)) return false;
+    const time = this.now();
+    const absent = this.humans(room).filter(member => !this.clients.get(member.id)?.connected);
+    if (absent.length && time < room.recovery.until) return false;
+    if (room.phase === 'playing') room.startAt += time - room.recovery.savedAt;
+    room.recovery = null;
+    for (const timer of room.timers) clearTimeout(timer);
+    room.timers.clear();
+    for (const member of room.members.values()) {
+      const client = this.clients.get(member.id);
+      if (client && !client.connected) { this.leave(client); this.clients.delete(client.id); }
+    }
+    if (!this.rooms.has(room.id)) return true;
+    this.snapshotAll(room);
+    if (room.phase === 'playing') {
+      for (const member of room.members.values()) {
+        const client = this.clients.get(member.id);
+        if (client?.connected) this.sendGame(room, client);
+      }
+      for (const ai of room.ais) this.scheduleAI(room, ai, Math.max(0, room.startAt - time));
+    }
+    return true;
+  }
+
   /* ---------- 連線 ---------- */
   connect(send) {
-    const c = { id: rid(), send, name: randName(), roomId: null, connected: true, leaveTimer: null, chatTimes: [] };
+    const c = { id: rid(), resumeKey: tok(), send, name: randName(), roomId: null, connected: true, leaveTimer: null, chatTimes: [] };
     this.clients.set(c.id, c);
-    c.send({ t: 'welcome', id: c.id, name: c.name });
+    c.send({ t: 'welcome', id: c.id, name: c.name, resumeKey: c.resumeKey, provisional: !!this.checkpoints });
     return c;
   }
-  resume(c, oldId) {
+  resume(c, oldId, resumeKey) {
     const old = this.clients.get(oldId);
     if (!old || old === c || old.connected) return false;
+    if (this.checkpoints && old.resumeKey !== resumeKey) return false;
     clearTimeout(old.leaveTimer); old.leaveTimer = null;
     old.send = c.send; old.connected = true;
     this.clients.delete(c.id); c.alias = old;
-    c.send({ t: 'welcome', id: old.id, name: old.name, resumed: true });
+    c.send({ t: 'welcome', id: old.id, name: old.name, resumeKey: old.resumeKey, resumed: true });
     const room = old.roomId && this.rooms.get(old.roomId);
-    if (room) { this.snapshotAll(room); if (room.phase === 'playing') this.sendGame(room, old); }
+    if (room && !this.finishRecovery(room)) { this.snapshotAll(room); if (room.phase === 'playing') this.sendGame(room, old); }
     return old;
   }
   disconnect(c) {
@@ -78,6 +133,7 @@ class Hub {
     if (!room) { this.clients.delete(c.id); this.broadcastList(); return; }
     this.snapshotAll(room);
     this.broadcastList();
+    if (room.recovery) return;
     c.leaveTimer = setTimeout(() => { this.leave(c); this.clients.delete(c.id); }, this.grace);
     c.leaveTimer.unref && c.leaveTimer.unref();
   }
@@ -86,13 +142,15 @@ class Hub {
   handle(c, m) {
     if (c.alias) c = c.alias;
     if (!m || typeof m.t !== 'string') return;
+    if (this.roomOf(c)?.recovery && !['hello', 'rooms', 'leave'].includes(m.t)) return;
     const f = this['on_' + m.t];
     if (f) f.call(this, c, m);
   }
   err(c, code) { c.send({ t: 'error', code }); }
   on_hello(c, m) {
-    if (m.resumeId) { const o = this.resume(c, String(m.resumeId)); if (o) { if (m.name) o.name = cleanName(m.name); this.broadcastList(); return; } }
+    if (m.resumeId) { const o = this.resume(c, String(m.resumeId), m.resumeKey); if (o) { if (m.name) o.name = cleanName(m.name); this.broadcastList(); return; } }
     if (m.name) c.name = cleanName(m.name);
+    if (this.checkpoints) c.send({ t: 'welcome', id: c.id, name: c.name, resumeKey: c.resumeKey });
     c.send({ t: 'rooms', rooms: this.list(), online: this.onlineCount() });
     this.broadcastList();
   }
@@ -195,6 +253,7 @@ class Hub {
     for (const t of r.timers) clearTimeout(t); r.timers.clear();
     r.invites.clear(); r.phase = 'closed';
     this.rooms.delete(r.id); this.closed.set(r.id, this.now());
+    if (this.checkpoints) this.checkpoints.remove(r.id);
     for (const mem of r.members.values()) {
       const c = this.clients.get(mem.id);
       if (c) { c.send({ t: 'closed', reason }); c.roomId = null; clearTimeout(c.leaveTimer); }
@@ -260,7 +319,7 @@ class Hub {
     this.applyTap(r, { id: c.id, name: mem.name }, m.id | 0, c);
   }
   applyTap(r, actor, id, client) {
-    if (r.phase !== 'playing' || this.now() < r.startAt) return;
+    if (r.recovery || r.phase !== 'playing' || this.now() < r.startAt) return;
     const s = r.state, a = s.arrows[id];
     if (!a || a.removed) { client && client.send({ t: 'late', id }); return; }
     const len = a.cells.length;
@@ -328,14 +387,14 @@ class Hub {
   sys(r, k, p) { const msg = { t: 'chat', sys: true, k, p: p || {}, ts: this.now() }; r.chat.push(msg); if (r.chat.length > 60) r.chat.shift(); this.broadcast(r, msg); }
 
   /* ---------- 廣播 ---------- */
-  broadcast(r, obj) { for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(obj); } }
-  snapshotAll(r) { for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(this.snapshot(r, mem)); } }
+  broadcast(r, obj) { this.saveRoom(r); for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(obj); } }
+  snapshotAll(r) { this.saveRoom(r); for (const mem of r.members.values()) { const c = this.clients.get(mem.id); c && c.connected && c.send(this.snapshot(r, mem)); } }
   snapshot(r, me) {
     const players = this.players(r).map((p) => ({ ...p, score: r.scores.get(p.id) || 0, total: r.totals.get(p.id) || 0, host: p.id === r.hostId, connected: p.isAI ? true : (this.clients.get(p.id) || {}).connected !== false }));
     const spectators = [...r.members.values()].filter((m) => m.role === 'spectator').map((m) => ({ id: m.id, name: m.name }));
     const snap = {
       t: 'room', id: r.id, name: r.name, hostId: r.hostId, diff: r.diff, max: r.max, phase: r.phase, round: r.round, totalRounds: r.totalRounds, matchDone: r.matchDone,
-      you: me.id, role: me.role, players, spectators, startAt: r.startAt, serverNow: this.now(),
+      you: me.id, role: me.role, players, spectators, startAt: r.startAt, serverNow: this.now(), recovering: !!r.recovery,
       remaining: r.state && r.phase === 'playing' ? R.remaining(r.state) : 0, result: r.lastResult,
       chat: r.chat.slice(-30),
     };

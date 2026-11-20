@@ -24,7 +24,10 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const hub = new Hub();
+const checkpoints = process.env.AMAZE_ROOM_DB_PATH
+  ? require('./lib/room-checkpoints.js').openCheckpoints(process.env.AMAZE_ROOM_DB_PATH)
+  : null;
+const hub = new Hub({ checkpoints });
 
 /* 大廳聊天室（與房間聊天分開；即時傳送訊息，不載入歷史訊息）。hub.js 前端也會載入，所以接在伺服器這層 */
 const chatSends = new Map();   // 連線 id → send
