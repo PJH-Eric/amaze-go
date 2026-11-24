@@ -1,9 +1,9 @@
 {
   "zh-Hant": {
     "name": "箭頭解密",
-    "summary": "點選未被其他箭頭阻擋的箭頭，讓它沿尖端方向飛出棋盤；被擋住時會撞回。五種難度各有 200 關，也能和電腦或朋友競速清盤。",
+    "summary": "點選未被其他箭頭阻擋的箭頭，讓它沿尖端方向飛出棋盤；被擋住時會撞回。五種難度各有 300 關，也能和電腦或朋友競速清盤。",
     "modes": [
-      "五種難度・每種 200 關",
+      "五種難度・每種 300 關",
       "單機隨機模式",
       "電腦對戰",
       "線上房間",
@@ -14,9 +14,9 @@
   },
   "zh-Hans": {
     "name": "箭头解密",
-    "summary": "点击未被其他箭头挡住的箭头，让它沿尖端方向飞出棋盘；被挡住时会撞回。五种难度各有 200 关，也能和电脑或朋友竞速清盘。",
+    "summary": "点击未被其他箭头挡住的箭头，让它沿尖端方向飞出棋盘；被挡住时会撞回。五种难度各有 300 关，也能和电脑或朋友竞速清盘。",
     "modes": [
-      "五种难度・每种 200 关",
+      "五种难度・每种 300 关",
       "单机随机模式",
       "电脑对战",
       "线上房间",
@@ -27,9 +27,9 @@
   },
   "en": {
     "name": "Arrow Escape",
-    "summary": "Tap an unblocked arrow to send it flying off the board in the direction it points; blocked arrows bounce back. Play five difficulty levels with 200 stages each, or race the computer and friends to clear the board.",
+    "summary": "Tap an unblocked arrow to send it flying off the board in the direction it points; blocked arrows bounce back. Play five difficulty levels with 300 stages each, or race the computer and friends to clear the board.",
     "modes": [
-      "Five difficulties, 200 stages each",
+      "Five difficulties, 300 stages each",
       "Solo Random Mode",
       "vs Computer",
       "Online Room",

@@ -110,7 +110,7 @@ async function buildGame(id) {
       setup(build) {
         if (id === 'amaze-go') {
           // The online hub generates its boards from random specs. Campaign boards are browser assets.
-          build.onResolve({ filter: /^\.\/levels-v1(?:-extra)?\.js$/ }, ({ importer }) =>
+          build.onResolve({ filter: /^\.\/levels-v1(?:-extra2?)?\.js$/ }, ({ importer }) =>
             importer === path.join(gameRoot, 'public', 'js', 'rules.js')
               ? { path: 'campaign', namespace: 'offline-levels' }
               : undefined);

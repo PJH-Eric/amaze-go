@@ -99,7 +99,7 @@ const randomBoards = Object.keys(R.DIFFICULTIES).flatMap((difficulty, di) => [1,
       // 逐關只量版面（尺寸、捲動、縮放），不需繪出畫面；visibility 不影響版面，可省下大量繪製成本。
       await page.addStyleTag({ content: '#board, #board * { visibility: hidden !important; }' });
       const stats = await inspect(page, Object.keys(R.DIFFICULTIES), []);
-      assert.equal(stats.story, 1000);
+      assert.equal(stats.story, 1500);
       assert.deepEqual(errors, []);
       await context.close();
       return stats;
@@ -109,7 +109,7 @@ const randomBoards = Object.keys(R.DIFFICULTIES).flatMap((difficulty, di) => [1,
       const { context, page, errors } = await openPage(width, height);
       const stats = await inspect(page, [], randomBoards);
       assert.equal(stats.versus, 30);
-      for (const [difficulty, level] of [['easy', 1], ['normal', 100], ['myth', 200]]) {
+      for (const [difficulty, level] of [['easy', 1], ['normal', 100], ['myth', 300]]) {
         await page.evaluate(([d, l]) => __amaze.start(d, l), [difficulty, level]);
         await frames(page);
         await page.screenshot({ path: path.join(output, `${difficulty}-${width}x${height}.png`) });
@@ -152,7 +152,7 @@ const randomBoards = Object.keys(R.DIFFICULTIES).flatMap((difficulty, di) => [1,
       }
     }));
     sizes.forEach(([width, height], i) => {
-      assert.equal(results[i].story, 1000);
+      assert.equal(results[i].story, 1500);
       assert.equal(results[i].versus, 30);
       console.log('✓', `${width}x${height}`, JSON.stringify(results[i]), '手動縮放／旋轉／重玩');
     });

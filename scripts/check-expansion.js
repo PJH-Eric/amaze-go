@@ -43,14 +43,14 @@ async function clearLevel(page) {
       localStorage.setItem('amaze.settings', JSON.stringify({ bgm: false, sfx: false, reduce: true }));
     };
     const first = await openPage(undefined);
-    assert.match(await first.page.locator('#storyBtn').textContent(), /200 關・共 1,000 關/);
+    assert.match(await first.page.locator('#storyBtn').textContent(), /300 關・共 1,500 關/);
     await first.context.close();
     await Promise.all(['toddler', 'easy', 'normal', 'hard', 'myth'].map(async (difficulty) => {
       const { context, page } = await openPage(undefined);
       await page.locator('#storyBtn').click();
       await page.locator('#diffChips [data-v="' + difficulty + '"]').click();
-      assert.equal(await page.locator('#levelGrid .lv').count(), 200);
-      assert.equal(await page.locator('#progressText').textContent(), '已通 100／200 關・星星 500／1000');
+      assert.equal(await page.locator('#levelGrid .lv').count(), 300);
+      assert.equal(await page.locator('#progressText').textContent(), '已通 100／300 關・星星 500／1500');
       assert.match(await page.locator('#levelGrid .lv').nth(99).getAttribute('aria-label'), /最佳 0:12.34/);
       assert.equal(await page.locator('#levelGrid .lv').nth(100).isEnabled(), true);
       assert.equal(await page.locator('#levelGrid .lv').nth(101).isEnabled(), false);
@@ -60,12 +60,12 @@ async function clearLevel(page) {
       assert.equal(await page.evaluate(() => __amaze.state.level), 101);
       await clearLevel(page);
       await page.locator('#roomBtn').click();
-      assert.match(await page.locator('#progressText').textContent(), /^已通 101／200 關/);
+      assert.match(await page.locator('#progressText').textContent(), /^已通 101／300 關/);
       assert.equal(await page.locator('#levelGrid .lv').nth(101).isEnabled(), true);
-      await page.evaluate((d) => __amaze.start(d, 199), difficulty);
+      await page.evaluate((d) => __amaze.start(d, 299), difficulty);
       await clearLevel(page);
       await page.locator('#againBtn').click();
-      assert.equal(await page.evaluate(() => __amaze.state.level), 200);
+      assert.equal(await page.evaluate(() => __amaze.state.level), 300);
       const original = await page.evaluate(() => JSON.stringify(__amaze.state));
       await clearLevel(page);
       assert.equal(await page.locator('#againBtn').textContent(), '重玩這關');
@@ -73,7 +73,7 @@ async function clearLevel(page) {
       await page.locator('#againBtn').click();
       assert.equal(await page.evaluate(() => JSON.stringify(__amaze.state)), original);
       await page.evaluate(() => AmazeApp.show('levels'));
-      console.log('✓', difficulty, '舊紀錄、100→101、解鎖 102、199→200、末關重玩');
+      console.log('✓', difficulty, '舊紀錄、100→101、解鎖 102、299→300、末關重玩');
       await context.close();
     }));
     await Promise.all(sizes.map(async ([width, height]) => {
@@ -95,7 +95,7 @@ async function clearLevel(page) {
       const last = await page.locator('#levelGrid .lv').last().boundingBox();
       assert.ok(last.y >= 0 && last.y + last.height <= height + 1);
       await page.screenshot({ path: path.join(output, `expanded-${width}x${height}.png`) });
-      console.log('✓ 200 關選關、統計與末列捲動', width, height);
+      console.log('✓ 300 關選關、統計與末列捲動', width, height);
       await context.close();
     }));
     assert.deepEqual(errors, []);

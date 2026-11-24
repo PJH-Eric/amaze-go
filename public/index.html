@@ -54,7 +54,7 @@
       <h1 id="homeTitle" data-i18n="home.title">箭頭解密</h1>
       <p class="sub" data-i18n="home.sub">Amaze GO・點一點，讓箭頭飛出去</p>
       <div class="menu">
-        <button class="btn primary big" id="storyBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" fill="#fff" stroke="#fff" stroke-linejoin="round"/></svg></span><span class="tx"><b data-i18n="home.story.t">闖關模式</b><small data-i18n="home.story.d">單人・五種難度各 200 關・共 1,000 關</small></span></button>
+        <button class="btn primary big" id="storyBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.1 1.1-6.5L2.6 9.5l6.5-.9z" fill="#fff" stroke="#fff" stroke-linejoin="round"/></svg></span><span class="tx"><b data-i18n="home.story.t">闖關模式</b><small data-i18n="home.story.d">單人・五種難度各 300 關・共 1,500 關</small></span></button>
         <button class="btn big randomMode" id="randomBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="#ad8be8"/><g fill="#fff"><circle cx="8" cy="8" r="1.6"/><circle cx="16" cy="8" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="8" cy="16" r="1.6"/><circle cx="16" cy="16" r="1.6"/></g></svg></span><span class="tx"><b data-i18n="random.title">單機隨機模式</b><small data-i18n="random.menu">選擇難度・隨機盤面・自由挑戰</small></span></button>
         <button class="btn big" id="vsAiBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="4" fill="#7fd6c2"/><circle cx="9.5" cy="13" r="1.6" fill="#fff"/><circle cx="14.5" cy="13" r="1.6" fill="#fff"/><path d="M12 8V4.5" stroke="#7fd6c2" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="3.8" r="1.5" fill="#7fd6c2"/></svg></span><span class="tx"><b data-i18n="home.vsai.t">對戰模式・對電腦</b><small data-i18n="home.vsai.d">1～3 位電腦・可選 1～5 盤・累計分數</small></span></button>
         <button class="btn big" id="onlineBtn" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#8fc7ff" stroke-width="2.4"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="#8fc7ff" stroke-width="2"/></svg></span><span class="tx"><b data-i18n="home.online.t">對戰模式・線上</b><small data-i18n="home.online.d">跟朋友搶同一個棋盤・觀戰・邀請連結</small></span></button>
@@ -233,7 +233,7 @@
   <div class="card">
     <h2 id="howTitle" data-i18n="how.title">怎麼玩</h2>
     <ol class="steps">
-      <li data-i18n-html="how.1"><b>闖關模式：</b>五種難度各 200 關，共 1,000 關，依序解鎖。同一難度與關卡的盤面固定。每種難度最高 1,000 星，全部共 5,000 星；舊有進度與最佳時間會保留。</li>
+      <li data-i18n-html="how.1"><b>闖關模式：</b>五種難度各 300 關，共 1,500 關，依序解鎖。同一難度與關卡的盤面固定。每種難度最高 1,500 星，全部共 7,500 星；舊有進度與最佳時間會保留。</li>
       <li data-i18n-html="how.2">點一支箭頭，它會朝<b>尖端的方向</b>直直飛出去。</li>
       <li data-i18n-html="how.3">前面有別的箭頭擋住就飛不出去，會撞回來；單機模式扣一顆愛心（幼幼班愛心無限）。</li>
       <li data-i18n-html="how.4">先飛出沒被擋的，慢慢清出路，把所有箭頭都送出棋盤就完成！闖關每關最高 5 星：過關 1 星，失誤少最多再加 2 星，提示用量在難度允許內加 1 星，耗時在目標內加 1 星，各門檻依難度而異。</li>
@@ -263,6 +263,7 @@
 <script src="js/shapes.js"></script>
 <script src="js/levels-v1.js"></script>
 <script src="js/levels-v1-extra.js"></script>
+<script src="js/levels-v1-extra2.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/hub.js"></script>
 <script src="js/board.js"></script>
@@ -275,20 +276,20 @@
 <!--SEO:GAMEPLAY-->
 <noscript><div class="seo-gameplay"><section lang="zh-Hant">
 <h2>箭頭解密</h2>
-<p>點選未被其他箭頭阻擋的箭頭，讓它沿尖端方向飛出棋盤；被擋住時會撞回。五種難度各有 200 關，也能和電腦或朋友競速清盤。</p>
-<p><strong>玩法模式：</strong>五種難度・每種 200 關、單機隨機模式、電腦對戰、線上房間、觀戰、邀請連結</p>
+<p>點選未被其他箭頭阻擋的箭頭，讓它沿尖端方向飛出棋盤；被擋住時會撞回。五種難度各有 300 關，也能和電腦或朋友競速清盤。</p>
+<p><strong>玩法模式：</strong>五種難度・每種 300 關、單機隨機模式、電腦對戰、線上房間、觀戰、邀請連結</p>
 <p><strong>操作方式：</strong>點擊箭頭讓它飛出棋盤，注意別被其他箭頭擋住</p>
 </section>
 <section lang="zh-Hans">
 <h2>箭头解密</h2>
-<p>点击未被其他箭头挡住的箭头，让它沿尖端方向飞出棋盘；被挡住时会撞回。五种难度各有 200 关，也能和电脑或朋友竞速清盘。</p>
-<p><strong>玩法模式：</strong>五种难度・每种 200 关、单机随机模式、电脑对战、线上房间、观战、邀请链接</p>
+<p>点击未被其他箭头挡住的箭头，让它沿尖端方向飞出棋盘；被挡住时会撞回。五种难度各有 300 关，也能和电脑或朋友竞速清盘。</p>
+<p><strong>玩法模式：</strong>五种难度・每种 300 关、单机随机模式、电脑对战、线上房间、观战、邀请链接</p>
 <p><strong>操作方式：</strong>点击箭头让它飞出棋盘，注意别被其他箭头挡住</p>
 </section>
 <section lang="en">
 <h2>Arrow Escape</h2>
-<p>Tap an unblocked arrow to send it flying off the board in the direction it points; blocked arrows bounce back. Play five difficulty levels with 200 stages each, or race the computer and friends to clear the board.</p>
-<p><strong>Game modes: </strong>Five difficulties, 200 stages each, Solo Random Mode, vs Computer, Online Room, Spectate, Invite Link</p>
+<p>Tap an unblocked arrow to send it flying off the board in the direction it points; blocked arrows bounce back. Play five difficulty levels with 300 stages each, or race the computer and friends to clear the board.</p>
+<p><strong>Game modes: </strong>Five difficulties, 300 stages each, Solo Random Mode, vs Computer, Online Room, Spectate, Invite Link</p>
 <p><strong>How to play: </strong>Tap an arrow to fly it off the board, and watch out for arrows in the way</p>
 </section></div></noscript>
 <!--SEO:GAMEPLAY:END-->
