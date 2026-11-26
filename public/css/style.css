@@ -717,3 +717,51 @@ html.latency-on #lobby .topbar{padding-right:186px}
 
 /* ---------- 大廳聊天室：套用箭頭解密配色 ---------- */
 body .lc-root{--lc-accent:#e9709a;--lc-accent-ink:#fff;--lc-panel-bg:var(--card);--lc-panel-solid:var(--card);--lc-ink:var(--ink);--lc-muted:var(--ink2);--lc-line:var(--line);--lc-field-bg:#fff;--lc-sys-bg:var(--bg1);--lc-name:#c25483;--lc-radius:var(--r-md);--lc-z:25}
+
+.home-support {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(122px + env(safe-area-inset-right));
+  z-index: 28;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: .875rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  color: #91264d;
+  background: #fff1f6;
+  border-color: #ef85aa;
+}
+.home-support:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+body:not([data-screen="home"]) .home-support { display: none; }
+
+.home-support .support-label:not([lang="zh-Hant"]),
+:is(html:lang(zh-Hans), html:lang(zh-CN)) .home-support .support-label[lang="zh-Hant"],
+html:lang(en) .home-support .support-label[lang="zh-Hant"] { display: none; }
+:is(html:lang(zh-Hans), html:lang(zh-CN)) .home-support .support-label[lang="zh-Hans"],
+html:lang(en) .home-support .support-label[lang="en"] { display: inline; }
+
+@media (max-width: 480px) {
+  .home-support {
+    flex-direction: column;
+    gap: 2px;
+    width: 50px;
+    padding-inline: 3px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+  .home-support > [aria-hidden="true"] { font-size: 1rem; }
+}
+
+@media (max-width: 380px) {
+  .lobbyLink { padding-inline: 8px; font-size: .8rem; }
+}
